@@ -472,9 +472,6 @@ typedef struct SystemState
     BuiltinState builtin;
 } SystemState;
 
-void system_init(SystemState * system);
-void system_quit(SystemState * system);
-
 /* global.h */
 
 #if LISP_GLOBAL_API
@@ -2409,26 +2406,6 @@ Expr eval(Expr exp, Expr env)
     }
 }
 
-void system_init(SystemState * system)
-{
-    symbol_init(&system->symbol);
-    cons_init(&system->cons);
-    gensym_init(&system->gensym);
-    string_init(&system->string);
-    stream_init(&system->stream);
-    builtin_init(&system->builtin);
-}
-
-void system_quit(SystemState * system)
-{
-    builtin_quit(&system->builtin);
-    string_quit(&system->string);
-    gensym_quit(&system->gensym);
-    stream_quit(&system->stream);
-    cons_quit(&system->cons);
-    symbol_quit(&system->symbol);
-}
-
 SystemState global;
 
 class System
@@ -2445,6 +2422,26 @@ public:
     {
         system_quit(&global);
         s_instance = nullptr;
+    }
+
+    void system_init(SystemState * system)
+    {
+        symbol_init(&system->symbol);
+        cons_init(&system->cons);
+        gensym_init(&system->gensym);
+        string_init(&system->string);
+        stream_init(&system->stream);
+        builtin_init(&system->builtin);
+    }
+
+    void system_quit(SystemState * system)
+    {
+        builtin_quit(&system->builtin);
+        string_quit(&system->string);
+        gensym_quit(&system->gensym);
+        stream_quit(&system->stream);
+        cons_quit(&system->cons);
+        symbol_quit(&system->symbol);
     }
 
     virtual Expr make_core_env()
