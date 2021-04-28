@@ -304,28 +304,6 @@ typedef struct
     BuiltinInfo info[LISP_MAX_BUILTINS];
 } BuiltinState;
 
-void builtin_init(BuiltinState * builtin);
-void builtin_quit(BuiltinState * builtin);
-
-bool is_builtin_special(Expr exp);
-bool is_builtin_function(Expr exp);
-bool is_builtin_symbol(Expr exp);
-
-inline bool is_builtin(Expr exp)
-{
-    return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
-}
-
-Expr lisp_make_builtin_special(BuiltinState * builtin, char const * name, BuiltinFun fun);
-Expr lisp_make_builtin_function(BuiltinState * builtin, char const * name, BuiltinFun fun);
-
-char const * lisp_builtin_name(BuiltinState * builtin, Expr exp);
-BuiltinFun lisp_builtin_fun(BuiltinState * builtin, Expr exp);
-
-Expr make_builtin_special(char const * name, BuiltinFun fun);
-Expr make_builtin_function(char const * name, BuiltinFun fun);
-Expr make_builtin_symbol(char const * name, BuiltinFun fun);
-
 /* reader.h */
 
 #ifndef LISP_READER_PARSE_QUOTE
@@ -392,16 +370,6 @@ extern SystemState global;
 inline static bool stream_at_end(Expr exp)
 {
     return lisp_stream_at_end(&global.stream, exp);
-}
-
-inline static char const * builtin_name(Expr exp)
-{
-    return lisp_builtin_name(&global.builtin, exp);
-}
-
-inline static BuiltinFun builtin_fun(Expr exp)
-{
-    return lisp_builtin_fun(&global.builtin, exp);
 }
 
 #endif
@@ -824,94 +792,6 @@ void stream_release(Expr exp)
 
 #endif
 
-void builtin_init(BuiltinState * builtin)
-{
-    memset(builtin, 0, sizeof(BuiltinState));
-}
-
-void builtin_quit(BuiltinState * builtin)
-{
-}
-
-bool is_builtin_special(Expr exp)
-{
-    return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
-}
-
-bool is_builtin_function(Expr exp)
-{
-    return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
-}
-
-bool is_builtin_symbol(Expr exp)
-{
-    return expr_type(exp) == TYPE_BUILTIN_SYMBOL;
-}
-
-static Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun, U64 type)
-{
-    LISP_ASSERT(builtin->num < LISP_MAX_BUILTINS);
-    U64 const index = builtin->num++;
-    BuiltinInfo * info = builtin->info + index;
-    info->name = name; /* TODO take ownership of name? */
-    info->fun = fun;
-    return make_expr(type, index);
-}
-
-Expr lisp_make_builtin_special(BuiltinState * builtin, char const * name, BuiltinFun fun)
-{
-    return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_SPECIAL);
-}
-
-Expr lisp_make_builtin_function(BuiltinState * builtin, char const * name, BuiltinFun fun)
-{
-    return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_FUNCTION);
-}
-
-Expr lisp_make_builtin_symbol(BuiltinState * builtin, char const * name, BuiltinFun fun)
-{
-    return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_SYMBOL);
-}
-
-static BuiltinInfo * _builtin_expr_to_info(BuiltinState * builtin, Expr exp)
-{
-    LISP_ASSERT(is_builtin(exp));
-    U64 const index = expr_data(exp);
-    LISP_ASSERT(index < builtin->num);
-    return builtin->info + index;
-}
-
-char const * lisp_builtin_name(BuiltinState * builtin, Expr exp)
-{
-    BuiltinInfo * info = _builtin_expr_to_info(builtin, exp);
-    return info->name;
-}
-
-BuiltinFun lisp_builtin_fun(BuiltinState * builtin, Expr exp)
-{
-    BuiltinInfo * info = _builtin_expr_to_info(builtin, exp);
-    return info->fun;
-}
-
-#if LISP_GLOBAL_API
-
-Expr make_builtin_special(char const * name, BuiltinFun fun)
-{
-    return lisp_make_builtin_special(&global.builtin, name, fun);
-}
-
-Expr make_builtin_function(char const * name, BuiltinFun fun)
-{
-    return lisp_make_builtin_function(&global.builtin, name, fun);
-}
-
-Expr make_builtin_symbol(char const * name, BuiltinFun fun)
-{
-    return lisp_make_builtin_symbol(&global.builtin, name, fun);
-}
-
-#endif
-
 bool is_printable_ascii(U32 ch)
 {
     // NOTE we exclude space
@@ -920,6 +800,17 @@ bool is_printable_ascii(U32 ch)
 
 #define TEMP_BUF_SIZE  4096
 #define TEMP_BUF_COUNT 4
+
+char * get_temp_buf(size_t size)
+{
+    LISP_ASSERT(size <= TEMP_BUF_SIZE);
+
+    static char buf[TEMP_BUF_COUNT][TEMP_BUF_SIZE];
+    static int idx = 0;
+    char * ret = buf[idx];
+    idx = (idx + 1) % TEMP_BUF_COUNT;
+    return ret;
+}
 
 U64 i64_as_u64(I64 val)
 {
@@ -933,17 +824,6 @@ I64 u64_as_i64(U64 val)
     V64 v;
     v.u = val;
     return v.i;
-}
-
-char * get_temp_buf(size_t size)
-{
-    LISP_ASSERT(size <= TEMP_BUF_SIZE);
-
-    static char buf[TEMP_BUF_COUNT][TEMP_BUF_SIZE];
-    static int idx = 0;
-    char * ret = buf[idx];
-    idx = (idx + 1) % TEMP_BUF_COUNT;
-    return ret;
 }
 
 SystemState global;
@@ -1312,12 +1192,12 @@ public:
     void lisp_rplaca(ConsState * cons, Expr exp, Expr val)
     {
         LISP_ASSERT(is_cons(exp));
-    
+
         U64 const index = expr_data(exp);
         struct Pair * pair = _cons_lookup(cons, index);
         pair->a = val;
     }
-    
+
     void lisp_rplacd(ConsState * cons, Expr exp, Expr val)
     {
         LISP_ASSERT(is_cons(exp));
@@ -2349,6 +2229,107 @@ public:
             }
         }
         stream_put_char(out, '"');
+    }
+
+    /* builtin */
+
+    void builtin_init(BuiltinState * builtin)
+    {
+        memset(builtin, 0, sizeof(BuiltinState));
+    }
+
+    void builtin_quit(BuiltinState * builtin)
+    {
+    }
+
+    bool is_builtin_special(Expr exp)
+    {
+        return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
+    }
+
+    bool is_builtin_function(Expr exp)
+    {
+        return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
+    }
+
+    bool is_builtin_symbol(Expr exp)
+    {
+        return expr_type(exp) == TYPE_BUILTIN_SYMBOL;
+    }
+
+    inline bool is_builtin(Expr exp)
+    {
+        return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
+    }
+
+    static Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun, U64 type)
+    {
+        LISP_ASSERT(builtin->num < LISP_MAX_BUILTINS);
+        U64 const index = builtin->num++;
+        BuiltinInfo * info = builtin->info + index;
+        info->name = name; /* TODO take ownership of name? */
+        info->fun = fun;
+        return make_expr(type, index);
+    }
+
+    Expr lisp_make_builtin_special(BuiltinState * builtin, char const * name, BuiltinFun fun)
+    {
+        return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_SPECIAL);
+    }
+
+    Expr lisp_make_builtin_function(BuiltinState * builtin, char const * name, BuiltinFun fun)
+    {
+        return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_FUNCTION);
+    }
+
+    Expr lisp_make_builtin_symbol(BuiltinState * builtin, char const * name, BuiltinFun fun)
+    {
+        return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_SYMBOL);
+    }
+
+    BuiltinInfo * _builtin_expr_to_info(BuiltinState * builtin, Expr exp)
+    {
+        LISP_ASSERT(is_builtin(exp));
+        U64 const index = expr_data(exp);
+        LISP_ASSERT(index < builtin->num);
+        return builtin->info + index;
+    }
+
+    char const * lisp_builtin_name(BuiltinState * builtin, Expr exp)
+    {
+        BuiltinInfo * info = _builtin_expr_to_info(builtin, exp);
+        return info->name;
+    }
+
+    BuiltinFun lisp_builtin_fun(BuiltinState * builtin, Expr exp)
+    {
+        BuiltinInfo * info = _builtin_expr_to_info(builtin, exp);
+        return info->fun;
+    }
+
+    Expr make_builtin_special(char const * name, BuiltinFun fun)
+    {
+        return lisp_make_builtin_special(&global.builtin, name, fun);
+    }
+
+    Expr make_builtin_function(char const * name, BuiltinFun fun)
+    {
+        return lisp_make_builtin_function(&global.builtin, name, fun);
+    }
+
+    Expr make_builtin_symbol(char const * name, BuiltinFun fun)
+    {
+        return lisp_make_builtin_symbol(&global.builtin, name, fun);
+    }
+
+    char const * builtin_name(Expr exp)
+    {
+        return lisp_builtin_name(&global.builtin, exp);
+    }
+
+    BuiltinFun builtin_fun(Expr exp)
+    {
+        return lisp_builtin_fun(&global.builtin, exp);
     }
 
     /* closure */
