@@ -1940,53 +1940,6 @@ static void env_defspecial(Expr env, char const * name, BuiltinFun fun)
     env_def(env, intern(name), make_builtin_special(name, fun));
 }
 
-Expr s_quote(Expr args, Expr env)
-{
-    return car(args);
-}
-
-Expr s_def(Expr args, Expr env)
-{
-    env_def(env, car(args), eval(cadr(args), env));
-    return nil;
-}
-
-Expr s_if(Expr args, Expr env)
-{
-    if (eval(car(args), env) != nil)
-    {
-        return eval(cadr(args), env);
-    }
-    else if (cddr(args))
-    {
-        return eval(caddr(args), env);
-    }
-    else
-    {
-        return nil;
-    }
-}
-
-Expr s_while(Expr args, Expr env)
-{
-    Expr const test = car(args);
-    Expr const body = cdr(args);
-
-    // TODO do we want to return a value?
-    while (eval(test, env))
-    {
-        eval_body(body, env);
-    }
-    return nil;
-}
-
-Expr s_lambda(Expr args, Expr env)
-{
-    Expr const fun_args = car(args);
-    Expr const fun_body = cdr(args);
-    return cons(intern("lit"), cons(intern("clo"), cons(env, cons(fun_args, fun_body))));
-}
-
 bool is_unquote(Expr exp)
 {
     return is_named_call(exp, LISP_SYM_UNQUOTE);
@@ -2037,18 +1990,6 @@ static Expr backquote(Expr exp, Expr env)
     {
         return exp;
     }
-}
-
-Expr s_backquote(Expr args, Expr env)
-{
-    return backquote(car(args), env);
-}
-
-Expr s_syntax(Expr args, Expr env)
-{
-    Expr const fun_args = car(args);
-    Expr const fun_body = cdr(args);
-    return cons(intern("lit"), cons(intern("mac"), cons(env, cons(fun_args, fun_body))));
 }
 
 bool is_op(Expr exp, Expr name)
@@ -2246,13 +2187,64 @@ public:
 
         env_def(env, intern("t"), intern("t"));
 
-        env_defspecial(env, "quote", s_quote);
-        env_defspecial(env, "if", s_if);
-        env_defspecial(env, "while", s_while);
-        env_defspecial(env, "def", s_def);
-        env_defspecial(env, "lambda", s_lambda);
-        env_defspecial(env, "syntax", s_syntax);
-        env_defspecial(env, "backquote", s_backquote);
+        env_defspecial(env, "quote", [this](Expr args, Expr env) -> Expr
+        {
+            return car(args);
+        });
+
+        env_defspecial(env, "if", [this](Expr args, Expr env) -> Expr
+        {
+            if (eval(car(args), env) != nil)
+            {
+                return eval(cadr(args), env);
+            }
+            else if (cddr(args))
+            {
+                return eval(caddr(args), env);
+            }
+            else
+            {
+                return nil;
+            }
+        });
+
+        env_defspecial(env, "while", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const test = car(args);
+            Expr const body = cdr(args);
+
+            // TODO do we want to return a value?
+            while (eval(test, env))
+            {
+                eval_body(body, env);
+            }
+            return nil;
+        });
+
+        env_defspecial(env, "def", [this](Expr args, Expr env) -> Expr
+        {
+            env_def(env, car(args), eval(cadr(args), env));
+            return nil;
+        });
+
+        env_defspecial(env, "lambda", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const fun_args = car(args);
+            Expr const fun_body = cdr(args);
+            return cons(intern("lit"), cons(intern("clo"), cons(env, cons(fun_args, fun_body))));
+        });
+
+        env_defspecial(env, "syntax", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const mac_args = car(args);
+            Expr const mac_body = cdr(args);
+            return cons(intern("lit"), cons(intern("mac"), cons(env, cons(mac_args, mac_body))));
+        });
+
+        env_defspecial(env, "backquote", [this](Expr args, Expr env) -> Expr
+        {
+            return backquote(car(args), env);
+        });
 
         env_defun(env, "eq", [this](Expr args, Expr env) -> Expr
         {
