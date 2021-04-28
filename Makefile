@@ -9,4 +9,4 @@ clean:
 	rm -f lisp
 
 lisp: lisp.cpp lisp.hpp Makefile
-	c++ -std=c++11 -Wall -Wextra -Wno-unused-parameter -O2 -o $@ $<
+	c++ -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess -O2 -o $@ $<
