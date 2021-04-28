@@ -7,6 +7,18 @@
 (def defmacro (syntax (name args . body)
                 `(def ,name (syntax ,args ,@body))))
 
+(defun caar (exp) (car (car exp)))
+
+(defun cadr (exp) (car (cdr exp)))
+
+(defun cdar (exp) (cdr (car exp)))
+
+(defun cddr (exp) (cdr (cdr exp)))
+
+(defun caddr(exp) (car (cdr (cdr exp))))
+
+(defun cadddr (exp) (car (cdr (cdr (cdr exp)))))
+
 (defun not (arg)
   (if arg
       nil

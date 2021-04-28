@@ -33,3 +33,7 @@
 
 (test (car '(a b c)) a)
 (test (cdr '(a b c)) (b c))
+
+(test (car '(a b c)) a)
+(test (cadr '(a b c)) b)
+(test (caddr '(a b c)) c)
