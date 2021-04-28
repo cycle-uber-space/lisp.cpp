@@ -1513,7 +1513,7 @@ static Expr parse_expr(SystemState * sys, Expr in)
     {
         return parse_string(sys, in);
     }
-#if LISP_READER_PARSE_QUOTE
+#if LISP_READER_PARSE_CHARACTER
     else if (stream_peek_char(in) == '\\')
     {
         stream_skip_char(in);
