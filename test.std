@@ -30,3 +30,6 @@
 
 (test (car (cons 'a 'b)) a)
 (test (cdr (cons 'a 'b)) b)
+
+(test (car '(a b c)) a)
+(test (cdr '(a b c)) (b c))
