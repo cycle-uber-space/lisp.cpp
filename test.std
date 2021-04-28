@@ -21,7 +21,7 @@
 
 (test 'foo foo)
 
-(test (if nil 'a 'b) a)
+(test (if nil 'a 'b) b)
 (test (if 'eq 'a 'b) a)
 
 (test (equal '(a . b) '(a . b)) t)
