@@ -1193,7 +1193,7 @@ void stream_put_u64(Expr exp, U64 val)
 void stream_put_x64(Expr exp, U64 val)
 {
     char str[32];
-    sprintf(str, "%016" PRIu64, val);
+    sprintf(str, "%016" PRIx64, val);
     stream_put_string(exp, str);
 }
 
@@ -1539,6 +1539,9 @@ static Expr parse_expr(SystemState * sys, Expr in)
 {
     skip_whitespace_or_comment(in);
 
+    char lexeme[4096];
+    Expr tok = nil;
+
     if (stream_peek_char(in) == '(')
     {
         return parse_list(sys, in);
@@ -1550,7 +1553,6 @@ static Expr parse_expr(SystemState * sys, Expr in)
 #if LISP_READER_PARSE_CHARACTER
     else if (stream_peek_char(in) == '\\')
     {
-        char lexeme[4096];
         Expr tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
         while (!is_whitespace_or_eof(stream_peek_char(in)))
         {
@@ -1605,8 +1607,7 @@ static Expr parse_expr(SystemState * sys, Expr in)
 #endif
     else if (is_symbol_start(stream_peek_char(in)))
     {
-        char lexeme[4096];
-        Expr tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
+        tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
         stream_put_char(tok, stream_read_char(in));
 
     symbol_loop:
