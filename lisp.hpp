@@ -289,13 +289,6 @@ typedef struct
     U64 counter;
 } GensymState;
 
-void gensym_init(GensymState * gensym);
-void gensym_quit(GensymState * gensym);
-
-bool is_gensym(Expr exp);
-
-Expr lisp_gensym(GensymState * gensym);
-
 /* string.h */
 
 #define LISP_MAX_STRINGS        500000
@@ -837,25 +830,6 @@ void rplacd(Expr exp, Expr val)
 }
 
 #endif
-
-void gensym_init(GensymState * gensym)
-{
-    memset(gensym, 0, sizeof(GensymState));
-}
-
-void gensym_quit(GensymState * gensym)
-{
-}
-
-bool is_gensym(Expr exp)
-{
-    return expr_type(exp) == TYPE_GENSYM;
-}
-
-Expr lisp_gensym(GensymState * gensym)
-{
-    return make_expr(TYPE_GENSYM, gensym->counter++);
-}
 
 bool is_character(Expr exp)
 {
@@ -1730,6 +1704,19 @@ public:
         symbol_quit(&system->symbol);
     }
 
+    /* core */
+
+    void load_file(char const * path, Expr env)
+    {
+        Expr const in = make_file_input_stream_from_path(path);
+        Expr exp = nil;
+        while (maybe_parse_expr(in, &exp))
+        {
+            eval(exp, env);
+        }
+        stream_release(in);
+    }
+
     virtual Expr make_core_env()
     {
         Expr env = make_env(nil);
@@ -1911,15 +1898,25 @@ public:
         return env;
     }
 
-    void load_file(char const * path, Expr env)
+    /* gensym */
+
+    void gensym_init(GensymState * gensym)
     {
-        Expr const in = make_file_input_stream_from_path(path);
-        Expr exp = nil;
-        while (maybe_parse_expr(in, &exp))
-        {
-            eval(exp, env);
-        }
-        stream_release(in);
+        memset(gensym, 0, sizeof(GensymState));
+    }
+
+    void gensym_quit(GensymState * gensym)
+    {
+    }
+
+    bool is_gensym(Expr exp)
+    {
+        return expr_type(exp) == TYPE_GENSYM;
+    }
+
+    Expr lisp_gensym(GensymState * gensym)
+    {
+        return make_expr(TYPE_GENSYM, gensym->counter++);
     }
 
     /* fixnum */
