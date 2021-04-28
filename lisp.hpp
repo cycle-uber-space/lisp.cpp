@@ -1136,6 +1136,12 @@ public:
         return lisp_string_length(&global.string, exp);
     }
 
+    bool string_equal(Expr exp1, Expr exp2)
+    {
+        // TODO use cached length test first
+        return !strcmp(string_value(exp1), string_value(exp2));
+    }
+
     Expr _string_alloc(StringState * string, size_t len)
     {
         if (string->count < LISP_MAX_STRINGS)
@@ -1205,6 +1211,10 @@ public:
         if (is_cons(a) && is_cons(b))
         {
             return equal(car(a), car(b)) && equal(cdr(a), cdr(b));
+        }
+        else if (is_string(a) && is_string(b))
+        {
+            return string_equal(a, b);
         }
         return eq(a, b);
     }
