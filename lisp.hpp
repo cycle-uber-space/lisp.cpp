@@ -488,13 +488,6 @@ void env_set(Expr env, Expr var, Expr val);
 
 void env_destructuring_bind(Expr env, Expr vars, Expr vals);
 
-/* eval.h */
-
-Expr eval(Expr exp, Expr env);
-
-Expr eval_list(Expr exps, Expr env);
-Expr eval_body(Expr exps, Expr env);
-
 /* system.h */
 
 typedef struct SystemState
@@ -2104,48 +2097,6 @@ bool is_unquote_splicing(Expr exp)
     return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
 }
 
-static Expr backquote(Expr exp, Expr env);
-
-static Expr backquote_list(Expr seq, Expr env)
-{
-    if (seq)
-    {
-        Expr item = car(seq);
-        Expr rest = cdr(seq);
-        if (is_unquote_splicing(item))
-        {
-            return append(eval(cadr(item), env), backquote_list(rest, env));
-        }
-        else
-        {
-            return cons(backquote(item, env), backquote_list(rest, env));
-        }
-    }
-    else
-    {
-        return nil;
-    }
-}
-
-static Expr backquote(Expr exp, Expr env)
-{
-    if (is_cons(exp))
-    {
-        if (is_unquote(exp))
-        {
-            return eval(cadr(exp), env);
-        }
-        else
-        {
-            return backquote_list(exp, env);
-        }
-    }
-    else
-    {
-        return exp;
-    }
-}
-
 bool is_op(Expr exp, Expr name)
 {
     return is_cons(exp) && car(exp) == name;
@@ -2159,30 +2110,6 @@ bool is_quote(Expr exp)
 bool is_if(Expr exp)
 {
     return is_op(exp, LISP_SYM_IF);
-}
-
-Expr eval(Expr exp, Expr env);
-
-Expr eval_list(Expr exps, Expr env)
-{
-    Expr ret = nil;
-    for (Expr tmp = exps; tmp; tmp = cdr(tmp))
-    {
-        Expr const exp = car(tmp);
-        ret = cons(eval(exp, env), ret);
-    }
-    return nreverse(ret);
-}
-
-Expr eval_body(Expr exps, Expr env)
-{
-    Expr ret = nil;
-    for (Expr tmp = exps; tmp; tmp = cdr(tmp))
-    {
-        Expr const exp = car(tmp);
-        ret = eval(exp, env);
-    }
-    return ret;
 }
 
 /* TODO move these */
@@ -2237,65 +2164,6 @@ static Expr make_call_env_from(Expr lenv, Expr vars, Expr vals)
     Expr cenv = wrap_env(lenv);
     bind_args(cenv, vars, vals);
     return cenv;
-}
-
-Expr apply(Expr name, Expr args, Expr env)
-{
-    if (is_builtin_function(name))
-    {
-        Expr vals = eval_list(args, env);
-        return builtin_fun(name)(vals, env);
-    }
-    else if (is_builtin_special(name))
-    {
-        Expr vals = args;
-        return builtin_fun(name)(vals, env);
-    }
-    else if (is_function(name))
-    {
-        Expr vals = eval_list(args, env);
-        Expr body = closure_body(name);
-        return eval_body(body, make_call_env_from(closure_env(name), closure_args(name), vals));
-    }
-    else if (is_macro(name))
-    {
-        Expr body = closure_body(name);
-        Expr exp = eval_body(body, make_call_env_from(closure_env(name), closure_args(name), args));
-        return eval(exp, env);
-    }
-    else
-    {
-        // TODO check for unlimited recursion
-        return apply(eval(name, env), args, env);
-    }
-}
-
-Expr eval(Expr exp, Expr env)
-{
-    if (exp == nil)
-    {
-        return nil;
-    }
-
-    switch (expr_type(exp))
-    {
-    case TYPE_CHARACTER:
-    case TYPE_FIXNUM:
-    case TYPE_STRING:
-        return exp;
-    case TYPE_SYMBOL:
-    case TYPE_GENSYM:
-        if (exp == intern("*env*"))
-        {
-            return env;
-        }
-        return env_get(env, exp);
-    case TYPE_CONS:
-        return apply(car(exp), cdr(exp), env);
-    default:
-        LISP_FAIL("cannot evaluate %s\n", repr(exp));
-        return nil;
-    }
 }
 
 SystemState global;
@@ -2788,6 +2656,133 @@ public:
             }
         }
         stream_put_char(out, '"');
+    }
+
+    /* eval */
+
+    Expr eval(Expr exp, Expr env)
+    {
+        // TODO move to below switch
+        if (exp == nil)
+        {
+            return nil;
+        }
+
+        switch (expr_type(exp))
+        {
+        case TYPE_CHARACTER:
+        case TYPE_FIXNUM:
+        case TYPE_STRING:
+            return exp;
+        case TYPE_SYMBOL:
+        case TYPE_GENSYM:
+            // TODO add symbol macros
+            if (exp == intern("*env*"))
+            {
+                return env;
+            }
+            return env_get(env, exp);
+        case TYPE_CONS:
+            return apply(car(exp), cdr(exp), env);
+        default:
+            LISP_FAIL("cannot evaluate %s\n", repr(exp));
+            return nil;
+        }
+    }
+
+    Expr eval_list(Expr exps, Expr env)
+    {
+        Expr ret = nil;
+        for (Expr tmp = exps; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            ret = cons(eval(exp, env), ret);
+        }
+        return nreverse(ret);
+    }
+
+    Expr eval_body(Expr exps, Expr env)
+    {
+        Expr ret = nil;
+        for (Expr tmp = exps; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            ret = eval(exp, env);
+        }
+        return ret;
+    }
+
+    Expr apply(Expr name, Expr args, Expr env)
+    {
+        if (is_builtin_function(name))
+        {
+            Expr vals = eval_list(args, env);
+            return builtin_fun(name)(vals, env);
+        }
+        else if (is_builtin_special(name))
+        {
+            Expr vals = args;
+            return builtin_fun(name)(vals, env);
+        }
+        else if (is_function(name))
+        {
+            Expr vals = eval_list(args, env);
+            Expr body = closure_body(name);
+            return eval_body(body, make_call_env_from(closure_env(name), closure_args(name), vals));
+        }
+        else if (is_macro(name))
+        {
+            Expr body = closure_body(name);
+            Expr exp = eval_body(body, make_call_env_from(closure_env(name), closure_args(name), args));
+            return eval(exp, env);
+        }
+        else
+        {
+            // TODO check for unlimited recursion
+            return apply(eval(name, env), args, env);
+        }
+    }
+
+    /* backquote */
+
+    Expr backquote(Expr exp, Expr env)
+    {
+        if (is_cons(exp))
+        {
+            if (is_unquote(exp))
+            {
+                return eval(cadr(exp), env);
+            }
+            else
+            {
+                return backquote_list(exp, env);
+            }
+        }
+        else
+        {
+            return exp;
+        }
+    }
+
+    Expr backquote_list(Expr seq, Expr env)
+    {
+        if (seq)
+        {
+            Expr item = car(seq);
+            Expr rest = cdr(seq);
+            if (is_unquote_splicing(item))
+            {
+                return append(eval(cadr(item), env), backquote_list(rest, env));
+            }
+            else
+            {
+                return cons(backquote(item, env), backquote_list(rest, env));
+            }
+        }
+        else
+        {
+            return nil;
+        }
     }
 
     static System * s_instance;
