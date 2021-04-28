@@ -1200,7 +1200,7 @@ void stream_put_u64(Expr exp, U64 val)
 void stream_put_i64(Expr exp, U64 val)
 {
     char str[32];
-    sprintf(str, "%016" PRIi64, val);
+    sprintf(str, "%" PRIi64, val);
     stream_put_string(exp, str);
 }
 
