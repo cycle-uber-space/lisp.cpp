@@ -47,6 +47,13 @@ typedef int64_t I64;
 typedef float F32;
 typedef double F64;
 
+union V64
+{
+    U64 u;
+    I64 i;
+    F64 f;
+};
+
 static_assert(sizeof(U8 ) == 1, "");
 static_assert(sizeof(U16) == 2, "");
 static_assert(sizeof(U32) == 4, "");
@@ -59,6 +66,8 @@ static_assert(sizeof(I64) == 8, "");
 
 static_assert(sizeof(F32) == 4, "");
 static_assert(sizeof(F64) == 8, "");
+
+static_assert(sizeof(V64) == 8, "");
 
 #ifndef LISP_MALLOC
 #define LISP_MALLOC(size) malloc(size)
@@ -116,6 +125,12 @@ void error_warn(char const * fmt, ...);
 #define LISP_DATA_BITS (UINT64_C(64) - LISP_TYPE_BITS)
 #define LISP_DATA_MASK ((UINT64_C(1) << LISP_DATA_BITS) - UINT64_C(1))
 
+#define LISP_EXPR_MASK        UINT64_C(0xffffffffffffffff)
+#define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
+#define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
+#define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
+#define LISP_FIXNUM_MAXVAL    ((INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))) - INT64_C(1))
+
 typedef U64 Expr;
 
 Expr make_expr(U64 type, U64 data);
@@ -129,6 +144,7 @@ enum
     TYPE_CONS,
     TYPE_GENSYM,
     TYPE_CHARACTER,
+    TYPE_FIXNUM,
     TYPE_STRING,
     TYPE_STREAM,
     TYPE_BUILTIN_SPECIAL,
@@ -421,6 +437,9 @@ Expr read_one_from_string(char const * src);
 #endif
 
 /* util.h */
+
+U64 i64_as_u64(I64 val);
+I64 u64_as_i64(U64 val);
 
 char * get_temp_buf(size_t size);
 
@@ -1657,6 +1676,20 @@ bool is_named_call(Expr exp, Expr name)
     return is_cons(exp) && eq(car(exp), name);
 }
 
+U64 i64_as_u64(I64 val)
+{
+    V64 v;
+    v.i = val;
+    return v.u;
+}
+
+I64 u64_as_i64(U64 val)
+{
+    V64 v;
+    v.u = val;
+    return v.i;
+}
+
 char * get_temp_buf(size_t size)
 {
     LISP_ASSERT(size <= TEMP_BUF_SIZE);
@@ -2372,6 +2405,38 @@ public:
             eval(exp, env);
         }
         stream_release(in);
+    }
+
+    /* fixnum */
+
+    bool is_fixnum(Expr exp)
+    {
+        return expr_type(exp) == TYPE_FIXNUM;
+    }
+
+    Expr make_fixnum(I64 value)
+    {
+        LISP_ASSERT(value >= LISP_FIXNUM_MINVAL);
+        LISP_ASSERT(value <= LISP_FIXNUM_MAXVAL);
+
+        /* TODO probably no need to mask off the sign
+           bits, as they get shifted out by make_expr */
+        U64 const data = i64_as_u64(value) & LISP_DATA_MASK;
+        return make_expr(TYPE_FIXNUM, data);
+    }
+
+    I64 fixnum_value(Expr exp)
+    {
+        LISP_ASSERT(is_fixnum(exp));
+
+        U64 data = expr_data(exp);
+
+        if (data & LISP_FIXNUM_SIGN_MASK)
+        {
+            data |= LISP_EXPR_MASK << LISP_DATA_BITS;
+        }
+
+        return u64_as_i64(data);
     }
 
     /* printer */
