@@ -397,10 +397,11 @@ void builtin_quit(BuiltinState * builtin);
 
 bool is_builtin_special(Expr exp);
 bool is_builtin_function(Expr exp);
+bool is_builtin_symbol(Expr exp);
 
 inline bool is_builtin(Expr exp)
 {
-    return is_builtin_special(exp) || is_builtin_function(exp);
+    return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
 }
 
 Expr lisp_make_builtin_special(BuiltinState * builtin, char const * name, BuiltinFun fun);
