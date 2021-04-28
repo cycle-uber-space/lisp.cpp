@@ -6,16 +6,25 @@
 
 namespace lisp {
 
-class System
-{
-};
-
 class MySystem : public System
 {
 public:
+    typedef System Super;
+
     MySystem()
     {
         srand(time(NULL));
+    }
+
+    Expr make_core_env()
+    {
+        Expr env = Super::make_core_env();
+        env_defun(env, "coin", [this](Expr args, Expr kwargs, Expr env) -> Expr
+        {
+            LISP_ASSERT(args == nil);
+            return (rand() & 1) ? LISP_SYMBOL_T : nil;
+        });
+        return env;
     }
 
     int main(int argc, char ** argv)
@@ -51,7 +60,7 @@ public:
         else if (!strcmp("load", cmd))
         {
             global_init();
-            Expr env = make_default_env();
+            Expr env = make_core_env();
 
             for (int i = 2; i < argc; i++)
             {
@@ -62,7 +71,7 @@ public:
         else if (!strcmp("repl", cmd))
         {
             global_init();
-            Expr env = make_default_env();
+            Expr env = make_core_env();
 
             // TODO make a proper prompt input stream
             Expr in = global.stream.stdin;
@@ -95,17 +104,6 @@ public:
             fail("unknown command: %s\n", cmd);
         }
         return 0;
-    }
-
-    Expr make_default_env()
-    {
-        Expr env = make_core_env();
-        env_defun(env, "coin", [this](Expr args, Expr kwargs, Expr env) -> Expr
-        {
-            LISP_ASSERT(args == nil);
-            return (rand() & 1) ? LISP_SYMBOL_T : nil;
-        });
-        return env;
     }
 
     void unit_test(TestState * test)
@@ -262,7 +260,7 @@ public:
         LISP_TEST_ASSERT(test, eval(nil, nil) == nil);
 
         {
-            Expr env = make_default_env();
+            Expr env = make_core_env();
             Expr t = intern("t");
             LISP_TEST_ASSERT(test, eval(t, env) == t);
 
@@ -273,7 +271,7 @@ public:
         }
 
         {
-            Expr env = make_default_env();
+            Expr env = make_core_env();
             LISP_TEST_ASSERT(test, !strcmp("nil", eval_src("nil", env)));
             LISP_TEST_ASSERT(test, !strcmp("t", eval_src("t", env)));
             LISP_TEST_ASSERT(test, !strcmp("foo", eval_src("(quote foo)", env)));

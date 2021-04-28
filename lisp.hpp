@@ -453,10 +453,6 @@ void env_set(Expr env, Expr var, Expr val);
 
 void env_destructuring_bind(Expr env, Expr vars, Expr vals);
 
-/* core.h */
-
-Expr make_core_env();
-
 /* eval.h */
 
 Expr eval(Expr exp, Expr env);
@@ -2266,33 +2262,6 @@ Expr f_load_file(Expr args, Expr kwargs, Expr env)
     return nil;
 }
 
-Expr make_core_env()
-{
-    Expr env = make_env(nil);
-
-    env_def(env, intern("t"), intern("t"));
-
-    env_defspecial(env, "quote", s_quote);
-    env_defspecial(env, "if", s_if);
-    env_defspecial(env, "while", s_while);
-    env_defspecial(env, "def", s_def);
-    env_defspecial(env, "lambda", s_lambda);
-    env_defspecial(env, "syntax", s_syntax);
-    env_defspecial(env, "backquote", s_backquote);
-
-    env_defun(env, "eq", f_eq);
-    env_defun(env, "equal", f_equal);
-    env_defun(env, "cons", f_cons);
-    env_defun(env, "car", f_car);
-    env_defun(env, "cdr", f_cdr);
-    env_defun(env, "println", f_println);
-
-    env_defun(env, "gensym", f_gensym);
-    env_defun(env, "load-file", f_load_file);
-
-    return env;
-}
-
 bool is_op(Expr exp, Expr name)
 {
     return is_cons(exp) && car(exp) == name;
@@ -2490,6 +2459,45 @@ void global_quit()
 {
     system_quit(&global);
 }
+
+class System
+{
+public:
+    System()
+    {
+    }
+
+    virtual ~System()
+    {
+    }
+
+    virtual Expr make_core_env()
+    {
+        Expr env = make_env(nil);
+
+        env_def(env, intern("t"), intern("t"));
+
+        env_defspecial(env, "quote", s_quote);
+        env_defspecial(env, "if", s_if);
+        env_defspecial(env, "while", s_while);
+        env_defspecial(env, "def", s_def);
+        env_defspecial(env, "lambda", s_lambda);
+        env_defspecial(env, "syntax", s_syntax);
+        env_defspecial(env, "backquote", s_backquote);
+
+        env_defun(env, "eq", f_eq);
+        env_defun(env, "equal", f_equal);
+        env_defun(env, "cons", f_cons);
+        env_defun(env, "car", f_car);
+        env_defun(env, "cdr", f_cdr);
+        env_defun(env, "println", f_println);
+
+        env_defun(env, "gensym", f_gensym);
+        env_defun(env, "load-file", f_load_file);
+
+        return env;
+    }
+};
 
 #endif /* _LISP_CPP_ */
 
