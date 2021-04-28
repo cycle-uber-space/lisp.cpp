@@ -2588,25 +2588,26 @@ public:
     {
         if (is_builtin_function(name))
         {
-            Expr vals = eval_list(args, env);
-            return builtin_fun(name)(vals, env);
+            return builtin_fun(name)(eval_list(args, env), env);
         }
         else if (is_builtin_special(name))
         {
-            Expr vals = args;
-            return builtin_fun(name)(vals, env);
+            return builtin_fun(name)(args, env);
         }
         else if (is_function(name))
         {
-            Expr vals = eval_list(args, env);
-            Expr body = closure_body(name);
-            return eval_body(body, make_call_env_from(closure_env(name), closure_args(name), vals));
+            return eval_body(closure_body(name),
+                             make_call_env_from(closure_env(name),
+                                                closure_args(name),
+                                                eval_list(args, env)));
         }
         else if (is_macro(name))
         {
-            Expr body = closure_body(name);
-            Expr exp = eval_body(body, make_call_env_from(closure_env(name), closure_args(name), args));
-            return eval(exp, env);
+            return eval(eval_body(closure_body(name),
+                                  make_call_env_from(closure_env(name),
+                                                     closure_args(name),
+                                                     args)),
+                        env);
         }
         else
         {
@@ -2620,14 +2621,9 @@ public:
         env_destructuring_bind(env, vars, vals);
     }
 
-    Expr wrap_env(Expr lenv)
-    {
-        return make_env(lenv);
-    }
-
     Expr make_call_env_from(Expr lenv, Expr vars, Expr vals)
     {
-        Expr cenv = wrap_env(lenv);
+        Expr cenv = make_env(lenv);
         bind_args(cenv, vars, vals);
         return cenv;
     }
