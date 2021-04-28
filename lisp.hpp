@@ -24,6 +24,8 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include <functional>
+
 #define LISP_RED     "\x1b[31m"
 #define LISP_GREEN   "\x1b[32m"
 #define LISP_YELLOW  "\x1b[33m"
@@ -352,7 +354,7 @@ void stream_release(Expr exp);
 
 #define LISP_MAX_SPECIALS 64
 
-typedef Expr (* SpecialFun)(Expr args, Expr kwargs, Expr env); // TODO should we pass the system state?
+typedef std::function<Expr(Expr args, Expr kwargs, Expr env)> SpecialFun;
 
 typedef struct
 {
@@ -382,7 +384,7 @@ Expr make_special(char const * name, SpecialFun fun);
 
 #define LISP_MAX_BUILTINS 64
 
-typedef Expr (* BuiltinFun)(Expr args, Expr kwargs, Expr env); // TODO should we pass the system state?
+typedef std::function<Expr(Expr args, Expr kwargs, Expr env)> BuiltinFun;
 
 typedef struct
 {
