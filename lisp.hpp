@@ -449,13 +449,6 @@ bool equal(Expr a, Expr b);
 char const * repr(Expr exp);
 void println(Expr exp);
 
-Expr make_number(I64 value);
-Expr number_neg(Expr a);
-Expr number_add(Expr a, Expr b);
-Expr number_mul(Expr a, Expr b);
-Expr number_div(Expr a, Expr b);
-bool number_equal(Expr a, Expr b);
-
 Expr intern(char const * name);
 
 Expr list_1(Expr exp1);
@@ -2814,36 +2807,6 @@ void println(Expr exp)
     Expr out = global.stream.stdout;
     System::s_instance->render_expr(exp, out);
     stream_put_string(out, "\n");
-}
-
-Expr make_number(I64 value)
-{
-    return System::s_instance->make_number(value);
-}
-
-Expr number_neg(Expr a)
-{
-    return System::s_instance->number_neg(a);
-}
-
-Expr number_add(Expr a, Expr b)
-{
-    return System::s_instance->number_add(a, b);
-}
-
-Expr number_mul(Expr a, Expr b)
-{
-    return System::s_instance->number_mul(a, b);
-}
-
-Expr number_div(Expr a, Expr b)
-{
-    return System::s_instance->number_div(a, b);
-}
-
-bool number_equal(Expr a, Expr b)
-{
-    return System::s_instance->number_equal(a, b);
 }
 
 #endif /* _LISP_CPP_ */
