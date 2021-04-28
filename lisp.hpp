@@ -424,15 +424,6 @@ Expr make_builtin_symbol(char const * name, BuiltinFun fun);
 #define LISP_READER_PARSE_CHARACTER 1
 #endif
 
-bool lisp_maybe_parse_expr(SystemState * system, Expr in, Expr * exp);
-
-Expr lisp_read_one_from_string(SystemState * system, char const * src);
-
-#if LISP_GLOBAL_API
-bool maybe_parse_expr(Expr in, Expr * exp);
-Expr read_one_from_string(char const * src);
-#endif
-
 /* printer.h */
 
 #ifndef LISP_PRINTER_RENDER_QUOTE
@@ -1308,487 +1299,6 @@ bool is_printable_ascii(U32 ch)
     return ch >= 33 && ch <= 126;
 }
 
-static bool is_whitespace(char ch)
-{
-    return
-        ch == ' ' ||
-        ch == '\n' ||
-        ch == '\t';
-}
-
-static bool is_whitespace_or_eof(char ch)
-{
-    return ch == 0 || is_whitespace(ch);
-}
-
-static bool is_symbol_start(char ch)
-{
-    return
-        ch != 0 &&
-        !is_whitespace(ch) &&
-        ch != '"' &&
-        ch != '(' && ch != ')' &&
-        ch != ';' && ch != '\'';
-}
-
-static bool is_symbol_part(char ch)
-{
-    return is_symbol_start(ch);
-}
-
-static bool is_number_part(char ch)
-{
-    return ch >= '0' && ch <= '9';
-}
-
-static bool is_number_start(char ch)
-{
-    return is_number_part(ch) || ch == '-' || ch == '+';
-}
-
-static bool is_number_stop(char ch)
-{
-    return ch == 0 || ch == ')' || is_whitespace(ch);
-}
-
-static void skip_whitespace_or_comment(Expr in)
-{
-whitespace:
-    while (is_whitespace(stream_peek_char(in)))
-    {
-        stream_skip_char(in);
-    }
-
-    if (stream_peek_char(in) != ';')
-    {
-        return;
-    }
-
-    stream_skip_char(in);
-
-comment:
-    if (stream_peek_char(in) == 0)
-    {
-        return;
-    }
-
-    if (stream_peek_char(in) == '\n')
-    {
-        stream_skip_char(in);
-        goto whitespace;
-    }
-
-    stream_skip_char(in);
-    goto comment;
-}
-
-static Expr parse_expr(SystemState * sys, Expr in);
-
-static Expr parse_list(SystemState * sys, Expr in)
-{
-    Expr exp = nil;
-    Expr head = nil;
-    Expr tail = nil;
-
-    if (stream_peek_char(in) != '(')
-    {
-        LISP_FAIL("expected '(', got '%c'\n", stream_peek_char(in));
-        return nil;
-    }
-
-    stream_skip_char(in);
-
-list_loop:
-    skip_whitespace_or_comment(in);
-
-    if (stream_peek_char(in) == 0)
-    {
-        LISP_FAIL("unexpected eof\n");
-        return nil;
-    }
-
-    if (stream_peek_char(in) == ')')
-    {
-        goto list_done;
-    }
-
-    exp = parse_expr(sys, in);
-
-    // TODO get rid of artifical symbol dependence for dotted lists
-    if (exp == intern("."))
-    {
-        exp = parse_expr(sys, in);
-        lisp_rplacd(&sys->cons, tail, exp);
-
-        skip_whitespace_or_comment(in);
-
-        goto list_done;
-    }
-    else
-    {
-        Expr next = lisp_cons(&sys->cons, exp, nil);
-        if (head)
-        {
-            lisp_rplacd(&sys->cons, tail, next);
-            tail = next;
-        }
-        else
-        {
-            head = tail = next;
-        }
-    }
-
-    goto list_loop;
-
-list_done:
-    // TODO use expect_char(in, ')')
-    if (stream_peek_char(in) != ')')
-    {
-        LISP_FAIL("missing ')'\n");
-        return nil;
-    }
-    stream_skip_char(in);
-
-    return head;
-}
-
-static char parse_hex_digit(Expr in, char val)
-{
-    char const ch = stream_read_char(in);
-
-    if (ch >= '0' && ch <= '9')
-    {
-        val *= 16;
-        val += ch - '0';
-    }
-
-    else if (ch >= 'a' && ch <= 'f')
-    {
-        val *= 16;
-        val += 10 + ch - 'a';
-    }
-
-    else if (ch >= 'A' && ch <= 'F')
-    {
-        val *= 16;
-        val += 10 + ch - 'A';
-    }
-
-    else
-    {
-        LISP_FAIL("malformed string");
-    }
-
-    return val;
-}
-
-static Expr parse_string(SystemState * sys, Expr in)
-{
-    enum
-    {
-        STATE_DEFAULT,
-        STATE_ESCAPE,
-    } state = STATE_DEFAULT;
-
-    if (stream_peek_char(in) != '"')
-    {
-        LISP_FAIL("missing '\"'\n");
-        return nil;
-    }
-    stream_skip_char(in);
-
-    char lexeme[4096];
-    Expr tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
-
-string_loop:
-    if (stream_peek_char(in) == 0)
-    {
-        LISP_FAIL("unexpected eof in string\n");
-        return nil;
-    }
-
-    else if (state == STATE_DEFAULT)
-    {
-        if (stream_peek_char(in) == '"')
-        {
-            stream_skip_char(in);
-            goto string_done;
-        }
-        else if (stream_peek_char(in) == '\\')
-        {
-            stream_skip_char(in);
-            state = STATE_ESCAPE;
-        }
-        else
-        {
-            stream_put_char(tok, stream_read_char(in));
-        }
-    }
-
-    else if (state == STATE_ESCAPE)
-    {
-        if (stream_peek_char(in) == 'n')
-        {
-            stream_skip_char(in);
-            stream_put_char(tok, '\n');
-        }
-
-        else if (stream_peek_char(in) == 't')
-        {
-            stream_skip_char(in);
-            stream_put_char(tok, '\t');
-        }
-
-        else if (stream_peek_char(in) == 'x')
-        {
-            stream_skip_char(in);
-
-            char val = 0;
-            val = parse_hex_digit(in, val);
-            val = parse_hex_digit(in, val);
-
-            /* TODO check for more digits? */
-
-            stream_put_char(tok, val);
-        }
-
-        else
-        {
-            stream_put_char(tok, stream_read_char(in));
-        }
-
-        state = STATE_DEFAULT;
-    }
-
-    else
-    {
-        LISP_FAIL("internal error\n");
-        return nil;
-    }
-
-    goto string_loop;
-
-string_done:
-    stream_put_char(tok, 0);
-    Expr const ret = make_string(lexeme);
-    stream_release(tok);
-    return ret;
-}
-
-static Expr parse_expr(SystemState * sys, Expr in)
-{
-    skip_whitespace_or_comment(in);
-
-    char lexeme[4096];
-    Expr tok = nil;
-
-    if (stream_peek_char(in) == '(')
-    {
-        return parse_list(sys, in);
-    }
-    else if (stream_peek_char(in) == '"')
-    {
-        return parse_string(sys, in);
-    }
-#if LISP_READER_PARSE_CHARACTER
-    else if (stream_peek_char(in) == '\\')
-    {
-        tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
-
-        while (!is_whitespace_or_eof(stream_peek_char(in)))
-        {
-            stream_put_char(tok, stream_read_char(in));
-        }
-        stream_put_char(tok, 0);
-        stream_release(tok);
-
-        // handle printable characters
-        if (lexeme[2] == 0)
-        {
-            return make_character(lexeme[1]);
-        }
-        else if (!strcmp("\\bel", lexeme))
-        {
-            return make_character('\a');
-        }
-        else if (!strcmp("\\space", lexeme))
-        {
-            return make_character(' ');
-        }
-        else
-        {
-            LISP_FAIL("cannot parse character '%s'\n", lexeme);
-            return nil;
-        }
-    }
-#endif
-#if LISP_READER_PARSE_QUOTE
-    else if (stream_peek_char(in) == '\'')
-    {
-        stream_skip_char(in);
-        Expr const exp = list_2(intern("quote"), parse_expr(sys, in));
-        return exp;
-    }
-    else if (stream_peek_char(in) == '`')
-    {
-        stream_skip_char(in);
-        Expr const exp = list_2(intern("backquote"), parse_expr(sys, in));
-        return exp;
-    }
-    else if (stream_peek_char(in) == ',')
-    {
-        stream_skip_char(in);
-        if (stream_peek_char(in) == '@')
-        {
-            stream_skip_char(in);
-            return list_2(intern("unquote-splicing"), parse_expr(sys, in));
-        }
-        return list_2(intern("unquote"), parse_expr(sys, in));
-    }
-#endif
-
-    else if (is_number_start(stream_peek_char(in)))
-    {
-        tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
-
-        bool neg = 0;
-        if (stream_peek_char(in) == '-')
-        {
-            neg = 1;
-            stream_put_char(tok, stream_read_char(in));
-        }
-        else if (stream_peek_char(in) == '+')
-        {
-            stream_put_char(tok, stream_read_char(in));
-        }
-
-        if (is_number_part(stream_peek_char(in)))
-        {
-            Expr val = make_number(0);
-            Expr ten = make_number(10);
-            Expr one = make_number(1);
-            Expr den = one;
-
-            // TODO extract function: parse_int
-            while (1)
-            {
-                char const ch = stream_peek_char(in);
-                if (!is_number_part(ch))
-                {
-                    break;
-                }
-
-                I64 const digit = ch - '0';
-
-                val = number_mul(val, ten);
-                val = number_add(val, make_number(digit));
-
-                stream_put_char(tok, stream_read_char(in));
-            }
-
-            // TODO
-            if (stream_peek_char(in) == '.')
-            {
-                stream_put_char(tok, stream_read_char(in));
-
-                while (1)
-                {
-                    char const ch = stream_peek_char(in);
-                    if (!is_number_part(ch))
-                    {
-                        break;
-                    }
-
-                    I64 const digit = ch - '0';
-
-                    val = number_mul(val, ten);
-                    val = number_add(val, make_number(digit));
-                    den = number_mul(den, ten);
-
-                    stream_put_char(tok, stream_read_char(in));
-                }
-            }
-
-            if (neg)
-            {
-                val = number_neg(val);
-            }
-
-            if (!is_number_stop(stream_peek_char(in)))
-            {
-                goto symbol_loop;
-            }
-
-            if (!number_equal(den, one))
-            {
-                val = number_div(val, den);
-            }
-
-            return val;
-        }
-
-        goto symbol_loop;
-    }
-
-    else if (is_symbol_start(stream_peek_char(in)))
-    {
-        tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
-        stream_put_char(tok, stream_read_char(in));
-
-    symbol_loop:
-        if (is_symbol_part(stream_peek_char(in)))
-        {
-            stream_put_char(tok, stream_read_char(in));
-            goto symbol_loop;
-        }
-        else
-        {
-            goto symbol_done;
-        }
-
-    symbol_done:
-        stream_put_char(tok, 0);
-        Expr const ret = intern(lexeme);
-        stream_release(tok);
-        return ret;
-    }
-    else
-    {
-        LISP_FAIL("cannot read expression, unexpected '%c'\n", stream_peek_char(in));
-        return nil;
-    }
-}
-
-bool lisp_maybe_parse_expr(SystemState * sys, Expr in, Expr * exp)
-{
-    skip_whitespace_or_comment(in);
-    if (lisp_stream_at_end(&sys->stream, in))
-    {
-        return false;
-    }
-    *exp = parse_expr(sys, in);
-    return true;
-}
-
-Expr lisp_read_one_from_string(SystemState * sys, char const * src)
-{
-    Expr const in = lisp_make_string_input_stream(&sys->stream, src);
-    Expr ret = parse_expr(sys, in);
-    lisp_stream_release(&sys->stream, in);
-    //println(ret);
-    return ret;
-}
-
-bool maybe_parse_expr(Expr in, Expr * exp)
-{
-    return lisp_maybe_parse_expr(&global, in, exp);
-}
-
-Expr read_one_from_string(char const * src)
-{
-    return lisp_read_one_from_string(&global, src);
-}
-
 static bool is_quote_call(Expr exp)
 {
     return is_named_call(exp, intern("quote"));
@@ -2511,6 +2021,477 @@ public:
     bool number_equal(Expr a, Expr b)
     {
         return fixnum_equal(a, b);
+    }
+
+    /* reader */
+
+    Expr read_one_from_string(char const * src)
+    {
+        Expr const in = make_string_input_stream(src);
+        Expr ret = parse_expr(in);
+        stream_release(in);
+        //println(ret);
+        return ret;
+    }
+
+    bool maybe_parse_expr(Expr in, Expr * exp)
+    {
+        skip_whitespace_or_comment(in);
+        if (stream_at_end(in))
+        {
+            return false;
+        }
+        *exp = parse_expr(in);
+        return true;
+    }
+
+    Expr parse_expr(Expr in)
+    {
+        skip_whitespace_or_comment(in);
+
+        char lexeme[4096];
+        Expr tok = nil;
+
+        if (stream_peek_char(in) == '(')
+        {
+            return parse_list(in);
+        }
+        else if (stream_peek_char(in) == '"')
+        {
+            return parse_string(in);
+        }
+#if LISP_READER_PARSE_CHARACTER
+        else if (stream_peek_char(in) == '\\')
+        {
+            tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+
+            while (!is_whitespace_or_eof(stream_peek_char(in)))
+            {
+                stream_put_char(tok, stream_read_char(in));
+            }
+            stream_put_char(tok, 0);
+            stream_release(tok);
+
+            // handle printable characters
+            if (lexeme[2] == 0)
+            {
+                return make_character(lexeme[1]);
+            }
+            else if (!strcmp("\\bel", lexeme))
+            {
+                return make_character('\a');
+            }
+            else if (!strcmp("\\space", lexeme))
+            {
+                return make_character(' ');
+            }
+            else
+            {
+                LISP_FAIL("cannot parse character '%s'\n", lexeme);
+                return nil;
+            }
+        }
+#endif
+#if LISP_READER_PARSE_QUOTE
+        else if (stream_peek_char(in) == '\'')
+        {
+            stream_skip_char(in);
+            Expr const exp = list_2(intern("quote"), parse_expr(in));
+            return exp;
+        }
+        else if (stream_peek_char(in) == '`')
+        {
+            stream_skip_char(in);
+            Expr const exp = list_2(intern("backquote"), parse_expr(in));
+            return exp;
+        }
+        else if (stream_peek_char(in) == ',')
+        {
+            stream_skip_char(in);
+            if (stream_peek_char(in) == '@')
+            {
+                stream_skip_char(in);
+                return list_2(intern("unquote-splicing"), parse_expr(in));
+            }
+            return list_2(intern("unquote"), parse_expr(in));
+        }
+#endif
+
+        else if (is_number_start(stream_peek_char(in)))
+        {
+            tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+
+            bool neg = 0;
+            if (stream_peek_char(in) == '-')
+            {
+                neg = 1;
+                stream_put_char(tok, stream_read_char(in));
+            }
+            else if (stream_peek_char(in) == '+')
+            {
+                stream_put_char(tok, stream_read_char(in));
+            }
+
+            if (is_number_part(stream_peek_char(in)))
+            {
+                Expr val = make_number(0);
+                Expr ten = make_number(10);
+                Expr one = make_number(1);
+                Expr den = one;
+
+                // TODO extract function: parse_int
+                while (1)
+                {
+                    char const ch = stream_peek_char(in);
+                    if (!is_number_part(ch))
+                    {
+                        break;
+                    }
+
+                    I64 const digit = ch - '0';
+
+                    val = number_mul(val, ten);
+                    val = number_add(val, make_number(digit));
+
+                    stream_put_char(tok, stream_read_char(in));
+                }
+
+                // TODO
+                if (stream_peek_char(in) == '.')
+                {
+                    stream_put_char(tok, stream_read_char(in));
+
+                    while (1)
+                    {
+                        char const ch = stream_peek_char(in);
+                        if (!is_number_part(ch))
+                        {
+                            break;
+                        }
+
+                        I64 const digit = ch - '0';
+
+                        val = number_mul(val, ten);
+                        val = number_add(val, make_number(digit));
+                        den = number_mul(den, ten);
+
+                        stream_put_char(tok, stream_read_char(in));
+                    }
+                }
+
+                if (neg)
+                {
+                    val = number_neg(val);
+                }
+
+                if (!is_number_stop(stream_peek_char(in)))
+                {
+                    goto symbol_loop;
+                }
+
+                if (!number_equal(den, one))
+                {
+                    val = number_div(val, den);
+                }
+
+                return val;
+            }
+
+            goto symbol_loop;
+        }
+
+        else if (is_symbol_start(stream_peek_char(in)))
+        {
+            tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+            stream_put_char(tok, stream_read_char(in));
+
+        symbol_loop:
+            if (is_symbol_part(stream_peek_char(in)))
+            {
+                stream_put_char(tok, stream_read_char(in));
+                goto symbol_loop;
+            }
+            else
+            {
+                goto symbol_done;
+            }
+
+        symbol_done:
+            stream_put_char(tok, 0);
+            Expr const ret = intern(lexeme);
+            stream_release(tok);
+            return ret;
+        }
+        else
+        {
+            LISP_FAIL("cannot read expression, unexpected '%c'\n", stream_peek_char(in));
+            return nil;
+        }
+    }
+
+    Expr parse_list(Expr in)
+    {
+        Expr exp = nil;
+        Expr head = nil;
+        Expr tail = nil;
+
+        if (stream_peek_char(in) != '(')
+        {
+            LISP_FAIL("expected '(', got '%c'\n", stream_peek_char(in));
+            return nil;
+        }
+
+        stream_skip_char(in);
+
+    list_loop:
+        skip_whitespace_or_comment(in);
+
+        if (stream_peek_char(in) == 0)
+        {
+            LISP_FAIL("unexpected eof\n");
+            return nil;
+        }
+
+        if (stream_peek_char(in) == ')')
+        {
+            goto list_done;
+        }
+
+        exp = parse_expr(in);
+
+        // TODO get rid of artifical symbol dependence for dotted lists
+        if (exp == intern("."))
+        {
+            exp = parse_expr(in);
+            rplacd(tail, exp);
+
+            skip_whitespace_or_comment(in);
+
+            goto list_done;
+        }
+        else
+        {
+            Expr next = cons(exp, nil);
+            if (head)
+            {
+                rplacd(tail, next);
+                tail = next;
+            }
+            else
+            {
+                head = tail = next;
+            }
+        }
+
+        goto list_loop;
+
+    list_done:
+        // TODO use expect_char(in, ')')
+        if (stream_peek_char(in) != ')')
+        {
+            LISP_FAIL("missing ')'\n");
+            return nil;
+        }
+        stream_skip_char(in);
+
+        return head;
+    }
+
+    Expr parse_string(Expr in)
+    {
+        enum
+        {
+            STATE_DEFAULT,
+            STATE_ESCAPE,
+        } state = STATE_DEFAULT;
+
+        if (stream_peek_char(in) != '"')
+        {
+            LISP_FAIL("missing '\"'\n");
+            return nil;
+        }
+        stream_skip_char(in);
+
+        char lexeme[4096];
+        Expr tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+
+    string_loop:
+        if (stream_peek_char(in) == 0)
+        {
+            LISP_FAIL("unexpected eof in string\n");
+            return nil;
+        }
+
+        else if (state == STATE_DEFAULT)
+        {
+            if (stream_peek_char(in) == '"')
+            {
+                stream_skip_char(in);
+                goto string_done;
+            }
+            else if (stream_peek_char(in) == '\\')
+            {
+                stream_skip_char(in);
+                state = STATE_ESCAPE;
+            }
+            else
+            {
+                stream_put_char(tok, stream_read_char(in));
+            }
+        }
+
+        else if (state == STATE_ESCAPE)
+        {
+            if (stream_peek_char(in) == 'n')
+            {
+                stream_skip_char(in);
+                stream_put_char(tok, '\n');
+            }
+
+            else if (stream_peek_char(in) == 't')
+            {
+                stream_skip_char(in);
+                stream_put_char(tok, '\t');
+            }
+
+            else if (stream_peek_char(in) == 'x')
+            {
+                stream_skip_char(in);
+
+                char val = 0;
+                val = parse_hex_digit(in, val);
+                val = parse_hex_digit(in, val);
+
+                /* TODO check for more digits? */
+
+                stream_put_char(tok, val);
+            }
+
+            else
+            {
+                stream_put_char(tok, stream_read_char(in));
+            }
+
+            state = STATE_DEFAULT;
+        }
+
+        else
+        {
+            LISP_FAIL("internal error\n");
+            return nil;
+        }
+
+        goto string_loop;
+
+    string_done:
+        stream_put_char(tok, 0);
+        Expr const ret = make_string(lexeme);
+        stream_release(tok);
+        return ret;
+    }
+
+    char parse_hex_digit(Expr in, char val)
+    {
+        char const ch = stream_read_char(in);
+
+        if (ch >= '0' && ch <= '9')
+        {
+            val *= 16;
+            val += ch - '0';
+        }
+
+        else if (ch >= 'a' && ch <= 'f')
+        {
+            val *= 16;
+            val += 10 + ch - 'a';
+        }
+
+        else if (ch >= 'A' && ch <= 'F')
+        {
+            val *= 16;
+            val += 10 + ch - 'A';
+        }
+
+        else
+        {
+            LISP_FAIL("malformed string");
+        }
+
+        return val;
+    }
+
+    bool is_whitespace(char ch)
+    {
+        return
+            ch == ' ' ||
+            ch == '\n' ||
+            ch == '\t';
+    }
+
+    bool is_whitespace_or_eof(char ch)
+    {
+        return ch == 0 || is_whitespace(ch);
+    }
+
+    bool is_symbol_start(char ch)
+    {
+        return
+            ch != 0 &&
+            !is_whitespace(ch) &&
+            ch != '"' &&
+            ch != '(' && ch != ')' &&
+            ch != ';' && ch != '\'';
+    }
+
+    bool is_symbol_part(char ch)
+    {
+        return is_symbol_start(ch);
+    }
+
+    bool is_number_part(char ch)
+    {
+        return ch >= '0' && ch <= '9';
+    }
+
+    bool is_number_start(char ch)
+    {
+        return is_number_part(ch) || ch == '-' || ch == '+';
+    }
+
+    bool is_number_stop(char ch)
+    {
+        return ch == 0 || ch == ')' || is_whitespace(ch);
+    }
+
+    void skip_whitespace_or_comment(Expr in)
+    {
+    whitespace:
+        while (is_whitespace(stream_peek_char(in)))
+        {
+            stream_skip_char(in);
+        }
+
+        if (stream_peek_char(in) != ';')
+        {
+            return;
+        }
+
+        stream_skip_char(in);
+
+    comment:
+        if (stream_peek_char(in) == 0)
+        {
+            return;
+        }
+
+        if (stream_peek_char(in) == '\n')
+        {
+            stream_skip_char(in);
+            goto whitespace;
+        }
+
+        stream_skip_char(in);
+        goto comment;
     }
 
     /* printer */
