@@ -2662,14 +2662,9 @@ public:
 
     Expr eval(Expr exp, Expr env)
     {
-        // TODO move to below switch
-        if (exp == nil)
-        {
-            return nil;
-        }
-
         switch (expr_type(exp))
         {
+        case TYPE_NIL:
         case TYPE_CHARACTER:
         case TYPE_FIXNUM:
         case TYPE_STRING:
