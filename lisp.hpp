@@ -630,14 +630,14 @@ public:
         {
             Expr const fun_args = car(args);
             Expr const fun_body = cdr(args);
-            return cons(intern("lit"), cons(intern("clo"), cons(env, cons(fun_args, fun_body))));
+            return make_function(env, nil, fun_args, fun_body);
         });
 
         env_defspecial(env, "syntax", [this](Expr args, Expr env) -> Expr
         {
             Expr const mac_args = car(args);
             Expr const mac_body = cdr(args);
-            return cons(intern("lit"), cons(intern("mac"), cons(env, cons(mac_args, mac_body))));
+            return make_macro(env, nil, mac_args, mac_body);
         });
 
         env_defspecial(env, "backquote", [this](Expr args, Expr env) -> Expr
@@ -2312,9 +2312,19 @@ public:
         return is_closure(exp, intern("clo"));
     }
 
+    Expr make_function(Expr env, Expr name, Expr args, Expr body)
+    {
+        return cons(intern("lit"), cons(intern("clo"), cons(env, cons(args, body))));
+    }
+
     bool is_macro(Expr exp)
     {
         return is_closure(exp, intern("mac"));
+    }
+
+    Expr make_macro(Expr env, Expr name, Expr args, Expr body)
+    {
+        return cons(intern("lit"), cons(intern("mac"), cons(env, cons(args, body))));
     }
 
     Expr closure_env(Expr exp)
