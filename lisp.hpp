@@ -2256,12 +2256,6 @@ Expr f_gensym(Expr args, Expr kwargs, Expr env)
     return lisp_gensym(&global.gensym);
 }
 
-Expr f_load_file(Expr args, Expr kwargs, Expr env)
-{
-    load_file(string_value(first(args)), env);
-    return nil;
-}
-
 bool is_op(Expr exp, Expr name)
 {
     return is_cons(exp) && car(exp) == name;
@@ -2493,7 +2487,11 @@ public:
         env_defun(env, "println", f_println);
 
         env_defun(env, "gensym", f_gensym);
-        env_defun(env, "load-file", f_load_file);
+        env_defun(env, "load-file", [this](Expr args, Expr kwargs, Expr env) -> Expr
+        {
+            load_file(string_value(first(args)), env);
+            return nil;
+        });
 
         return env;
     }
