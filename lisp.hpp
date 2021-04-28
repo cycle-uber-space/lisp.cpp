@@ -2246,6 +2246,11 @@ Expr f_println(Expr args, Expr kwargs, Expr env)
     return nil;
 }
 
+Expr f_intern(Expr args, Expr kwargs, Expr env)
+{
+    return intern(string_value(car(args)));
+}
+
 Expr f_gensym(Expr args, Expr kwargs, Expr env)
 {
     return lisp_gensym(&global.gensym);
@@ -2464,6 +2469,7 @@ public:
         env_defun(env, "car", f_car);
         env_defun(env, "cdr", f_cdr);
         env_defun(env, "println", f_println);
+        env_defun(env, "intern", f_intern);
 
         env_defun(env, "gensym", f_gensym);
         env_defun(env, "load-file", [this](Expr args, Expr kwargs, Expr env) -> Expr
