@@ -205,66 +205,10 @@ typedef struct
     struct Pair * pairs;
 } ConsState;
 
-void cons_init(ConsState * cons);
-void cons_quit(ConsState * cons);
-
-bool is_cons(Expr exp);
-
-Expr lisp_cons(ConsState * cons, Expr a, Expr b);
-Expr lisp_car(ConsState * cons, Expr exp);
-Expr lisp_cdr(ConsState * cons, Expr exp);
-void lisp_rplaca(ConsState * cons, Expr exp, Expr val);
-void lisp_rplacd(ConsState * cons, Expr exp, Expr val);
-
-#if LISP_GLOBAL_API
-
-Expr cons(Expr a, Expr b);
-Expr car(Expr exp);
-Expr cdr(Expr exp);
-void rplaca(Expr exp, Expr val);
-void rplacd(Expr exp, Expr val);
-
-inline static Expr caar(Expr exp)
+bool is_cons(Expr exp)
 {
-    return car(car(exp));
+    return expr_type(exp) == TYPE_CONS;
 }
-
-inline static Expr cadr(Expr exp)
-{
-    return car(cdr(exp));
-}
-
-inline static Expr cdar(Expr exp)
-{
-    return cdr(car(exp));
-}
-
-inline static Expr cddr(Expr exp)
-{
-    return cdr(cdr(exp));
-}
-
-inline static Expr caddr(Expr exp)
-{
-    return car(cdr(cdr(exp)));
-}
-
-inline static Expr cdddr(Expr exp)
-{
-    return cdr(cdr(cdr(exp)));
-}
-
-inline static Expr cadddr(Expr exp)
-{
-    return car(cdr(cdr(cdr(exp))));
-}
-
-inline static Expr cddddr(Expr exp)
-{
-    return cdr(cdr(cdr(cdr(exp))));
-}
-
-#endif
 
 /* gensym.h */
 
@@ -405,8 +349,6 @@ I64 u64_as_i64(U64 val);
 
 char * get_temp_buf(size_t size);
 
-bool is_named_call(Expr exp, Expr name);
-
 inline static bool eq(Expr a, Expr b)
 {
     return a == b;
@@ -446,9 +388,6 @@ typedef struct SystemState
 #if LISP_GLOBAL_API
 
 extern SystemState global;
-
-void global_init();
-void global_quit();
 
 inline static bool stream_at_end(Expr exp)
 {
@@ -626,96 +565,6 @@ static struct Pair * _cons_lookup(ConsState * cons, U64 index)
     LISP_ASSERT_DEBUG(index < cons->num);
     return &cons->pairs[index];
 }
-
-void cons_init(ConsState * cons)
-{
-    memset(cons, 0, sizeof(ConsState));
-}
-
-void cons_quit(ConsState * cons)
-{
-}
-
-bool is_cons(Expr exp)
-{
-    return expr_type(exp) == TYPE_CONS;
-}
-
-Expr lisp_cons(ConsState * cons, Expr a, Expr b)
-{
-    _cons_maybe_realloc(cons);
-
-    U64 const index = cons->num++;
-    struct Pair * pair = _cons_lookup(cons, index);
-    pair->a = a;
-    pair->b = b;
-    return make_expr(TYPE_CONS, index);
-}
-
-Expr lisp_car(ConsState * cons, Expr exp)
-{
-    LISP_ASSERT(is_cons(exp));
-
-    U64 const index = expr_data(exp);
-    struct Pair * pair = _cons_lookup(cons, index);
-    return pair->a;
-}
-
-Expr lisp_cdr(ConsState * cons, Expr exp)
-{
-    LISP_ASSERT(is_cons(exp));
-
-    U64 const index = expr_data(exp);
-    struct Pair * pair = _cons_lookup(cons, index);
-    return pair->b;
-}
-
-void lisp_rplaca(ConsState * cons, Expr exp, Expr val)
-{
-    LISP_ASSERT(is_cons(exp));
-
-    U64 const index = expr_data(exp);
-    struct Pair * pair = _cons_lookup(cons, index);
-    pair->a = val;
-}
-
-void lisp_rplacd(ConsState * cons, Expr exp, Expr val)
-{
-    LISP_ASSERT(is_cons(exp));
-
-    U64 const index = expr_data(exp);
-    struct Pair * pair = _cons_lookup(cons, index);
-    pair->b = val;
-}
-
-#if LISP_GLOBAL_API
-
-Expr cons(Expr a, Expr b)
-{
-    return lisp_cons(&global.cons, a, b);
-}
-
-Expr car(Expr exp)
-{
-    return lisp_car(&global.cons, exp);
-}
-
-Expr cdr(Expr exp)
-{
-    return lisp_cdr(&global.cons, exp);
-}
-
-void rplaca(Expr exp, Expr val)
-{
-    lisp_rplaca(&global.cons, exp, val);
-}
-
-void rplacd(Expr exp, Expr val)
-{
-    lisp_rplacd(&global.cons, exp, val);
-}
-
-#endif
 
 bool is_character(Expr exp)
 {
@@ -1069,18 +918,8 @@ bool is_printable_ascii(U32 ch)
     return ch >= 33 && ch <= 126;
 }
 
-static bool is_quote_call(Expr exp)
-{
-    return is_named_call(exp, intern("quote"));
-}
-
 #define TEMP_BUF_SIZE  4096
 #define TEMP_BUF_COUNT 4
-
-bool is_named_call(Expr exp, Expr name)
-{
-    return is_cons(exp) && eq(car(exp), name);
-}
 
 U64 i64_as_u64(I64 val)
 {
@@ -1105,139 +944,6 @@ char * get_temp_buf(size_t size)
     char * ret = buf[idx];
     idx = (idx + 1) % TEMP_BUF_COUNT;
     return ret;
-}
-
-bool equal(Expr a, Expr b)
-{
-    if (is_cons(a) && is_cons(b))
-    {
-        return equal(car(a), car(b)) && equal(cdr(a), cdr(b));
-    }
-    return eq(a, b);
-}
-
-Expr list_1(Expr exp1)
-{
-    return cons(exp1, nil);
-}
-
-Expr list_2(Expr exp1, Expr exp2)
-{
-    return cons(exp1, cons(exp2, nil));
-}
-
-Expr list_3(Expr exp1, Expr exp2, Expr exp3)
-{
-    return cons(exp1, cons(exp2, cons(exp3, nil)));
-}
-
-Expr first(Expr seq)
-{
-    return car(seq);
-}
-
-Expr second(Expr seq)
-{
-    return car(cdr(seq));
-}
-
-Expr nreverse(Expr list)
-{
-    if (!list)
-    {
-        return list;
-    }
-
-    Expr prev = nil;
-    Expr expr = list;
-    while (is_cons(expr))
-    {
-        Expr next = cdr(expr);
-        rplacd(expr, prev);
-        prev = expr;
-        expr = next;
-    }
-    if (expr)
-    {
-        Expr iter;
-        for (iter = prev; cdr(iter); iter = cdr(iter))
-        {
-            Expr next = car(iter);
-            rplaca(iter, expr);
-            expr = next;
-        }
-        Expr next = car(iter);
-        rplaca(iter, expr);
-        rplacd(iter, next);
-    }
-    return prev;
-}
-
-Expr append(Expr a, Expr b)
-{
-    return a ? cons(car(a), append(cdr(a), b)) : b;
-}
-
-bool is_unquote(Expr exp)
-{
-    return is_named_call(exp, LISP_SYM_UNQUOTE);
-}
-
-bool is_unquote_splicing(Expr exp)
-{
-    return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
-}
-
-bool is_op(Expr exp, Expr name)
-{
-    return is_cons(exp) && car(exp) == name;
-}
-
-bool is_quote(Expr exp)
-{
-    return is_op(exp, LISP_SYM_QUOTE);
-}
-
-bool is_if(Expr exp)
-{
-    return is_op(exp, LISP_SYM_IF);
-}
-
-/* TODO move these */
-
-/* (lit clo <env> <args> . <body>) */
-
-bool is_closure(Expr exp, Expr kind)
-{
-    return is_cons(exp) &&
-        eq(intern("lit"), car(exp)) &&
-        is_cons(cdr(exp)) &&
-        eq(kind, cadr(exp));
-}
-
-bool is_function(Expr exp)
-{
-    return is_closure(exp, intern("clo"));
-}
-
-bool is_macro(Expr exp)
-{
-    return is_closure(exp, intern("mac"));
-}
-
-Expr closure_env(Expr exp)
-{
-    return caddr(exp);
-}
-
-Expr closure_args(Expr exp)
-{
-    return cadddr(exp);
-}
-
-Expr closure_body(Expr exp)
-{
-    return cddddr(exp);
 }
 
 SystemState global;
@@ -1563,6 +1269,129 @@ public:
         return lisp_symbol_name(&global.symbol, exp);
     }
 
+    /* cons */
+
+    void cons_init(ConsState * cons)
+    {
+        memset(cons, 0, sizeof(ConsState));
+    }
+
+    void cons_quit(ConsState * cons)
+    {
+    }
+
+    Expr lisp_cons(ConsState * cons, Expr a, Expr b)
+    {
+        _cons_maybe_realloc(cons);
+
+        U64 const index = cons->num++;
+        struct Pair * pair = _cons_lookup(cons, index);
+        pair->a = a;
+        pair->b = b;
+        return make_expr(TYPE_CONS, index);
+    }
+
+    Expr lisp_car(ConsState * cons, Expr exp)
+    {
+        LISP_ASSERT(is_cons(exp));
+
+        U64 const index = expr_data(exp);
+        struct Pair * pair = _cons_lookup(cons, index);
+        return pair->a;
+    }
+
+    Expr lisp_cdr(ConsState * cons, Expr exp)
+    {
+        LISP_ASSERT(is_cons(exp));
+
+        U64 const index = expr_data(exp);
+        struct Pair * pair = _cons_lookup(cons, index);
+        return pair->b;
+    }
+
+    void lisp_rplaca(ConsState * cons, Expr exp, Expr val)
+    {
+        LISP_ASSERT(is_cons(exp));
+    
+        U64 const index = expr_data(exp);
+        struct Pair * pair = _cons_lookup(cons, index);
+        pair->a = val;
+    }
+    
+    void lisp_rplacd(ConsState * cons, Expr exp, Expr val)
+    {
+        LISP_ASSERT(is_cons(exp));
+
+        U64 const index = expr_data(exp);
+        struct Pair * pair = _cons_lookup(cons, index);
+        pair->b = val;
+    }
+
+    Expr cons(Expr a, Expr b)
+    {
+        return lisp_cons(&global.cons, a, b);
+    }
+
+    Expr car(Expr exp)
+    {
+        return lisp_car(&global.cons, exp);
+    }
+
+    Expr cdr(Expr exp)
+    {
+        return lisp_cdr(&global.cons, exp);
+    }
+
+    void rplaca(Expr exp, Expr val)
+    {
+        lisp_rplaca(&global.cons, exp, val);
+    }
+
+    void rplacd(Expr exp, Expr val)
+    {
+        lisp_rplacd(&global.cons, exp, val);
+    }
+
+    Expr caar(Expr exp)
+    {
+        return car(car(exp));
+    }
+
+    Expr cadr(Expr exp)
+    {
+        return car(cdr(exp));
+    }
+
+    Expr cdar(Expr exp)
+    {
+        return cdr(car(exp));
+    }
+
+    Expr cddr(Expr exp)
+    {
+        return cdr(cdr(exp));
+    }
+
+    Expr caddr(Expr exp)
+    {
+        return car(cdr(cdr(exp)));
+    }
+
+    Expr cdddr(Expr exp)
+    {
+        return cdr(cdr(cdr(exp)));
+    }
+
+    Expr cadddr(Expr exp)
+    {
+        return car(cdr(cdr(cdr(exp))));
+    }
+
+    Expr cddddr(Expr exp)
+    {
+        return cdr(cdr(cdr(cdr(exp))));
+    }
+
     /* gensym */
 
     void gensym_init(GensymState * gensym)
@@ -1761,6 +1590,114 @@ public:
         }
 
         return string->values[index];
+    }
+
+    /* util */
+
+    bool is_named_call(Expr exp, Expr name)
+    {
+        return is_cons(exp) && eq(car(exp), name);
+    }
+
+    bool is_quote_call(Expr exp)
+    {
+        return is_named_call(exp, intern("quote"));
+    }
+
+    bool is_unquote(Expr exp)
+    {
+        return is_named_call(exp, LISP_SYM_UNQUOTE);
+    }
+
+    bool is_unquote_splicing(Expr exp)
+    {
+        return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
+    }
+
+    bool is_op(Expr exp, Expr name)
+    {
+        return is_cons(exp) && car(exp) == name;
+    }
+
+    bool is_quote(Expr exp)
+    {
+        return is_op(exp, LISP_SYM_QUOTE);
+    }
+
+    bool is_if(Expr exp)
+    {
+        return is_op(exp, LISP_SYM_IF);
+    }
+
+    bool equal(Expr a, Expr b)
+    {
+        if (is_cons(a) && is_cons(b))
+        {
+            return equal(car(a), car(b)) && equal(cdr(a), cdr(b));
+        }
+        return eq(a, b);
+    }
+
+    Expr list_1(Expr exp1)
+    {
+        return cons(exp1, nil);
+    }
+
+    Expr list_2(Expr exp1, Expr exp2)
+    {
+        return cons(exp1, cons(exp2, nil));
+    }
+
+    Expr list_3(Expr exp1, Expr exp2, Expr exp3)
+    {
+        return cons(exp1, cons(exp2, cons(exp3, nil)));
+    }
+
+    Expr first(Expr seq)
+    {
+        return car(seq);
+    }
+
+    Expr second(Expr seq)
+    {
+        return car(cdr(seq));
+    }
+
+    Expr nreverse(Expr list)
+    {
+        if (!list)
+        {
+            return list;
+        }
+
+        Expr prev = nil;
+        Expr expr = list;
+        while (is_cons(expr))
+        {
+            Expr next = cdr(expr);
+            rplacd(expr, prev);
+            prev = expr;
+            expr = next;
+        }
+        if (expr)
+        {
+            Expr iter;
+            for (iter = prev; cdr(iter); iter = cdr(iter))
+            {
+                Expr next = car(iter);
+                rplaca(iter, expr);
+                expr = next;
+            }
+            Expr next = car(iter);
+            rplaca(iter, expr);
+            rplacd(iter, next);
+        }
+        return prev;
+    }
+
+    Expr append(Expr a, Expr b)
+    {
+        return a ? cons(car(a), append(cdr(a), b)) : b;
     }
 
     /* reader */
@@ -2412,6 +2349,44 @@ public:
             }
         }
         stream_put_char(out, '"');
+    }
+
+    /* closure */
+
+    /* (lit clo <env> <args> . <body>) */
+    /* (lit mac <env> <args> . <body>) */
+
+    bool is_closure(Expr exp, Expr kind)
+    {
+        return is_cons(exp) &&
+            eq(intern("lit"), car(exp)) &&
+            is_cons(cdr(exp)) &&
+            eq(kind, cadr(exp));
+    }
+
+    bool is_function(Expr exp)
+    {
+        return is_closure(exp, intern("clo"));
+    }
+
+    bool is_macro(Expr exp)
+    {
+        return is_closure(exp, intern("mac"));
+    }
+
+    Expr closure_env(Expr exp)
+    {
+        return caddr(exp);
+    }
+
+    Expr closure_args(Expr exp)
+    {
+        return cadddr(exp);
+    }
+
+    Expr closure_body(Expr exp)
+    {
+        return cddddr(exp);
     }
 
     /* env */
