@@ -18,12 +18,6 @@ public:
         srand(time(NULL));
     }
 
-    static Expr f_coin(Expr args, Expr kwargs, Expr env)
-    {
-        LISP_ASSERT(args == nil);
-        return (rand() & 1) ? LISP_SYMBOL_T : nil;
-    }
-
     int main(int argc, char ** argv)
     {
         if (argc < 2)
@@ -58,7 +52,12 @@ public:
         {
             global_init();
             Expr env = make_core_env();
-            env_defun(env, "coin", f_coin);
+            env_defun(env, "coin", [this](Expr args, Expr kwargs, Expr env) -> Expr
+            {
+                LISP_ASSERT(args == nil);
+                return (rand() & 1) ? LISP_SYMBOL_T : nil;
+            });
+
             for (int i = 2; i < argc; i++)
             {
                 load_file(argv[i], env);
