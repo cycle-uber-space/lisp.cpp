@@ -122,6 +122,7 @@ enum
     TYPE_SYMBOL,
     TYPE_CONS,
     TYPE_GENSYM,
+    TYPE_CHARACTER,
     TYPE_STRING,
     TYPE_STREAM,
     TYPE_BUILTIN_SPECIAL,
@@ -340,7 +341,7 @@ void stream_put_string(Expr exp, char const * str);
 void stream_put_u64(Expr exp, U64 val);
 void stream_put_x64(Expr exp, U64 val);
 
-inline static char stream_get_char(Expr exp)
+inline static char stream_read_char(Expr exp)
 {
     /* TODO inline implementation */
     char const ret = stream_peek_char(exp);
@@ -392,6 +393,10 @@ Expr make_builtin_function(char const * name, BuiltinFun fun);
 
 #ifndef LISP_READER_PARSE_QUOTE
 #define LISP_READER_PARSE_QUOTE 1
+#endif
+
+#ifndef LISP_READER_PARSE_CHARACTER
+#define LISP_READER_PARSE_CHARACTER 1
 #endif
 
 bool lisp_maybe_parse_expr(SystemState * system, Expr in, Expr * exp);
@@ -840,6 +845,22 @@ bool is_gensym(Expr exp)
 Expr lisp_gensym(GensymState * gensym)
 {
     return make_expr(TYPE_GENSYM, gensym->counter++);
+}
+
+bool is_character(Expr exp)
+{
+    return expr_type(exp) == TYPE_CHARACTER;
+}
+
+Expr make_character(U32 code)
+{
+    return make_expr(TYPE_CHARACTER, code);
+}
+
+U32 character_code(Expr exp)
+{
+    LISP_ASSERT(is_character(exp));
+    return (U32) expr_data(exp);
 }
 
 static Expr string_alloc(StringState * string, size_t len)
@@ -1359,7 +1380,7 @@ list_done:
 
 static char parse_hex_digit(Expr in, char val)
 {
-    char const ch = stream_get_char(in);
+    char const ch = stream_read_char(in);
 
     if (ch >= '0' && ch <= '9')
     {
@@ -1426,7 +1447,7 @@ string_loop:
         }
         else
         {
-            stream_put_char(tok, stream_get_char(in));
+            stream_put_char(tok, stream_read_char(in));
         }
     }
 
@@ -1459,7 +1480,7 @@ string_loop:
 
         else
         {
-            stream_put_char(tok, stream_get_char(in));
+            stream_put_char(tok, stream_read_char(in));
         }
 
         state = STATE_DEFAULT;
@@ -1493,6 +1514,23 @@ static Expr parse_expr(SystemState * sys, Expr in)
         return parse_string(sys, in);
     }
 #if LISP_READER_PARSE_QUOTE
+    else if (stream_peek_char(in) == '\\')
+    {
+        stream_skip_char(in);
+        // TODO
+        U32 ch = stream_read_char(in);
+        if (ch >= 'a' && ch <= 'z')
+        {
+            return make_character(ch);
+        }
+        else
+        {
+            LISP_FAIL("cannot parse character %" PRIu32 "\n", ch);
+            return nil;
+        }
+    }
+#endif
+#if LISP_READER_PARSE_QUOTE
     else if (stream_peek_char(in) == '\'')
     {
         stream_skip_char(in);
@@ -1520,12 +1558,12 @@ static Expr parse_expr(SystemState * sys, Expr in)
     {
         char lexeme[4096];
         Expr tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
-        stream_put_char(tok, stream_get_char(in));
+        stream_put_char(tok, stream_read_char(in));
 
     symbol_loop:
         if (is_symbol_part(stream_peek_char(in)))
         {
-            stream_put_char(tok, stream_get_char(in));
+            stream_put_char(tok, stream_read_char(in));
             goto symbol_loop;
         }
         else
@@ -1651,6 +1689,22 @@ void render_gensym(Expr exp, Expr out)
     stream_put_u64(out, num);
 }
 
+void render_character(Expr exp, Expr out)
+{
+    LISP_ASSERT_DEBUG(is_character(exp));
+    U32 const code = character_code(exp);
+    // TODO
+    if (code >= 'a' && code <= 'z')
+    {
+        stream_put_char(out, '\\');
+        stream_put_char(out, (char) code);
+    }
+    else
+    {
+        LISP_FAIL("cannot render character %" PRIu32 "\n", code);
+    }
+}
+
 void render_string(Expr exp, Expr out)
 {
     stream_put_char(out, '"');
@@ -1708,6 +1762,9 @@ void render_expr(Expr exp, Expr out)
         break;
     case TYPE_GENSYM:
         render_gensym(exp, out);
+        break;
+    case TYPE_CHARACTER:
+        render_character(exp, out);
         break;
     case TYPE_STRING:
         render_string(exp, out);
@@ -2359,9 +2416,11 @@ Expr eval(Expr exp, Expr env)
 
     switch (expr_type(exp))
     {
+    case TYPE_CHARACTER:
     case TYPE_STRING:
         return exp;
     case TYPE_SYMBOL:
+    case TYPE_GENSYM:
         if (exp == intern("*env*"))
         {
             return env;
