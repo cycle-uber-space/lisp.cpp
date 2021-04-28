@@ -13,27 +13,27 @@
       (println (intern "\x1b[32mPASS\x1b[0m") exp '=> res)
       (println (intern "\x1b[31mFAIL\x1b[0m") exp '=> val '!= res)))
 
-(defmacro test (exp res)
+(defmacro test (exp _ res)
   `(test-report ',exp ,exp ',res))
 
-(test nil nil)
-(test t t)
+(test nil => nil)
+(test t => t)
 
-(test 'foo foo)
+(test 'foo => foo)
 
-(test (if nil 'a 'b) b)
-(test (if 'eq 'a 'b) a)
+(test (if nil 'a 'b) => b)
+(test (if 'eq 'a 'b) => a)
 
-(test (equal '(a . b) '(a . b)) t)
+(test (equal '(a . b) '(a . b)) => t)
 
-(test (cons 'a 'b) (a . b))
+(test (cons 'a 'b) => (a . b))
 
-(test (car (cons 'a 'b)) a)
-(test (cdr (cons 'a 'b)) b)
+(test (car (cons 'a 'b)) => a)
+(test (cdr (cons 'a 'b)) => b)
 
-(test (car '(a b c)) a)
-(test (cdr '(a b c)) (b c))
+(test (car '(a b c)) => a)
+(test (cdr '(a b c)) => (b c))
 
-(test (car '(a b c)) a)
-(test (cadr '(a b c)) b)
-(test (caddr '(a b c)) c)
+(test (car '(a b c)) => a)
+(test (cadr '(a b c)) => b)
+(test (caddr '(a b c)) => c)
