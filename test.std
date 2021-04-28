@@ -10,8 +10,8 @@
 
 (defun test-report (exp val res)
   (if (equal val res)
-      (println 'PASS exp '=> res)
-      (println 'FAIL exp '=> val '!= res)))
+      (println (intern "\x1b[32mPASS\x1b[0m") exp '=> res)
+      (println (intern "\x1b[31mFAIL\x1b[0m") exp '=> val '!= res)))
 
 (defmacro test (exp res)
   `(test-report ',exp ,exp ',res))
