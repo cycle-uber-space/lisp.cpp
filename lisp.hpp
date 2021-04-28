@@ -110,6 +110,12 @@ void error_warn(char const * fmt, ...);
 
 /* expr.h */
 
+#define LISP_TYPE_BITS UINT64_C(8)
+#define LISP_TYPE_MASK ((UINT64_C(1) << LISP_TYPE_BITS) - UINT64_C(1))
+
+#define LISP_DATA_BITS (UINT64_C(64) - LISP_TYPE_BITS)
+#define LISP_DATA_MASK ((UINT64_C(1) << LISP_DATA_BITS) - UINT64_C(1))
+
 typedef U64 Expr;
 
 Expr make_expr(U64 type, U64 data);
@@ -579,17 +585,17 @@ void error_warn(char const * fmt, ...)
 
 Expr make_expr(U64 type, U64 data)
 {
-    return (data << 8) | (type & 0xff);
+    return (data << LISP_TYPE_BITS) | (type & LISP_TYPE_MASK);
 }
 
 U64 expr_type(Expr exp)
 {
-    return exp & 0xff;
+    return exp & LISP_TYPE_MASK;
 }
 
 U64 expr_data(Expr exp)
 {
-    return exp >> 8;
+    return exp >> LISP_TYPE_BITS;
 }
 
 static void _symbol_maybe_realloc(SymbolState * symbol)
