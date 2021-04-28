@@ -14,4 +14,4 @@ lisp: lisp.cpp lisp.hpp Makefile
 test:
 	./lisp unit
 	./lisp load bel.lisp test.bel
-	./lisp load std.lisp test.std
+	./lisp load test.std
