@@ -475,8 +475,6 @@ typedef struct SystemState
 void system_init(SystemState * system);
 void system_quit(SystemState * system);
 
-void load_file(char const * path, Expr env);
-
 /* global.h */
 
 #if LISP_GLOBAL_API
@@ -2431,17 +2429,6 @@ void system_quit(SystemState * system)
     symbol_quit(&system->symbol);
 }
 
-void load_file(char const * path, Expr env)
-{
-    Expr const in = make_file_input_stream_from_path(path);
-    Expr exp = nil;
-    while (maybe_parse_expr(in, &exp))
-    {
-        eval(exp, env);
-    }
-    stream_release(in);
-}
-
 SystemState global;
 
 void global_init()
@@ -2494,6 +2481,17 @@ public:
         });
 
         return env;
+    }
+
+    void load_file(char const * path, Expr env)
+    {
+        Expr const in = make_file_input_stream_from_path(path);
+        Expr exp = nil;
+        while (maybe_parse_expr(in, &exp))
+        {
+            eval(exp, env);
+        }
+        stream_release(in);
     }
 };
 
