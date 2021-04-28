@@ -2446,10 +2446,13 @@ class System
 public:
     System()
     {
+        LISP_ASSERT(s_instance == nullptr);
+        s_instance = this;
     }
 
     virtual ~System()
     {
+        s_instance = nullptr;
     }
 
     virtual Expr make_core_env()
@@ -2493,7 +2496,13 @@ public:
         }
         stream_release(in);
     }
+
+private:
+    static System * s_instance;
+
 };
+
+System * System::s_instance = nullptr;
 
 #endif /* _LISP_CPP_ */
 
