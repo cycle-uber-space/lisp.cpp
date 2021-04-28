@@ -481,6 +481,9 @@ Expr make_core_env();
 
 Expr eval(Expr exp, Expr env);
 
+Expr eval_list(Expr exps, Expr env);
+Expr eval_body(Expr exps, Expr env);
+
 /* system.h */
 
 typedef struct SystemState
@@ -2137,6 +2140,19 @@ Expr s_if(Expr args, Expr kwargs, Expr env)
     }
 }
 
+Expr s_while(Expr args, Expr kwargs, Expr env)
+{
+    Expr const test = car(args);
+    Expr const body = cdr(args);
+
+    // TODO do we want to return a value?
+    while (eval(test, env))
+    {
+        eval_body(body, env);
+    }
+    return nil;
+}
+
 Expr s_lambda(Expr args, Expr kwargs, Expr env)
 {
     Expr const fun_args = car(args);
@@ -2322,6 +2338,7 @@ Expr make_core_env()
 
     env_defspecial(env, "quote", s_quote);
     env_defspecial(env, "if", s_if);
+    env_defspecial(env, "while", s_while);
     env_defspecial(env, "def", s_def);
     env_defspecial(env, "lambda", s_lambda);
     env_defspecial(env, "syntax", s_syntax);
