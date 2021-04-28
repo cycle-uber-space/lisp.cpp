@@ -1254,12 +1254,23 @@ Expr make_builtin_function(char const * name, BuiltinFun fun)
 
 #endif
 
+bool is_printable_ascii(U32 ch)
+{
+    // NOTE we exclude space
+    return ch >= 33 && ch <= 126;
+}
+
 static bool is_whitespace(char ch)
 {
     return
         ch == ' ' ||
         ch == '\n' ||
         ch == '\t';
+}
+
+static bool is_whitespace_or_eof(char ch)
+{
+    return ch == 0 || is_whitespace(ch);
 }
 
 static bool is_symbol_start(char ch)
@@ -1516,16 +1527,31 @@ static Expr parse_expr(SystemState * sys, Expr in)
 #if LISP_READER_PARSE_CHARACTER
     else if (stream_peek_char(in) == '\\')
     {
-        stream_skip_char(in);
-        // TODO
-        U32 ch = stream_read_char(in);
-        if (ch >= 'a' && ch <= 'z')
+        char lexeme[4096];
+        Expr tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
+        while (!is_whitespace_or_eof(stream_peek_char(in)))
         {
-            return make_character(ch);
+            stream_put_char(tok, stream_read_char(in));
+        }
+        stream_put_char(tok, 0);
+        stream_release(tok);
+
+        // handle printable characters
+        if (lexeme[2] == 0)
+        {
+            return make_character(lexeme[1]);
+        }
+        else if (!strcmp("\\bel", lexeme))
+        {
+            return make_character('\a');
+        }
+        else if (!strcmp("\\space", lexeme))
+        {
+            return make_character(' ');
         }
         else
         {
-            LISP_FAIL("cannot parse character %" PRIu32 "\n", ch);
+            LISP_FAIL("cannot parse character '%s'\n", lexeme);
             return nil;
         }
     }
@@ -1694,10 +1720,18 @@ void render_character(Expr exp, Expr out)
     LISP_ASSERT_DEBUG(is_character(exp));
     U32 const code = character_code(exp);
     // TODO
-    if (code >= 'a' && code <= 'z')
+    if (is_printable_ascii(code))
     {
         stream_put_char(out, '\\');
         stream_put_char(out, (char) code);
+    }
+    else if (code == '\a')
+    {
+        stream_put_string(out, "\\bel");
+    }
+    else if (code == ' ')
+    {
+        stream_put_string(out, "\\space");
     }
     else
     {
