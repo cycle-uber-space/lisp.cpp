@@ -36,7 +36,6 @@ public:
         char const * cmd = argv[1];
         if (!strcmp("unit", cmd))
         {
-            global_init();
             TestState _test;
             TestState * test = &_test;
             LISP_TEST_BEGIN(test);
@@ -55,22 +54,18 @@ public:
             unit_test(test);
             LISP_TEST_GROUP(test, "summary");
             LISP_TEST_FINISH(test);
-            global_quit();
         }
         else if (!strcmp("load", cmd))
         {
-            global_init();
             Expr env = make_core_env();
 
             for (int i = 2; i < argc; i++)
             {
                 load_file(argv[i], env);
             }
-            global_quit();
         }
         else if (!strcmp("repl", cmd))
         {
-            global_init();
             Expr env = make_core_env();
 
             // TODO make a proper prompt input stream
@@ -97,7 +92,7 @@ public:
                 goto loop;
             }
         done:
-            global_quit();
+            ;
         }
         else
         {

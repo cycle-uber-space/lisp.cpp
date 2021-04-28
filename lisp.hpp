@@ -2431,16 +2431,6 @@ void system_quit(SystemState * system)
 
 SystemState global;
 
-void global_init()
-{
-    system_init(&global);
-}
-
-void global_quit()
-{
-    system_quit(&global);
-}
-
 class System
 {
 public:
@@ -2448,10 +2438,12 @@ public:
     {
         LISP_ASSERT(s_instance == nullptr);
         s_instance = this;
+        global_init();
     }
 
     virtual ~System()
     {
+        global_quit();
         s_instance = nullptr;
     }
 
@@ -2495,6 +2487,16 @@ public:
             eval(exp, env);
         }
         stream_release(in);
+    }
+
+    void global_init()
+    {
+        system_init(&global);
+    }
+
+    void global_quit()
+    {
+        system_quit(&global);
     }
 
 private:
