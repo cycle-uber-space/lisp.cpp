@@ -455,6 +455,13 @@ bool equal(Expr a, Expr b);
 char const * repr(Expr exp);
 void println(Expr exp);
 
+Expr make_number(I64 value);
+Expr number_neg(Expr a);
+Expr number_add(Expr a, Expr b);
+Expr number_mul(Expr a, Expr b);
+Expr number_div(Expr a, Expr b);
+bool number_equal(Expr a, Expr b);
+
 Expr intern(char const * name);
 
 Expr list_1(Expr exp1);
@@ -1190,6 +1197,13 @@ void stream_put_u64(Expr exp, U64 val)
     stream_put_string(exp, str);
 }
 
+void stream_put_i64(Expr exp, U64 val)
+{
+    char str[32];
+    sprintf(str, "%016" PRIi64, val);
+    stream_put_string(exp, str);
+}
+
 void stream_put_x64(Expr exp, U64 val)
 {
     char str[32];
@@ -1309,6 +1323,21 @@ static bool is_symbol_start(char ch)
 static bool is_symbol_part(char ch)
 {
     return is_symbol_start(ch);
+}
+
+static bool is_number_part(char ch)
+{
+    return ch >= '0' && ch <= '9';
+}
+
+static bool is_number_start(char ch)
+{
+    return is_number_part(ch) || ch == '-' || ch == '+';
+}
+
+static bool is_number_stop(char ch)
+{
+    return ch == 0 || ch == ')' || is_whitespace(ch);
 }
 
 static void skip_whitespace_or_comment(Expr in)
@@ -1553,7 +1582,8 @@ static Expr parse_expr(SystemState * sys, Expr in)
 #if LISP_READER_PARSE_CHARACTER
     else if (stream_peek_char(in) == '\\')
     {
-        Expr tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
+        tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
+
         while (!is_whitespace_or_eof(stream_peek_char(in)))
         {
             stream_put_char(tok, stream_read_char(in));
@@ -1605,6 +1635,90 @@ static Expr parse_expr(SystemState * sys, Expr in)
         return list_2(intern("unquote"), parse_expr(sys, in));
     }
 #endif
+
+    else if (is_number_start(stream_peek_char(in)))
+    {
+        tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
+
+        bool neg = 0;
+        if (stream_peek_char(in) == '-')
+        {
+            neg = 1;
+            stream_put_char(tok, stream_read_char(in));
+        }
+        else if (stream_peek_char(in) == '+')
+        {
+            stream_put_char(tok, stream_read_char(in));
+        }
+
+        if (is_number_part(stream_peek_char(in)))
+        {
+            Expr val = make_number(0);
+            Expr ten = make_number(10);
+            Expr one = make_number(1);
+            Expr den = one;
+
+            // TODO extract function: parse_int
+            while (1)
+            {
+                char const ch = stream_peek_char(in);
+                if (!is_number_part(ch))
+                {
+                    break;
+                }
+
+                I64 const digit = ch - '0';
+
+                val = number_mul(val, ten);
+                val = number_add(val, make_number(digit));
+
+                stream_put_char(tok, stream_read_char(in));
+            }
+
+            // TODO
+            if (stream_peek_char(in) == '.')
+            {
+                stream_put_char(tok, stream_read_char(in));
+
+                while (1)
+                {
+                    char const ch = stream_peek_char(in);
+                    if (!is_number_part(ch))
+                    {
+                        break;
+                    }
+
+                    I64 const digit = ch - '0';
+
+                    val = number_mul(val, ten);
+                    val = number_add(val, make_number(digit));
+                    den = number_mul(den, ten);
+
+                    stream_put_char(tok, stream_read_char(in));
+                }
+            }
+
+            if (neg)
+            {
+                val = number_neg(val);
+            }
+
+            if (!is_number_stop(stream_peek_char(in)))
+            {
+                goto symbol_loop;
+            }
+
+            if (!number_equal(den, one))
+            {
+                val = number_div(val, den);
+            }
+
+            return val;
+        }
+
+        goto symbol_loop;
+    }
+
     else if (is_symbol_start(stream_peek_char(in)))
     {
         tok = lisp_make_buffer_output_stream(&sys->stream, 4096, lexeme);
@@ -2166,6 +2280,7 @@ Expr eval(Expr exp, Expr env)
     switch (expr_type(exp))
     {
     case TYPE_CHARACTER:
+    case TYPE_FIXNUM:
     case TYPE_STRING:
         return exp;
     case TYPE_SYMBOL:
@@ -2440,6 +2555,68 @@ public:
         return u64_as_i64(data);
     }
 
+    Expr fixnum_neg(Expr a)
+    {
+        return make_fixnum(-fixnum_value(a));
+    }
+
+    Expr fixnum_add(Expr a, Expr b)
+    {
+        return make_fixnum(fixnum_value(a) + fixnum_value(b));
+    }
+
+    Expr fixnum_mul(Expr a, Expr b)
+    {
+        return make_fixnum(fixnum_value(a) * fixnum_value(b));
+    }
+
+    Expr fixnum_div(Expr a, Expr b)
+    {
+        return make_fixnum(fixnum_value(a) / fixnum_value(b));
+    }
+
+    bool fixnum_equal(Expr a, Expr b)
+    {
+        return a == b;
+    }
+
+    /* number */
+
+    bool is_number(Expr exp)
+    {
+        return is_fixnum(exp);
+    }
+
+    Expr make_number(I64 value)
+    {
+        return make_fixnum(value);
+    }
+
+    Expr number_neg(Expr a)
+    {
+        return fixnum_neg(a);
+    }
+
+    Expr number_add(Expr a, Expr b)
+    {
+        return fixnum_add(a, b);
+    }
+
+    Expr number_mul(Expr a, Expr b)
+    {
+        return fixnum_mul(a, b);
+    }
+
+    Expr number_div(Expr a, Expr b)
+    {
+        return fixnum_div(a, b);
+    }
+
+    bool number_equal(Expr a, Expr b)
+    {
+        return fixnum_equal(a, b);
+    }
+
     /* printer */
 
     void render_expr(Expr exp, Expr out)
@@ -2461,6 +2638,9 @@ public:
             break;
         case TYPE_CHARACTER:
             render_character(exp, out);
+            break;
+        case TYPE_FIXNUM:
+            stream_put_i64(out, fixnum_value(exp));
             break;
         case TYPE_STRING:
             render_string(exp, out);
@@ -2631,6 +2811,36 @@ void println(Expr exp)
     Expr out = global.stream.stdout;
     System::s_instance->render_expr(exp, out);
     stream_put_string(out, "\n");
+}
+
+Expr make_number(I64 value)
+{
+    return System::s_instance->make_number(value);
+}
+
+Expr number_neg(Expr a)
+{
+    return System::s_instance->number_neg(a);
+}
+
+Expr number_add(Expr a, Expr b)
+{
+    return System::s_instance->number_add(a, b);
+}
+
+Expr number_mul(Expr a, Expr b)
+{
+    return System::s_instance->number_mul(a, b);
+}
+
+Expr number_div(Expr a, Expr b)
+{
+    return System::s_instance->number_div(a, b);
+}
+
+bool number_equal(Expr a, Expr b)
+{
+    return System::s_instance->number_equal(a, b);
 }
 
 #endif /* _LISP_CPP_ */
