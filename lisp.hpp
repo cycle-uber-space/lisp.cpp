@@ -2,6 +2,8 @@
 #ifndef _LISP_HPP_
 #define _LISP_HPP_
 
+/* config */
+
 #ifndef LISP_GLOBAL_API
 #define LISP_GLOBAL_API 1
 #endif
@@ -13,6 +15,32 @@
 #ifndef LISP_SYMBOL_NAME_OF_NIL
 #define LISP_SYMBOL_NAME_OF_NIL 1
 #endif
+
+#ifndef LISP_MALLOC
+#define LISP_MALLOC(size) malloc(size)
+#endif
+
+#ifndef LISP_REALLOC
+#define LISP_REALLOC(ptr, size) realloc(ptr, size)
+#endif
+
+#ifndef LISP_FREE
+#define LISP_FREE(ptr) free(ptr)
+#endif
+
+#ifndef LISP_READER_PARSE_QUOTE
+#define LISP_READER_PARSE_QUOTE 1
+#endif
+
+#ifndef LISP_READER_PARSE_CHARACTER
+#define LISP_READER_PARSE_CHARACTER 1
+#endif
+
+#ifndef LISP_PRINTER_RENDER_QUOTE
+#define LISP_PRINTER_RENDER_QUOTE 1
+#endif
+
+/* includes */
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -26,6 +54,8 @@
 
 #include <functional>
 
+/* defines */
+
 #define LISP_RED     "\x1b[31m"
 #define LISP_GREEN   "\x1b[32m"
 #define LISP_YELLOW  "\x1b[33m"
@@ -33,6 +63,8 @@
 #define LISP_MAGENTA "\x1b[35m"
 #define LISP_CYAN    "\x1b[36m"
 #define LISP_RESET   "\x1b[0m"
+
+/* base */
 
 typedef uint8_t U8;
 typedef uint16_t U16;
@@ -69,19 +101,7 @@ static_assert(sizeof(F64) == 8, "");
 
 static_assert(sizeof(V64) == 8, "");
 
-#ifndef LISP_MALLOC
-#define LISP_MALLOC(size) malloc(size)
-#endif
-
-#ifndef LISP_REALLOC
-#define LISP_REALLOC(ptr, size) realloc(ptr, size)
-#endif
-
-#ifndef LISP_FREE
-#define LISP_FREE(ptr) free(ptr)
-#endif
-
-/* test.h */
+/* test */
 
 typedef struct
 {
@@ -101,7 +121,7 @@ void test_finish(TestState * test);
 void test_group(TestState * test, char const * text);
 void test_assert_try(TestState * test, bool exp, char const * msg);
 
-/* error.h */
+/* error */
 
 #define LISP_FAIL(...)    error_fail(__VA_ARGS__);
 #define LISP_WARN(...)    error_warn(__VA_ARGS__);
@@ -117,7 +137,7 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 void error_fail(char const * fmt, ...);
 void error_warn(char const * fmt, ...);
 
-/* expr.h */
+/* expr */
 
 #define LISP_TYPE_BITS UINT64_C(8)
 #define LISP_TYPE_MASK ((UINT64_C(1) << LISP_TYPE_BITS) - UINT64_C(1))
@@ -125,11 +145,7 @@ void error_warn(char const * fmt, ...);
 #define LISP_DATA_BITS (UINT64_C(64) - LISP_TYPE_BITS)
 #define LISP_DATA_MASK ((UINT64_C(1) << LISP_DATA_BITS) - UINT64_C(1))
 
-#define LISP_EXPR_MASK        UINT64_C(0xffffffffffffffff)
-#define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
-#define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
-#define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
-#define LISP_FIXNUM_MAXVAL    ((INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))) - INT64_C(1))
+#define LISP_EXPR_MASK UINT64_C(0xffffffffffffffff)
 
 typedef U64 Expr;
 
@@ -157,9 +173,14 @@ enum
     DATA_NIL = 0,
 };
 
+inline bool eq(Expr a, Expr b)
+{
+    return a == b;
+}
+
 typedef struct SystemState SystemState;
 
-/* nil.h */
+/* nil */
 
 #define nil 0
 
@@ -168,7 +189,7 @@ inline static bool is_nil(Expr exp)
     return exp == nil;
 }
 
-/* symbol.h */
+/* symbol */
 
 #define LISP_SYMBOL_T intern("t")
 
@@ -188,7 +209,7 @@ typedef struct
     char ** names;
 } SymbolState;
 
-/* cons.h */
+/* cons */
 
 #define LISP_MAX_CONSES -1
 #define LISP_DEF_CONSES  4
@@ -205,21 +226,21 @@ typedef struct
     struct Pair * pairs;
 } ConsState;
 
-bool is_cons(Expr exp)
+inline bool is_cons(Expr exp)
 {
     return expr_type(exp) == TYPE_CONS;
 }
 
-/* gensym.h */
+/* gensym */
 
 typedef struct
 {
     U64 counter;
 } GensymState;
 
-/* string.h */
+/* string */
 
-#define LISP_MAX_STRINGS        500000
+#define LISP_MAX_STRINGS 500000
 
 typedef struct
 {
@@ -227,7 +248,7 @@ typedef struct
     char ** values;
 } StringState;
 
-/* stream.h */
+/* stream */
 
 #define LISP_MAX_STREAMS 64
 
@@ -251,7 +272,7 @@ typedef struct
     Expr stderr;
 } StreamState;
 
-/* builtin.h */
+/* builtin */
 
 #define LISP_MAX_BUILTINS 64
 
@@ -269,52 +290,7 @@ typedef struct
     BuiltinInfo info[LISP_MAX_BUILTINS];
 } BuiltinState;
 
-/* reader.h */
-
-#ifndef LISP_READER_PARSE_QUOTE
-#define LISP_READER_PARSE_QUOTE 1
-#endif
-
-#ifndef LISP_READER_PARSE_CHARACTER
-#define LISP_READER_PARSE_CHARACTER 1
-#endif
-
-/* printer.h */
-
-#ifndef LISP_PRINTER_RENDER_QUOTE
-#define LISP_PRINTER_RENDER_QUOTE 1
-#endif
-
-/* util.h */
-
-U64 i64_as_u64(I64 val);
-I64 u64_as_i64(U64 val);
-
-char * get_temp_buf(size_t size);
-
-inline static bool eq(Expr a, Expr b)
-{
-    return a == b;
-}
-
-bool equal(Expr a, Expr b);
-
-char const * repr(Expr exp);
-void println(Expr exp);
-
-Expr intern(char const * name);
-
-Expr list_1(Expr exp1);
-Expr list_2(Expr exp1, Expr exp2);
-Expr list_3(Expr exp1, Expr exp2, Expr exp3);
-
-Expr first(Expr seq);
-Expr second(Expr seq);
-
-Expr nreverse(Expr seq);
-Expr append(Expr seq1, Expr seq2);
-
-/* system.h */
+/* system */
 
 typedef struct SystemState
 {
@@ -1004,6 +980,11 @@ public:
     }
 
     /* fixnum */
+
+#define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
+#define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
+#define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
+#define LISP_FIXNUM_MAXVAL    ((INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))) - INT64_C(1))
 
     bool is_fixnum(Expr exp)
     {
