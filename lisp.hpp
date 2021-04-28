@@ -124,8 +124,8 @@ enum
     TYPE_GENSYM,
     TYPE_STRING,
     TYPE_STREAM,
-    TYPE_SPECIAL,
-    TYPE_BUILTIN,
+    TYPE_BUILTIN_SPECIAL,
+    TYPE_BUILTIN_FUNCTION,
 };
 
 enum
@@ -1213,7 +1213,7 @@ void special_quit(SpecialState * special)
 
 bool is_special(Expr exp)
 {
-    return expr_type(exp) == TYPE_SPECIAL;
+    return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
 }
 
 Expr lisp_make_special(SpecialState * special, char const * name, SpecialFun fun)
@@ -1223,7 +1223,7 @@ Expr lisp_make_special(SpecialState * special, char const * name, SpecialFun fun
     SpecialInfo * info = special->info + index;
     info->name = name; /* TODO take ownership of name? */
     info->fun = fun;
-    return make_expr(TYPE_SPECIAL, index);
+    return make_expr(TYPE_BUILTIN_SPECIAL, index);
 }
 
 static SpecialInfo * _special_expr_to_info(SpecialState * special, Expr exp)
@@ -1266,7 +1266,7 @@ void builtin_quit(BuiltinState * builtin)
 
 bool is_builtin(Expr exp)
 {
-    return expr_type(exp) == TYPE_BUILTIN;
+    return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
 }
 
 Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun)
@@ -1276,7 +1276,7 @@ Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun
     BuiltinInfo * info = builtin->info + index;
     info->name = name; /* TODO take ownership of name? */
     info->fun = fun;
-    return make_expr(TYPE_BUILTIN, index);
+    return make_expr(TYPE_BUILTIN_FUNCTION, index);
 }
 
 static BuiltinInfo * _builtin_expr_to_info(BuiltinState * builtin, Expr exp)
@@ -1694,7 +1694,7 @@ void render_cons(Expr exp, Expr out)
     stream_put_char(out, ')');
 }
 
-void render_special(Expr exp, Expr out)
+void render_builtin_special(Expr exp, Expr out)
 {
     stream_put_string(out, "#:<special operator");
     char const * name = special_name(exp);
@@ -1706,7 +1706,7 @@ void render_special(Expr exp, Expr out)
     stream_put_string(out, ">");
 }
 
-void render_builtin(Expr exp, Expr out)
+void render_builtin_function(Expr exp, Expr out)
 {
     stream_put_string(out, "#:<core function");
     char const * name = builtin_name(exp);
@@ -1787,11 +1787,11 @@ void render_expr(Expr exp, Expr out)
     case TYPE_STRING:
         render_string(exp, out);
         break;
-    case TYPE_SPECIAL:
-        render_special(exp, out);
+    case TYPE_BUILTIN_SPECIAL:
+        render_builtin_special(exp, out);
         break;
-    case TYPE_BUILTIN:
-        render_builtin(exp, out);
+    case TYPE_BUILTIN_FUNCTION:
+        render_builtin_function(exp, out);
         break;
     default:
         LISP_FAIL("cannot print expression %016" PRIx64 "\n", exp);
