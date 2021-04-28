@@ -2051,66 +2051,6 @@ Expr s_syntax(Expr args, Expr env)
     return cons(intern("lit"), cons(intern("mac"), cons(env, cons(fun_args, fun_body))));
 }
 
-Expr f_eq(Expr args, Expr env)
-{
-    if (is_nil(args))
-    {
-        LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("eq"), args)));
-    }
-    Expr prv = car(args);
-    Expr tmp = cdr(args);
-    if (is_nil(tmp))
-    {
-        LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("eq"), args)));
-    }
-    for (; tmp; tmp = cdr(tmp))
-    {
-        Expr const exp = car(tmp);
-        if (prv != exp)
-        {
-            return nil;
-        }
-        prv = exp;
-    }
-    return intern("t");
-}
-
-Expr f_equal(Expr args, Expr env)
-{
-    if (is_nil(args))
-    {
-        LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("equal"), args)));
-    }
-    Expr prv = car(args);
-    Expr tmp = cdr(args);
-    if (is_nil(tmp))
-    {
-        LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("equal"), args)));
-    }
-
-    for (; tmp; tmp = cdr(tmp))
-    {
-        Expr const exp = car(tmp);
-        if (!equal(prv, exp))
-        {
-            return nil;
-        }
-        prv = exp;
-    }
-
-    return LISP_SYMBOL_T;
-}
-
-Expr f_intern(Expr args, Expr env)
-{
-    return intern(string_value(car(args)));
-}
-
-Expr f_gensym(Expr args, Expr env)
-{
-    return lisp_gensym(&global.gensym);
-}
-
 bool is_op(Expr exp, Expr name)
 {
     return is_cons(exp) && car(exp) == name;
@@ -2314,30 +2254,82 @@ public:
         env_defspecial(env, "syntax", s_syntax);
         env_defspecial(env, "backquote", s_backquote);
 
-        env_defun(env, "eq", f_eq);
-        env_defun(env, "equal", f_equal);
+        env_defun(env, "eq", [this](Expr args, Expr env) -> Expr
+        {
+            if (is_nil(args))
+            {
+                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("eq"), args)));
+            }
+            Expr prv = car(args);
+            Expr tmp = cdr(args);
+            if (is_nil(tmp))
+            {
+                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("eq"), args)));
+            }
+            for (; tmp; tmp = cdr(tmp))
+            {
+                Expr const exp = car(tmp);
+                if (prv != exp)
+                {
+                    return nil;
+                }
+                prv = exp;
+            }
+            return intern("t");
+        });
+        env_defun(env, "equal", [this](Expr args, Expr env) -> Expr
+        {
+            if (is_nil(args))
+            {
+                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("equal"), args)));
+            }
+            Expr prv = car(args);
+            Expr tmp = cdr(args);
+            if (is_nil(tmp))
+            {
+                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("equal"), args)));
+            }
+
+            for (; tmp; tmp = cdr(tmp))
+            {
+                Expr const exp = car(tmp);
+                if (!equal(prv, exp))
+                {
+                    return nil;
+                }
+                prv = exp;
+            }
+
+            return LISP_SYMBOL_T;
+        });
+
         env_defun(env, "cons", [this](Expr args, Expr env) -> Expr
         {
             return cons(car(args), cadr(args));
         });
+
         env_defun(env, "car", [this](Expr args, Expr env) -> Expr
         {
             return car(car(args));
         });
+
         env_defun(env, "cdr", [this](Expr args, Expr env) -> Expr
         {
             return cdr(car(args));
         });
+
         env_defun(env, "rplaca", [this](Expr args, Expr env) -> Expr
         {
             rplaca(car(args), cadr(args));
             return nil;
         });
+
         env_defun(env, "rplacd", [this](Expr args, Expr env) -> Expr
         {
             rplacd(car(args), cadr(args));
             return nil;
         });
+
         env_defun(env, "println", [this](Expr args, Expr env) -> Expr
         {
             Expr out = global.stream.stdout;
@@ -2353,9 +2345,17 @@ public:
             stream_put_char(out, '\n');
             return nil;
         });
-        env_defun(env, "intern", f_intern);
 
-        env_defun(env, "gensym", f_gensym);
+        env_defun(env, "intern", [this](Expr args, Expr env) -> Expr
+        {
+            return intern(string_value(car(args)));
+        });
+
+        env_defun(env, "gensym", [this](Expr args, Expr env) -> Expr
+        {
+            return lisp_gensym(&global.gensym);
+        });
+
         env_defun(env, "load-file", [this](Expr args, Expr env) -> Expr
         {
             load_file(string_value(first(args)), env);
