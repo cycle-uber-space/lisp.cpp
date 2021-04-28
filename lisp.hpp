@@ -149,6 +149,7 @@ enum
     TYPE_STREAM,
     TYPE_BUILTIN_SPECIAL,
     TYPE_BUILTIN_FUNCTION,
+    TYPE_BUILTIN_SYMBOL,
 };
 
 enum
@@ -410,6 +411,7 @@ BuiltinFun lisp_builtin_fun(BuiltinState * builtin, Expr exp);
 
 Expr make_builtin_special(char const * name, BuiltinFun fun);
 Expr make_builtin_function(char const * name, BuiltinFun fun);
+Expr make_builtin_symbol(char const * name, BuiltinFun fun);
 
 /* reader.h */
 
@@ -1230,6 +1232,11 @@ bool is_builtin_function(Expr exp)
     return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
 }
 
+bool is_builtin_symbol(Expr exp)
+{
+    return expr_type(exp) == TYPE_BUILTIN_SYMBOL;
+}
+
 static Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun, U64 type)
 {
     LISP_ASSERT(builtin->num < LISP_MAX_BUILTINS);
@@ -1248,6 +1255,11 @@ Expr lisp_make_builtin_special(BuiltinState * builtin, char const * name, Builti
 Expr lisp_make_builtin_function(BuiltinState * builtin, char const * name, BuiltinFun fun)
 {
     return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_FUNCTION);
+}
+
+Expr lisp_make_builtin_symbol(BuiltinState * builtin, char const * name, BuiltinFun fun)
+{
+    return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_SYMBOL);
 }
 
 static BuiltinInfo * _builtin_expr_to_info(BuiltinState * builtin, Expr exp)
@@ -1280,6 +1292,11 @@ Expr make_builtin_special(char const * name, BuiltinFun fun)
 Expr make_builtin_function(char const * name, BuiltinFun fun)
 {
     return lisp_make_builtin_function(&global.builtin, name, fun);
+}
+
+Expr make_builtin_symbol(char const * name, BuiltinFun fun)
+{
+    return lisp_make_builtin_symbol(&global.builtin, name, fun);
 }
 
 #endif
@@ -2087,6 +2104,11 @@ static void env_defspecial(Expr env, char const * name, BuiltinFun fun)
     env_def(env, intern(name), make_builtin_special(name, fun));
 }
 
+static void env_defsym(Expr env, char const * name, BuiltinFun fun)
+{
+    env_def(env, intern(name), make_builtin_symbol(name, fun));
+}
+
 bool is_unquote(Expr exp)
 {
     return is_named_call(exp, LISP_SYM_UNQUOTE);
@@ -2209,6 +2231,11 @@ public:
         Expr env = make_env(nil);
 
         env_def(env, intern("t"), intern("t"));
+
+        env_defsym(env, "*env*", [this](Expr args, Expr env) -> Expr
+        {
+            return env;
+        });
 
         env_defspecial(env, "quote", [this](Expr args, Expr env) -> Expr
         {
@@ -2519,6 +2546,9 @@ public:
         case TYPE_BUILTIN_FUNCTION:
             render_builtin_function(exp, out);
             break;
+        case TYPE_BUILTIN_SYMBOL:
+            render_builtin_symbol(exp, out);
+            break;
         default:
             LISP_FAIL("cannot print expression %016" PRIx64 "\n", exp);
             break;
@@ -2561,9 +2591,10 @@ public:
         stream_put_char(out, ')');
     }
 
-    void render_builtin_special(Expr exp, Expr out)
+    void render_builtin(Expr exp, Expr out, char const * flavor)
     {
-        stream_put_string(out, "#:<special operator");
+        stream_put_string(out, "#:<");
+        stream_put_string(out, flavor);
         char const * name = builtin_name(exp);
         if (name)
         {
@@ -2573,16 +2604,19 @@ public:
         stream_put_string(out, ">");
     }
 
+    void render_builtin_special(Expr exp, Expr out)
+    {
+        render_builtin(exp, out, "special operator");
+    }
+
     void render_builtin_function(Expr exp, Expr out)
     {
-        stream_put_string(out, "#:<core function");
-        char const * name = builtin_name(exp);
-        if (name)
-        {
-            stream_put_string(out, " ");
-            stream_put_string(out, name);
-        }
-        stream_put_string(out, ">");
+        render_builtin(exp, out, "core function");
+    }
+
+    void render_builtin_symbol(Expr exp, Expr out)
+    {
+        render_builtin(exp, out, "symbol macro");
     }
 
     void render_gensym(Expr exp, Expr out)
@@ -2671,14 +2705,11 @@ public:
             return exp;
         case TYPE_SYMBOL:
         case TYPE_GENSYM:
-            // TODO add symbol macros
-            if (exp == intern("*env*"))
-            {
-                return env;
-            }
             return env_get(env, exp);
         case TYPE_CONS:
             return apply(car(exp), cdr(exp), env);
+        case TYPE_BUILTIN_SYMBOL:
+            return builtin_fun(exp)(nil, env);
         default:
             LISP_FAIL("cannot evaluate %s\n", repr(exp));
             return nil;
