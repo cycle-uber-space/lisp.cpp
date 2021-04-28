@@ -512,6 +512,66 @@ I64 u64_as_i64(U64 val)
     return v.i;
 }
 
+U32 utf8_decode_one(U8 const * buf)
+{
+    U8 ch = *buf++;
+    if (ch < 0x80)
+    {
+        return ch;
+    }
+
+    // TODO check for leading 0b10 in continuation bytes
+
+    U32 val = 0;
+    if ((ch >> 5) == 0x6)
+    {
+        val |= ch & 0x1f;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else if ((ch >> 4) == 0xe)
+    {
+        val |= ch & 0xf;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else if ((ch >> 3) == 0x1e)
+    {
+        val |= ch & 0x7;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else
+    {
+        LISP_FAIL("illegal utf-8 string\n", val);
+    }
+
+    if (val >= 0xd800 && val < 0xe000)
+    {
+        LISP_FAIL("illegal surrogate pair %" PRIu32 " in utf-8 string\n", val);
+    }
+
+    return val;
+}
+
 SystemState global;
 
 class System
@@ -668,6 +728,7 @@ public:
             }
             return intern("t");
         });
+
         env_defun(env, "equal", [this](Expr args, Expr env) -> Expr
         {
             if (is_nil(args))
@@ -751,6 +812,16 @@ public:
         {
             load_file(string_value(first(args)), env);
             return nil;
+        });
+
+        env_defun(env, "ord", [this](Expr args, Expr env) -> Expr
+        {
+            return make_number(utf8_decode_one(string_value_utf8(car(args))));
+        });
+
+        env_defun(env, "chr", [this](Expr args, Expr env) -> Expr
+        {
+            return make_string_from_utf32_char((U32) fixnum_value(car(args)));
         });
 
         return env;
@@ -1126,9 +1197,61 @@ public:
         return lisp_make_string(&global.string, str);
     }
 
+    Expr make_string_from_utf8(U8 const * str)
+    {
+        // TODO this is not portable
+        return make_string((char const *) str);
+    }
+
+    Expr make_string_from_utf32_char(U32 ch)
+    {
+        U8 bytes[5];
+        U8 * out_bytes = bytes;
+
+        if (ch < 0x80)
+        {
+            *out_bytes++ = (U8) ch;
+        }
+        else if (ch < 0x800)
+        {
+            *out_bytes++ = (U8) (0xc0 | ((ch >> 6) & 0x1f));
+            *out_bytes++ = (U8) (0x80 | (ch & 0x3f));
+        }
+        else if (ch >= 0xd800 && ch < 0xe000)
+        {
+            LISP_FAIL("illegal code point %" PRIu64 " for utf-8 encoder\n", ch);
+        }
+        else if (ch < 0x10000)
+        {
+            *out_bytes++ = (U8) (0xe0 | ((ch >> 12) & 0xf));
+            *out_bytes++ = (U8) (0x80 | ((ch >> 6) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | (ch & 0x3f));
+        }
+        else if (ch < 0x200000)
+        {
+            *out_bytes++ = (U8) (0xf0 | ((ch >> 18) & 0x7));
+            *out_bytes++ = (U8) (0x80 | ((ch >> 12) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | ((ch >> 6) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | (ch & 0x3f));
+        }
+        else
+        {
+            LISP_FAIL("illegal code point %" PRIu64 " for utf-8 encoder\n", ch);
+        }
+
+        *out_bytes++ = 0;
+        return make_string_from_utf8(bytes);
+    }
+
     char const * string_value(Expr exp)
     {
         return lisp_string_value(&global.string, exp);
+    }
+
+    U8 const * string_value_utf8(Expr exp)
+    {
+        // TODO actually change internal representation
+        return (U8 const *) string_value(exp);
     }
 
     U64 string_length(Expr exp)

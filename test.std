@@ -37,3 +37,17 @@
 (test (car '(a b c)) => a)
 (test (cadr '(a b c)) => b)
 (test (caddr '(a b c)) => c)
+
+;;; ord
+
+(test (ord "A") => 65)
+(test (ord "Ä") => 196)
+(test (ord "あ") => 12354)
+(test (ord "𐍈") => 66376)
+
+;;; chr
+
+(test (chr 65) => "A")
+(test (chr 196) => "Ä")
+(test (chr 12354) => "あ")
+(test (chr 66376) => "𐍈")
