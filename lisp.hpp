@@ -2438,12 +2438,12 @@ public:
     {
         LISP_ASSERT(s_instance == nullptr);
         s_instance = this;
-        global_init();
+        system_init(&global);
     }
 
     virtual ~System()
     {
-        global_quit();
+        system_quit(&global);
         s_instance = nullptr;
     }
 
@@ -2487,16 +2487,6 @@ public:
             eval(exp, env);
         }
         stream_release(in);
-    }
-
-    void global_init()
-    {
-        system_init(&global);
-    }
-
-    void global_quit()
-    {
-        system_quit(&global);
     }
 
 private:
