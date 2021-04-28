@@ -1228,17 +1228,17 @@ public:
         return eq(a, b);
     }
 
-    Expr list_1(Expr exp1)
+    Expr list(Expr exp1)
     {
         return cons(exp1, nil);
     }
 
-    Expr list_2(Expr exp1, Expr exp2)
+    Expr list(Expr exp1, Expr exp2)
     {
         return cons(exp1, cons(exp2, nil));
     }
 
-    Expr list_3(Expr exp1, Expr exp2, Expr exp3)
+    Expr list(Expr exp1, Expr exp2, Expr exp3)
     {
         return cons(exp1, cons(exp2, cons(exp3, nil)));
     }
@@ -1381,13 +1381,13 @@ public:
         else if (stream_peek_char(in) == '\'')
         {
             stream_skip_char(in);
-            Expr const exp = list_2(intern("quote"), parse_expr(in));
+            Expr const exp = list(intern("quote"), parse_expr(in));
             return exp;
         }
         else if (stream_peek_char(in) == '`')
         {
             stream_skip_char(in);
-            Expr const exp = list_2(intern("backquote"), parse_expr(in));
+            Expr const exp = list(intern("backquote"), parse_expr(in));
             return exp;
         }
         else if (stream_peek_char(in) == ',')
@@ -1396,9 +1396,9 @@ public:
             if (stream_peek_char(in) == '@')
             {
                 stream_skip_char(in);
-                return list_2(intern("unquote-splicing"), parse_expr(in));
+                return list(intern("unquote-splicing"), parse_expr(in));
             }
-            return list_2(intern("unquote"), parse_expr(in));
+            return list(intern("unquote"), parse_expr(in));
         }
 #endif
 

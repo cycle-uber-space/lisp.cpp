@@ -171,12 +171,12 @@ public:
         LISP_TEST_ASSERT(test, read_one_from_string("nil") == nil);
         LISP_TEST_ASSERT(test, read_one_from_string("foo") == foo);
         LISP_TEST_ASSERT(test, read_one_from_string("()") == nil);
-        LISP_TEST_ASSERT(test, equal(read_one_from_string("(foo bar baz)"), list_3(foo, intern("bar"), intern("baz"))));
+        LISP_TEST_ASSERT(test, equal(read_one_from_string("(foo bar baz)"), list(foo, intern("bar"), intern("baz"))));
 
         LISP_TEST_ASSERT(test, equal(read_one_from_string("'foo"), make_quote(foo)));
         LISP_TEST_ASSERT(test, equal(read_one_from_string("`foo"), make_backquote(foo)));
-        LISP_TEST_ASSERT(test, equal(read_one_from_string(",foo"), list_2(intern("unquote"), foo)));
-        LISP_TEST_ASSERT(test, equal(read_one_from_string(",@foo"), list_2(intern("unquote-splicing"), foo)));
+        LISP_TEST_ASSERT(test, equal(read_one_from_string(",foo"), list(intern("unquote"), foo)));
+        LISP_TEST_ASSERT(test, equal(read_one_from_string(",@foo"), list(intern("unquote-splicing"), foo)));
     }
 
     void unit_test_printer(TestState * test)
@@ -195,9 +195,9 @@ public:
         {
             Expr const foo = intern("foo");
             Expr const bar = intern("bar");
-            LISP_TEST_ASSERT(test, first(list_1(foo)) == foo);
-            LISP_TEST_ASSERT(test, first(list_2(foo, bar)) == foo);
-            LISP_TEST_ASSERT(test, second(list_2(foo, bar)) == bar);
+            LISP_TEST_ASSERT(test, first(list(foo)) == foo);
+            LISP_TEST_ASSERT(test, first(list(foo, bar)) == foo);
+            LISP_TEST_ASSERT(test, second(list(foo, bar)) == bar);
         }
     }
 
@@ -325,12 +325,12 @@ public:
 
     Expr make_quote(Expr exp)
     {
-        return list_2(intern("quote"), exp);
+        return list(intern("quote"), exp);
     }
 
     Expr make_backquote(Expr exp)
     {
-        return list_2(intern("backquote"), exp);
+        return list(intern("backquote"), exp);
     }
 };
 
