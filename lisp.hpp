@@ -350,36 +350,6 @@ inline static char stream_get_char(Expr exp)
 
 void stream_release(Expr exp);
 
-/* special.h */
-
-#define LISP_MAX_SPECIALS 64
-
-typedef std::function<Expr(Expr args, Expr kwargs, Expr env)> SpecialFun;
-
-typedef struct
-{
-    char const * name;
-    SpecialFun fun;
-} SpecialInfo;
-
-typedef struct
-{
-    U64 num;
-    SpecialInfo info[LISP_MAX_SPECIALS];
-} SpecialState;
-
-void special_init(SpecialState * special);
-void special_quit(SpecialState * special);
-
-bool is_special(Expr exp);
-
-Expr lisp_make_special(SpecialState * special, char const * name, SpecialFun fun);
-
-char const * lisp_special_name(SpecialState * special, Expr exp);
-SpecialFun lisp_special_fun(SpecialState * special, Expr exp);
-
-Expr make_special(char const * name, SpecialFun fun);
-
 /* builtin.h */
 
 #define LISP_MAX_BUILTINS 64
@@ -401,14 +371,22 @@ typedef struct
 void builtin_init(BuiltinState * builtin);
 void builtin_quit(BuiltinState * builtin);
 
-bool is_builtin(Expr exp);
+bool is_builtin_special(Expr exp);
+bool is_builtin_function(Expr exp);
 
-Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun);
+inline bool is_builtin(Expr exp)
+{
+    return is_builtin_special(exp) || is_builtin_function(exp);
+}
+
+Expr lisp_make_builtin_special(BuiltinState * builtin, char const * name, BuiltinFun fun);
+Expr lisp_make_builtin_function(BuiltinState * builtin, char const * name, BuiltinFun fun);
 
 char const * lisp_builtin_name(BuiltinState * builtin, Expr exp);
 BuiltinFun lisp_builtin_fun(BuiltinState * builtin, Expr exp);
 
-Expr make_builtin(char const * name, BuiltinFun fun);
+Expr make_builtin_special(char const * name, BuiltinFun fun);
+Expr make_builtin_function(char const * name, BuiltinFun fun);
 
 /* reader.h */
 
@@ -495,7 +473,6 @@ typedef struct SystemState
     StreamState stream;
     GensymState gensym;
     StringState string;
-    SpecialState special;
     BuiltinState builtin;
 } SystemState;
 
@@ -526,16 +503,6 @@ inline static char const * builtin_name(Expr exp)
 inline static BuiltinFun builtin_fun(Expr exp)
 {
     return lisp_builtin_fun(&global.builtin, exp);
-}
-
-inline static char const * special_name(Expr exp)
-{
-    return lisp_special_name(&global.special, exp);
-}
-
-inline static SpecialFun special_fun(Expr exp)
-{
-    return lisp_special_fun(&global.special, exp);
 }
 
 #endif
@@ -1202,59 +1169,6 @@ void stream_release(Expr exp)
 
 #endif
 
-void special_init(SpecialState * special)
-{
-    memset(special, 0, sizeof(SpecialState));
-}
-
-void special_quit(SpecialState * special)
-{
-}
-
-bool is_special(Expr exp)
-{
-    return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
-}
-
-Expr lisp_make_special(SpecialState * special, char const * name, SpecialFun fun)
-{
-    LISP_ASSERT(special->num < LISP_MAX_SPECIALS);
-    U64 const index = special->num++;
-    SpecialInfo * info = special->info + index;
-    info->name = name; /* TODO take ownership of name? */
-    info->fun = fun;
-    return make_expr(TYPE_BUILTIN_SPECIAL, index);
-}
-
-static SpecialInfo * _special_expr_to_info(SpecialState * special, Expr exp)
-{
-    LISP_ASSERT(is_special(exp));
-    U64 const index = expr_data(exp);
-    LISP_ASSERT(index < special->num);
-    return special->info + index;
-}
-
-char const * lisp_special_name(SpecialState * special, Expr exp)
-{
-    SpecialInfo * info = _special_expr_to_info(special, exp);
-    return info->name;
-}
-
-SpecialFun lisp_special_fun(SpecialState * special, Expr exp)
-{
-    SpecialInfo * info = _special_expr_to_info(special, exp);
-    return info->fun;
-}
-
-#if LISP_GLOBAL_API
-
-Expr make_special(char const * name, SpecialFun fun)
-{
-    return lisp_make_special(&global.special, name, fun);
-}
-
-#endif
-
 void builtin_init(BuiltinState * builtin)
 {
     memset(builtin, 0, sizeof(BuiltinState));
@@ -1264,19 +1178,34 @@ void builtin_quit(BuiltinState * builtin)
 {
 }
 
-bool is_builtin(Expr exp)
+bool is_builtin_special(Expr exp)
+{
+    return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
+}
+
+bool is_builtin_function(Expr exp)
 {
     return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
 }
 
-Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun)
+static Expr lisp_make_builtin(BuiltinState * builtin, char const * name, BuiltinFun fun, U64 type)
 {
     LISP_ASSERT(builtin->num < LISP_MAX_BUILTINS);
     U64 const index = builtin->num++;
     BuiltinInfo * info = builtin->info + index;
     info->name = name; /* TODO take ownership of name? */
     info->fun = fun;
-    return make_expr(TYPE_BUILTIN_FUNCTION, index);
+    return make_expr(type, index);
+}
+
+Expr lisp_make_builtin_special(BuiltinState * builtin, char const * name, BuiltinFun fun)
+{
+    return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_SPECIAL);
+}
+
+Expr lisp_make_builtin_function(BuiltinState * builtin, char const * name, BuiltinFun fun)
+{
+    return lisp_make_builtin(builtin, name, fun, TYPE_BUILTIN_FUNCTION);
 }
 
 static BuiltinInfo * _builtin_expr_to_info(BuiltinState * builtin, Expr exp)
@@ -1301,9 +1230,14 @@ BuiltinFun lisp_builtin_fun(BuiltinState * builtin, Expr exp)
 
 #if LISP_GLOBAL_API
 
-Expr make_builtin(char const * name, BuiltinFun fun)
+Expr make_builtin_special(char const * name, BuiltinFun fun)
 {
-    return lisp_make_builtin(&global.builtin, name, fun);
+    return lisp_make_builtin_special(&global.builtin, name, fun);
+}
+
+Expr make_builtin_function(char const * name, BuiltinFun fun)
+{
+    return lisp_make_builtin_function(&global.builtin, name, fun);
 }
 
 #endif
@@ -1697,7 +1631,7 @@ void render_cons(Expr exp, Expr out)
 void render_builtin_special(Expr exp, Expr out)
 {
     stream_put_string(out, "#:<special operator");
-    char const * name = special_name(exp);
+    char const * name = builtin_name(exp);
     if (name)
     {
         stream_put_string(out, " ");
@@ -2106,12 +2040,12 @@ void env_destructuring_bind(Expr env, Expr vars, Expr vals)
 
 static void env_defun(Expr env, char const * name, BuiltinFun fun)
 {
-    env_def(env, intern(name), make_builtin(name, fun));
+    env_def(env, intern(name), make_builtin_function(name, fun));
 }
 
-static void env_defspecial(Expr env, char const * name, SpecialFun fun)
+static void env_defspecial(Expr env, char const * name, BuiltinFun fun)
 {
-    env_def(env, intern(name), make_special(name, fun));
+    env_def(env, intern(name), make_builtin_special(name, fun));
 }
 
 Expr s_quote(Expr args, Expr kwargs, Expr env)
@@ -2454,19 +2388,19 @@ static Expr make_call_env_from(Expr lenv, Expr vars, Expr vals)
 
 Expr apply(Expr name, Expr args, Expr env)
 {
-    if (is_builtin(name))
+    if (is_builtin_function(name))
     {
         // TODO parse keyword args
         Expr kwargs = nil;
         Expr vals = eval_list(args, env);
         return builtin_fun(name)(vals, kwargs, env);
     }
-    else if (is_special(name))
+    else if (is_builtin_special(name))
     {
         // TODO parse keyword args
         Expr kwargs = nil;
         Expr vals = args;
-        return special_fun(name)(vals, kwargs, env);
+        return builtin_fun(name)(vals, kwargs, env);
     }
     else if (is_function(name))
     {
@@ -2521,13 +2455,11 @@ void system_init(SystemState * system)
     gensym_init(&system->gensym);
     string_init(&system->string);
     stream_init(&system->stream);
-    special_init(&system->special);
     builtin_init(&system->builtin);
 }
 
 void system_quit(SystemState * system)
 {
-    special_quit(&system->special);
     builtin_quit(&system->builtin);
     string_quit(&system->string);
     gensym_quit(&system->gensym);
