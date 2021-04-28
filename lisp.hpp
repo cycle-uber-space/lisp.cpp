@@ -2441,6 +2441,16 @@ public:
         {
             return cdr(car(args));
         });
+        env_defun(env, "rplaca", [this](Expr args, Expr env) -> Expr
+        {
+            rplaca(car(args), cadr(args));
+            return nil;
+        });
+        env_defun(env, "rplacd", [this](Expr args, Expr env) -> Expr
+        {
+            rplacd(car(args), cadr(args));
+            return nil;
+        });
         env_defun(env, "println", f_println);
         env_defun(env, "intern", f_intern);
 
