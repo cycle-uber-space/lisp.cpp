@@ -19,7 +19,7 @@ public:
     Expr make_core_env()
     {
         Expr env = Super::make_core_env();
-        env_defun(env, "coin", [this](Expr args, Expr kwargs, Expr env) -> Expr
+        env_defun(env, "coin", [this](Expr args, Expr env) -> Expr
         {
             LISP_ASSERT(args == nil);
             return (rand() & 1) ? LISP_SYMBOL_T : nil;

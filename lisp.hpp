@@ -354,7 +354,7 @@ void stream_release(Expr exp);
 
 #define LISP_MAX_BUILTINS 64
 
-typedef std::function<Expr(Expr args, Expr kwargs, Expr env)> BuiltinFun;
+typedef std::function<Expr(Expr args, Expr env)> BuiltinFun;
 
 typedef struct
 {
@@ -2039,19 +2039,18 @@ static void env_defspecial(Expr env, char const * name, BuiltinFun fun)
     env_def(env, intern(name), make_builtin_special(name, fun));
 }
 
-Expr s_quote(Expr args, Expr kwargs, Expr env)
+Expr s_quote(Expr args, Expr env)
 {
     return car(args);
 }
 
-Expr s_def(Expr args, Expr kwargs, Expr env)
+Expr s_def(Expr args, Expr env)
 {
-    // TODO look for env in kwargs
     env_def(env, car(args), eval(cadr(args), env));
     return nil;
 }
 
-Expr s_if(Expr args, Expr kwargs, Expr env)
+Expr s_if(Expr args, Expr env)
 {
     if (eval(car(args), env) != nil)
     {
@@ -2067,7 +2066,7 @@ Expr s_if(Expr args, Expr kwargs, Expr env)
     }
 }
 
-Expr s_while(Expr args, Expr kwargs, Expr env)
+Expr s_while(Expr args, Expr env)
 {
     Expr const test = car(args);
     Expr const body = cdr(args);
@@ -2080,7 +2079,7 @@ Expr s_while(Expr args, Expr kwargs, Expr env)
     return nil;
 }
 
-Expr s_lambda(Expr args, Expr kwargs, Expr env)
+Expr s_lambda(Expr args, Expr env)
 {
     Expr const fun_args = car(args);
     Expr const fun_body = cdr(args);
@@ -2139,19 +2138,19 @@ static Expr backquote(Expr exp, Expr env)
     }
 }
 
-Expr s_backquote(Expr args, Expr kwargs, Expr env)
+Expr s_backquote(Expr args, Expr env)
 {
     return backquote(car(args), env);
 }
 
-Expr s_syntax(Expr args, Expr kwargs, Expr env)
+Expr s_syntax(Expr args, Expr env)
 {
     Expr const fun_args = car(args);
     Expr const fun_body = cdr(args);
     return cons(intern("lit"), cons(intern("mac"), cons(env, cons(fun_args, fun_body))));
 }
 
-Expr f_eq(Expr args, Expr kwargs, Expr env)
+Expr f_eq(Expr args, Expr env)
 {
     if (is_nil(args))
     {
@@ -2175,7 +2174,7 @@ Expr f_eq(Expr args, Expr kwargs, Expr env)
     return intern("t");
 }
 
-Expr f_equal(Expr args, Expr kwargs, Expr env)
+Expr f_equal(Expr args, Expr env)
 {
     if (is_nil(args))
     {
@@ -2201,7 +2200,7 @@ Expr f_equal(Expr args, Expr kwargs, Expr env)
     return LISP_SYMBOL_T;
 }
 
-Expr f_println(Expr args, Expr kwargs, Expr env)
+Expr f_println(Expr args, Expr env)
 {
     Expr out = global.stream.stdout;
     for (Expr tmp = args; tmp; tmp = cdr(tmp))
@@ -2217,12 +2216,12 @@ Expr f_println(Expr args, Expr kwargs, Expr env)
     return nil;
 }
 
-Expr f_intern(Expr args, Expr kwargs, Expr env)
+Expr f_intern(Expr args, Expr env)
 {
     return intern(string_value(car(args)));
 }
 
-Expr f_gensym(Expr args, Expr kwargs, Expr env)
+Expr f_gensym(Expr args, Expr env)
 {
     return lisp_gensym(&global.gensym);
 }
@@ -2324,22 +2323,16 @@ Expr apply(Expr name, Expr args, Expr env)
 {
     if (is_builtin_function(name))
     {
-        // TODO parse keyword args
-        Expr kwargs = nil;
         Expr vals = eval_list(args, env);
-        return builtin_fun(name)(vals, kwargs, env);
+        return builtin_fun(name)(vals, env);
     }
     else if (is_builtin_special(name))
     {
-        // TODO parse keyword args
-        Expr kwargs = nil;
         Expr vals = args;
-        return builtin_fun(name)(vals, kwargs, env);
+        return builtin_fun(name)(vals, env);
     }
     else if (is_function(name))
     {
-        // TODO parse keyword args
-        Expr kwargs = nil;
         Expr vals = eval_list(args, env);
         Expr body = closure_body(name);
         return eval_body(body, make_call_env_from(closure_env(name), closure_args(name), vals));
@@ -2436,15 +2429,15 @@ public:
 
         env_defun(env, "eq", f_eq);
         env_defun(env, "equal", f_equal);
-        env_defun(env, "cons", [this](Expr args, Expr kwargs, Expr env) -> Expr
+        env_defun(env, "cons", [this](Expr args, Expr env) -> Expr
         {
             return cons(car(args), cadr(args));
         });
-        env_defun(env, "car", [this](Expr args, Expr kwargs, Expr env) -> Expr
+        env_defun(env, "car", [this](Expr args, Expr env) -> Expr
         {
             return car(car(args));
         });
-        env_defun(env, "cdr", [this](Expr args, Expr kwargs, Expr env) -> Expr
+        env_defun(env, "cdr", [this](Expr args, Expr env) -> Expr
         {
             return cdr(car(args));
         });
@@ -2452,7 +2445,7 @@ public:
         env_defun(env, "intern", f_intern);
 
         env_defun(env, "gensym", f_gensym);
-        env_defun(env, "load-file", [this](Expr args, Expr kwargs, Expr env) -> Expr
+        env_defun(env, "load-file", [this](Expr args, Expr env) -> Expr
         {
             load_file(string_value(first(args)), env);
             return nil;
