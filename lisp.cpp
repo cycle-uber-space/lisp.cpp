@@ -67,6 +67,10 @@ public:
         else if (!strcmp("repl", cmd))
         {
             Expr env = make_core_env();
+            for (int i = 2; i < argc; i++)
+            {
+                load_file(argv[i], env);
+            }
 
             // TODO make a proper prompt input stream
             Expr in = global.stream.stdin;
