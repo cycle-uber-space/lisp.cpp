@@ -1,5 +1,3 @@
 
-(load "bel.lisp")
-
 (while (coin)
   (prn 'bel))
