@@ -690,6 +690,35 @@ public:
         stream_release(in);
     }
 
+    void repl(Expr env)
+    {
+        // TODO make a proper prompt input stream
+        Expr in = global.stream.stdin;
+    loop:
+        {
+            /* read */
+            // TODO use global.stream.stdout
+            fprintf(stdout, "> ");
+            fflush(stdout);
+
+            Expr exp = nil;
+            if (!maybe_parse_expr(in, &exp))
+            {
+                goto done;
+            }
+
+            /* eval */
+            Expr ret = eval(exp, env);
+
+            /* print */
+            println(ret);
+
+            goto loop;
+        }
+    done:
+        ;
+    }
+
     virtual Expr make_core_env()
     {
         Expr env = make_env(nil);

@@ -39,6 +39,8 @@ public:
             load_file(argv[i], env);
         }
 
+        repl(env);
+
         return 0;
     }
 };
