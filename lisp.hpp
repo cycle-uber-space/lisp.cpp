@@ -760,54 +760,14 @@ public:
             return backquote(car(args), env);
         });
 
-        env_defun(env, "eq", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "eq", [this](Expr args, Expr) -> Expr
         {
-            if (is_nil(args))
-            {
-                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("eq"), args)));
-            }
-            Expr prv = car(args);
-            Expr tmp = cdr(args);
-            if (is_nil(tmp))
-            {
-                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("eq"), args)));
-            }
-            for (; tmp; tmp = cdr(tmp))
-            {
-                Expr const exp = car(tmp);
-                if (prv != exp)
-                {
-                    return nil;
-                }
-                prv = exp;
-            }
-            return intern("t");
+            return all_eq(args) ? LISP_SYMBOL_T : nil;
         });
 
-        env_defun(env, "equal", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "equal", [this](Expr args, Expr) -> Expr
         {
-            if (is_nil(args))
-            {
-                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("equal"), args)));
-            }
-            Expr prv = car(args);
-            Expr tmp = cdr(args);
-            if (is_nil(tmp))
-            {
-                LISP_FAIL("not enough arguments in call %s\n", repr(cons(intern("equal"), args)));
-            }
-
-            for (; tmp; tmp = cdr(tmp))
-            {
-                Expr const exp = car(tmp);
-                if (!equal(prv, exp))
-                {
-                    return nil;
-                }
-                prv = exp;
-            }
-
-            return LISP_SYMBOL_T;
+            return all_equal(args) ? LISP_SYMBOL_T : nil;
         });
 
         env_defun(env, "cons", [this](Expr args, Expr env) -> Expr
@@ -1398,6 +1358,58 @@ public:
             return string_equal(a, b);
         }
         return eq(a, b);
+    }
+
+    bool all_equal(Expr exps)
+    {
+        if (is_nil(exps))
+        {
+            LISP_FAIL("not enough arguments in call to equal: %s\n", repr(exps));
+        }
+        Expr prv = car(exps);
+        Expr tmp = cdr(exps);
+        if (is_nil(tmp))
+        {
+            LISP_FAIL("not enough arguments in call to equal: %s\n", repr(exps));
+        }
+
+        for (; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            if (!equal(prv, exp))
+            {
+                return false;
+            }
+            prv = exp;
+        }
+
+        return true;
+    }
+
+    bool all_eq(Expr exps)
+    {
+        if (is_nil(exps))
+        {
+            LISP_FAIL("not enough arguments in call to eq: %s\n", repr(exps));
+        }
+        Expr prv = car(exps);
+        Expr tmp = cdr(exps);
+        if (is_nil(tmp))
+        {
+            LISP_FAIL("not enough arguments in call to eq: %s\n", repr(exps));
+        }
+
+        for (; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            if (!eq(prv, exp))
+            {
+                return false;
+            }
+            prv = exp;
+        }
+
+        return true;
     }
 
     Expr list(Expr exp1)
