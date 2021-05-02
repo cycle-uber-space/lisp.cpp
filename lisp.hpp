@@ -163,7 +163,7 @@ enum
     TYPE_SYMBOL,
     TYPE_CONS,
     TYPE_GENSYM,
-    TYPE_CHARACTER,
+    TYPE_CHAR,
     TYPE_FIXNUM,
     TYPE_STRING,
     TYPE_STREAM,
@@ -460,12 +460,12 @@ static struct Pair * _cons_lookup(ConsState * cons, U64 index)
 
 bool is_character(Expr exp)
 {
-    return expr_type(exp) == TYPE_CHARACTER;
+    return expr_type(exp) == TYPE_CHAR;
 }
 
 Expr make_character(U32 code)
 {
-    return make_expr(TYPE_CHARACTER, code);
+    return make_expr(TYPE_CHAR, code);
 }
 
 U32 character_code(Expr exp)
@@ -632,7 +632,7 @@ public:
         LISP_ASSERT_ALWAYS(TYPE_SYMBOL           == make_type("symbol"));
         LISP_ASSERT_ALWAYS(TYPE_CONS             == make_type("cons"));
         LISP_ASSERT_ALWAYS(TYPE_GENSYM           == make_type("gensym"));
-        LISP_ASSERT_ALWAYS(TYPE_CHARACTER        == make_type("char"));
+        LISP_ASSERT_ALWAYS(TYPE_CHAR             == make_type("char"));
         LISP_ASSERT_ALWAYS(TYPE_FIXNUM           == make_type("fixnum"));
         LISP_ASSERT_ALWAYS(TYPE_STRING           == make_type("string"));
         LISP_ASSERT_ALWAYS(TYPE_STREAM           == make_type("stream"));
@@ -1982,8 +1982,8 @@ public:
         case TYPE_GENSYM:
             render_gensym(exp, out);
             break;
-        case TYPE_CHARACTER:
-            render_character(exp, out);
+        case TYPE_CHAR:
+            render_char(exp, out);
             break;
         case TYPE_FIXNUM:
             stream_put_i64(out, fixnum_value(exp));
@@ -2078,7 +2078,7 @@ public:
         stream_put_u64(out, num);
     }
 
-    void render_character(Expr exp, Expr out)
+    void render_char(Expr exp, Expr out)
     {
         LISP_ASSERT_DEBUG(is_character(exp));
         U32 const code = character_code(exp);
@@ -2748,7 +2748,7 @@ public:
         switch (expr_type(exp))
         {
         case TYPE_NIL:
-        case TYPE_CHARACTER:
+        case TYPE_CHAR:
         case TYPE_FIXNUM:
         case TYPE_STRING:
             return exp;
