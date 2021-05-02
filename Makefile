@@ -3,7 +3,7 @@
 .SUFFIXES:
 .PHONY: all clean test
 
-BIN = std scheme
+BIN = bel scheme std
 
 all: $(BIN)
 
