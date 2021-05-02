@@ -701,10 +701,7 @@ public:
             return env;
         });
 
-        env_defspecial(env, "quote", [this](Expr args, Expr env) -> Expr
-        {
-            return car(args);
-        });
+        env_defspecial_quote(env);
 
         env_defspecial(env, "if", [this](Expr args, Expr env) -> Expr
         {
@@ -722,18 +719,7 @@ public:
             }
         });
 
-        env_defspecial(env, "while", [this](Expr args, Expr env) -> Expr
-        {
-            Expr const test = car(args);
-            Expr const body = cdr(args);
-
-            // TODO do we want to return a value?
-            while (eval(test, env))
-            {
-                eval_body(body, env);
-            }
-            return nil;
-        });
+        env_defspecial_while(env);
 
         env_defspecial(env, "def", [this](Expr args, Expr env) -> Expr
         {
@@ -797,21 +783,7 @@ public:
             return nil;
         });
 
-        env_defun(env, "println", [this](Expr args, Expr env) -> Expr
-        {
-            Expr out = global.stream.stdout;
-            for (Expr tmp = args; tmp; tmp = cdr(tmp))
-            {
-                if (tmp != args)
-                {
-                    stream_put_char(out, ' ');
-                }
-                Expr exp = car(tmp);
-                print_expr(exp, out);
-            }
-            stream_put_char(out, '\n');
-            return nil;
-        });
+        env_defun_println(env, "println");
 
         env_defun(env, "intern", [this](Expr args, Expr env) -> Expr
         {
@@ -840,6 +812,49 @@ public:
         });
 
         return env;
+    }
+
+    void env_defspecial_quote(Expr env)
+    {
+        env_defspecial(env, "quote", [this](Expr args, Expr env) -> Expr
+        {
+            return car(args);
+        });
+    }
+
+    void env_defspecial_while(Expr env)
+    {
+        env_defspecial(env, "while", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const test = car(args);
+            Expr const body = cdr(args);
+
+            // TODO do we want to return a value?
+            while (eval(test, env))
+            {
+                eval_body(body, env);
+            }
+            return nil;
+        });
+    }
+
+    void env_defun_println(Expr env, char const * name)
+    {
+        env_defun(env, name, [this](Expr args, Expr env) -> Expr
+        {
+            Expr out = global.stream.stdout;
+            for (Expr tmp = args; tmp; tmp = cdr(tmp))
+            {
+                if (tmp != args)
+                {
+                    stream_put_char(out, ' ');
+                }
+                Expr exp = car(tmp);
+                print_expr(exp, out);
+            }
+            stream_put_char(out, '\n');
+            return nil;
+        });
     }
 
     /* type */
