@@ -235,13 +235,6 @@ inline bool is_cons(Expr exp)
     return expr_type(exp) == TYPE_CONS;
 }
 
-/* gensym */
-
-typedef struct
-{
-    U64 counter;
-} GensymState;
-
 /* string */
 
 #define LISP_MAX_STRINGS 500000
@@ -301,7 +294,6 @@ typedef struct SystemState
     SymbolState symbol;
     ConsState cons;
     StreamState stream;
-    GensymState gensym;
     StringState string;
     BuiltinState builtin;
 } SystemState;
@@ -603,6 +595,29 @@ private:
     std::vector<std::string> m_type_names;
 };
 
+class GensymImpl
+{
+public:
+    GensymImpl(U64 type = TYPE_GENSYM) : m_type(type), m_counter(0)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make()
+    {
+        U64 const data = m_counter++;
+        return make_expr(m_type, data);
+    }
+
+private:
+    U64 m_type;
+    U64 m_counter;
+};
+
 class System
 {
 public:
@@ -636,7 +651,6 @@ public:
     {
         symbol_init(&system->symbol);
         cons_init(&system->cons);
-        gensym_init(&system->gensym);
         string_init(&system->string);
         stream_init(&system->stream);
         builtin_init(&system->builtin);
@@ -646,7 +660,6 @@ public:
     {
         builtin_quit(&system->builtin);
         string_quit(&system->string);
-        gensym_quit(&system->gensym);
         stream_quit(&system->stream);
         cons_quit(&system->cons);
         symbol_quit(&system->symbol);
@@ -847,7 +860,7 @@ public:
 
         env_defun(env, "gensym", [this](Expr args, Expr env) -> Expr
         {
-            return lisp_gensym(&global.gensym);
+            return gensym();
         });
 
         env_defun(env, "load-file", [this](Expr args, Expr env) -> Expr
@@ -1085,23 +1098,14 @@ public:
 
     /* gensym */
 
-    void gensym_init(GensymState * gensym)
-    {
-        memset(gensym, 0, sizeof(GensymState));
-    }
-
-    void gensym_quit(GensymState * gensym)
-    {
-    }
-
     bool is_gensym(Expr exp)
     {
-        return expr_type(exp) == TYPE_GENSYM;
+        return m_gensym.isinstance(exp);
     }
 
-    Expr lisp_gensym(GensymState * gensym)
+    Expr gensym()
     {
-        return make_expr(TYPE_GENSYM, gensym->counter++);
+        return m_gensym.make();
     }
 
     /* fixnum */
@@ -2858,6 +2862,7 @@ public:
     }
 
     TypeImpl m_type;
+    GensymImpl m_gensym;
 
     static System * s_instance;
 };
