@@ -1534,16 +1534,28 @@ public:
         return buffer;
     }
 
+    void print(Expr exp)
+    {
+        Expr const out = global.stream.stdout;
+        System::s_instance->print_expr(exp, out);
+    }
+
     void println(Expr exp)
     {
-        Expr out = global.stream.stdout;
+        Expr const out = global.stream.stdout;
         System::s_instance->print_expr(exp, out);
         stream_put_string(out, "\n");
     }
 
+    void display(Expr exp)
+    {
+        Expr const out = global.stream.stdout;
+        System::s_instance->display_expr(exp, out);
+    }
+
     void displayln(Expr exp)
     {
-        Expr out = global.stream.stdout;
+        Expr const out = global.stream.stdout;
         System::s_instance->display_expr(exp, out);
         stream_put_string(out, "\n");
     }
