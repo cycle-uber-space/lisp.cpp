@@ -1492,6 +1492,13 @@ public:
         stream_put_string(out, "\n");
     }
 
+    void displayln(Expr exp)
+    {
+        Expr out = global.stream.stdout;
+        System::s_instance->display_expr(exp, out);
+        stream_put_string(out, "\n");
+    }
+
     /* reader */
 
     Expr read_one_from_string(char const * src)
@@ -1964,6 +1971,22 @@ public:
     }
 
     /* printer */
+
+    void display_expr(Expr exp, Expr out)
+    {
+        switch (expr_type(exp))
+        {
+        case TYPE_STRING:
+            stream_put_string(out, string_value(exp));
+            break;
+        case TYPE_CHAR:
+            stream_put_char(out, character_code(exp));
+            break;
+        default:
+            print_expr(exp, out);
+            break;
+        }
+    }
 
     void print_expr(Expr exp, Expr out)
     {
