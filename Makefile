@@ -3,12 +3,14 @@
 .SUFFIXES:
 .PHONY: all clean test
 
-all: std
+BIN = std scheme
+
+all: $(BIN)
 
 clean:
-	rm -f std
+	rm -f $(BIN)
 
-std: std.cpp lisp.hpp Makefile
+%: %.cpp lisp.hpp Makefile
 	c++ -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess -O2 -o $@ $<
 
 test:
