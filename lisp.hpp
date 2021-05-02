@@ -1442,6 +1442,11 @@ public:
         return cons(exp1, cons(exp2, cons(exp3, nil)));
     }
 
+    Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
+    {
+        return cons(exp1, cons(exp2, cons(exp3, cons(exp4, cons(exp5, nil)))));
+    }
+
     Expr first(Expr seq)
     {
         return car(seq);
