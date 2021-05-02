@@ -34,7 +34,7 @@ public:
             return make_function(env, nil, fun_args, fun_body);
         });
 
-        env_defspecial(env, "displayln", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "displayln", [this](Expr args, Expr env) -> Expr
         {
             displayln(car(args));
             return nil;
