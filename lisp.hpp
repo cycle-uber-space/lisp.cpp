@@ -36,8 +36,8 @@
 #define LISP_READER_PARSE_CHARACTER 1
 #endif
 
-#ifndef LISP_PRINTER_RENDER_QUOTE
-#define LISP_PRINTER_RENDER_QUOTE 1
+#ifndef LISP_PRINTER_PRINT_QUOTE
+#define LISP_PRINTER_PRINT_QUOTE 1
 #endif
 
 /* includes */
@@ -807,7 +807,7 @@ public:
                     stream_put_char(out, ' ');
                 }
                 Expr exp = car(tmp);
-                render_expr(exp, out);
+                print_expr(exp, out);
             }
             stream_put_char(out, '\n');
             return nil;
@@ -1480,7 +1480,7 @@ public:
         size_t const size = 4096;
         char * buffer = get_temp_buf(size);
         Expr out = lisp_make_buffer_output_stream(&global.stream, size, buffer);
-        System::s_instance->render_expr(exp, out);
+        System::s_instance->print_expr(exp, out);
         stream_release(out);
         return buffer;
     }
@@ -1488,7 +1488,7 @@ public:
     void println(Expr exp)
     {
         Expr out = global.stream.stdout;
-        System::s_instance->render_expr(exp, out);
+        System::s_instance->print_expr(exp, out);
         stream_put_string(out, "\n");
     }
 
@@ -1965,7 +1965,7 @@ public:
 
     /* printer */
 
-    void render_expr(Expr exp, Expr out)
+    void print_expr(Expr exp, Expr out)
     {
         switch (expr_type(exp))
         {
@@ -1977,28 +1977,28 @@ public:
             stream_put_string(out, symbol_name(exp));
             break;
         case TYPE_CONS:
-            render_cons(exp, out);
+            print_cons(exp, out);
             break;
         case TYPE_GENSYM:
-            render_gensym(exp, out);
+            print_gensym(exp, out);
             break;
         case TYPE_CHAR:
-            render_char(exp, out);
+            print_char(exp, out);
             break;
         case TYPE_FIXNUM:
             stream_put_i64(out, fixnum_value(exp));
             break;
         case TYPE_STRING:
-            render_string(exp, out);
+            print_string(exp, out);
             break;
         case TYPE_BUILTIN_SPECIAL:
-            render_builtin_special(exp, out);
+            print_builtin_special(exp, out);
             break;
         case TYPE_BUILTIN_FUNCTION:
-            render_builtin_function(exp, out);
+            print_builtin_function(exp, out);
             break;
         case TYPE_BUILTIN_SYMBOL:
-            render_builtin_symbol(exp, out);
+            print_builtin_symbol(exp, out);
             break;
         default:
             LISP_FAIL("cannot print expression %016" PRIx64 "\n", exp);
@@ -2006,18 +2006,18 @@ public:
         }
     }
 
-    void render_cons(Expr exp, Expr out)
+    void print_cons(Expr exp, Expr out)
     {
-#if LISP_PRINTER_RENDER_QUOTE
+#if LISP_PRINTER_PRINT_QUOTE
         if (is_quote_call(exp))
         {
             stream_put_char(out, '\'');
-            render_expr(cadr(exp), out);
+            print_expr(cadr(exp), out);
             return;
         }
 #endif
         stream_put_char(out, '(');
-        render_expr(car(exp), out);
+        print_expr(car(exp), out);
 
         for (Expr tmp = cdr(exp); tmp; tmp = cdr(tmp))
         {
@@ -2029,12 +2029,12 @@ public:
             else if (is_cons(tmp))
             {
                 stream_put_char(out, ' ');
-                render_expr(car(tmp), out);
+                print_expr(car(tmp), out);
             }
             else
             {
                 stream_put_string(out, " . ");
-                render_expr(tmp, out);
+                print_expr(tmp, out);
                 break;
             }
         }
@@ -2042,7 +2042,7 @@ public:
         stream_put_char(out, ')');
     }
 
-    void render_builtin(Expr exp, Expr out, char const * flavor)
+    void print_builtin(Expr exp, Expr out, char const * flavor)
     {
         stream_put_string(out, "#:<");
         stream_put_string(out, flavor);
@@ -2055,22 +2055,22 @@ public:
         stream_put_string(out, ">");
     }
 
-    void render_builtin_special(Expr exp, Expr out)
+    void print_builtin_special(Expr exp, Expr out)
     {
-        render_builtin(exp, out, "special operator");
+        print_builtin(exp, out, "special operator");
     }
 
-    void render_builtin_function(Expr exp, Expr out)
+    void print_builtin_function(Expr exp, Expr out)
     {
-        render_builtin(exp, out, "core function");
+        print_builtin(exp, out, "core function");
     }
 
-    void render_builtin_symbol(Expr exp, Expr out)
+    void print_builtin_symbol(Expr exp, Expr out)
     {
-        render_builtin(exp, out, "symbol macro");
+        print_builtin(exp, out, "symbol macro");
     }
 
-    void render_gensym(Expr exp, Expr out)
+    void print_gensym(Expr exp, Expr out)
     {
         LISP_ASSERT_DEBUG(is_gensym(exp));
         U64 const num = expr_data(exp);
@@ -2078,7 +2078,7 @@ public:
         stream_put_u64(out, num);
     }
 
-    void render_char(Expr exp, Expr out)
+    void print_char(Expr exp, Expr out)
     {
         LISP_ASSERT_DEBUG(is_character(exp));
         U32 const code = character_code(exp);
@@ -2102,7 +2102,7 @@ public:
         }
     }
 
-    void render_string(Expr exp, Expr out)
+    void print_string(Expr exp, Expr out)
     {
         stream_put_char(out, '"');
         char const * str = string_value(exp);
