@@ -3,15 +3,15 @@
 .SUFFIXES:
 .PHONY: all clean test
 
-all: lisp
+all: std
 
 clean:
-	rm -f lisp
+	rm -f std
 
-lisp: lisp.cpp lisp.hpp Makefile
+std: std.cpp lisp.hpp Makefile
 	c++ -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess -O2 -o $@ $<
 
 test:
-	./lisp unit
-	./lisp load bel.lisp test.bel
-	./lisp load test.std
+	./std unit
+	./std load bel.lisp test.bel
+	./std load test.std
