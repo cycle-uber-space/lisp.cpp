@@ -128,7 +128,9 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 #define LISP_FAIL(...)    error_fail(__VA_ARGS__);
 #define LISP_WARN(...)    error_warn(__VA_ARGS__);
 
-#define LISP_ASSERT(x) assert(x)
+#define LISP_ASSERT_ALWAYS(x) assert(x)
+
+#define LISP_ASSERT(x) LISP_ASSERT_ALWAYS(x)
 
 #if LISP_DEBUG
 #define LISP_ASSERT_DEBUG(x) LISP_ASSERT(x)
@@ -609,6 +611,19 @@ public:
         LISP_ASSERT(s_instance == nullptr);
         s_instance = this;
         system_init(&global);
+
+        // TODO move to type_init?
+        LISP_ASSERT_ALWAYS(TYPE_NIL              == make_type("nil"));
+        LISP_ASSERT_ALWAYS(TYPE_SYMBOL           == make_type("symbol"));
+        LISP_ASSERT_ALWAYS(TYPE_CONS             == make_type("cons"));
+        LISP_ASSERT_ALWAYS(TYPE_GENSYM           == make_type("gensym"));
+        LISP_ASSERT_ALWAYS(TYPE_CHARACTER        == make_type("char"));
+        LISP_ASSERT_ALWAYS(TYPE_FIXNUM           == make_type("fixnum"));
+        LISP_ASSERT_ALWAYS(TYPE_STRING           == make_type("string"));
+        LISP_ASSERT_ALWAYS(TYPE_STREAM           == make_type("stream"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SPECIAL  == make_type("builtin-special"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_FUNCTION == make_type("builtin-function"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SYMBOL   == make_type("builtin-symbol"));
     }
 
     virtual ~System()
