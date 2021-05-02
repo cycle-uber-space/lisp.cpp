@@ -53,6 +53,8 @@
 #include <string.h>
 
 #include <functional>
+#include <vector>
+#include <string>
 
 /* defines */
 
@@ -574,6 +576,31 @@ U32 utf8_decode_one(U8 const * buf)
 
 SystemState global;
 
+class TypeImpl
+{
+public:
+    U64 make(char const * name)
+    {
+        U64 const type = count();
+        m_type_names.push_back(name);
+        return type;
+    }
+
+    U64 count() const
+    {
+        return m_type_names.size();
+    }
+
+    char const * name(U64 type) const
+    {
+        LISP_ASSERT(type < count());
+        return m_type_names[type].c_str();
+    }
+
+private:
+    std::vector<std::string> m_type_names;
+};
+
 class System
 {
 public:
@@ -825,6 +852,18 @@ public:
         });
 
         return env;
+    }
+
+    /* type */
+
+    U64 make_type(char const * name)
+    {
+        return m_type.make(name);
+    }
+
+    char const * type_name(U64 type)
+    {
+        return m_type.name(type);
     }
 
     /* symbol */
@@ -2802,6 +2841,8 @@ public:
             return nil;
         }
     }
+
+    TypeImpl m_type;
 
     static System * s_instance;
 };
