@@ -72,6 +72,12 @@ def hack_lines(lines):
             code = re_group(4)
             type_decl = "auto const" if kw == "let" else "auto"
             yield f"{indent}{type_decl} {name} = {code};"
+        elif re_match(fr"^( *)(var) ({ID}) *: *([^;]+);$", line):
+            indent = re_group(1)
+            kw = re_group(2)
+            name = re_group(3)
+            type_decl = re_group(4)
+            yield f"{indent}{type_decl} {name};"
         else:
             yield line
 
