@@ -213,6 +213,11 @@ typedef struct
     char ** names;
 } SymbolState;
 
+inline bool is_symbol(Expr exp)
+{
+    return expr_type(exp) == TYPE_SYMBOL;
+}
+
 /* cons */
 
 #define LISP_MAX_CONSES -1
@@ -268,6 +273,11 @@ typedef struct
     Expr stdout;
     Expr stderr;
 } StreamState;
+
+inline bool is_stream(Expr exp)
+{
+    return expr_type(exp) == TYPE_STREAM;
+}
 
 /* builtin */
 
@@ -618,13 +628,88 @@ private:
     U64 m_counter;
 };
 
+class SystemImpl;
+
 class System
 {
 public:
-    System()
+    System();
+    virtual ~System();
+
+    /* env */
+
+    Expr make_env(Expr outer);
+    virtual Expr make_core_env();
+
+    void env_def(Expr env, Expr var, Expr val);
+    void env_defun(Expr env, char const * name, BuiltinFun fun);
+    void env_defun_println(Expr env, char const * name);
+    void env_defspecial(Expr env, char const * name, BuiltinFun fun);
+    void env_defspecial_quote(Expr env);
+    void env_defspecial_while(Expr env);
+    void env_defsym(Expr env, char const * name, BuiltinFun fun);
+    void env_del(Expr env, Expr var);
+
+    Expr env_get(Expr env, Expr var);
+    bool env_can_set(Expr env, Expr var);
+    void env_set(Expr env, Expr var, Expr val);
+
+    /* function */
+
+    Expr make_function(Expr env, Expr name, Expr args, Expr body);
+
+    /* symbol */
+
+    char const * symbol_name(Expr exp);
+
+    /* print */
+
+    char const * repr(Expr exp);
+    void print(Expr exp);
+    void println(Expr exp);
+    void display(Expr exp);
+    void displayln(Expr exp);
+
+    /* read */
+
+    Expr intern(char const * name);
+    Expr read_one_from_string(char const * src);
+
+    /* cons */
+
+    Expr cons(Expr a, Expr b);
+    Expr car(Expr exp);
+    Expr cdr(Expr exp);
+    void rplaca(Expr exp, Expr val);
+    void rplacd(Expr exp, Expr val);
+
+    /* core */
+
+    Expr list(Expr exp1);
+    Expr list(Expr exp1, Expr exp2);
+    Expr list(Expr exp1, Expr exp2, Expr exp3);
+    Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
+
+    Expr first(Expr seq);
+    Expr second(Expr seq);
+
+    bool equal(Expr a, Expr b);
+
+    /* eval */
+
+    Expr eval(Expr exp, Expr env);
+    void load_file(char const * path, Expr env);
+    void repl(Expr env);
+
+    SystemImpl * m_impl = nullptr;
+    static System * s_instance;
+};
+
+class SystemImpl
+{
+public:
+    SystemImpl()
     {
-        LISP_ASSERT(s_instance == nullptr);
-        s_instance = this;
         system_init(&global);
 
         // TODO move to type_init?
@@ -641,10 +726,9 @@ public:
         LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SYMBOL   == make_type("builtin-symbol"));
     }
 
-    virtual ~System()
+    virtual ~SystemImpl()
     {
         system_quit(&global);
-        s_instance = nullptr;
     }
 
     void system_init(SystemState * system)
@@ -899,11 +983,6 @@ public:
     }
 
     /* symbol */
-
-    bool is_symbol(Expr exp)
-    {
-        return expr_type(exp) == TYPE_SYMBOL;
-    }
 
     void symbol_init(SymbolState * symbol)
     {
@@ -1529,7 +1608,7 @@ public:
         size_t const size = 4096;
         char * buffer = get_temp_buf(size);
         Expr out = lisp_make_buffer_output_stream(&global.stream, size, buffer);
-        System::s_instance->print_expr(exp, out);
+        print_expr(exp, out);
         stream_release(out);
         return buffer;
     }
@@ -1537,26 +1616,26 @@ public:
     void print(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        System::s_instance->print_expr(exp, out);
+        print_expr(exp, out);
     }
 
     void println(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        System::s_instance->print_expr(exp, out);
+        print_expr(exp, out);
         stream_put_string(out, "\n");
     }
 
     void display(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        System::s_instance->display_expr(exp, out);
+        display_expr(exp, out);
     }
 
     void displayln(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        System::s_instance->display_expr(exp, out);
+        display_expr(exp, out);
         stream_put_string(out, "\n");
     }
 
@@ -2248,11 +2327,6 @@ public:
                 fclose(info->file);
             }
         }
-    }
-
-    bool is_stream(Expr exp)
-    {
-        return expr_type(exp) == TYPE_STREAM;
     }
 
     static Expr _make_file_stream(StreamState * stream, FILE * file, bool close_on_quit)
@@ -2959,9 +3033,207 @@ public:
 
     TypeImpl m_type;
     GensymImpl m_gensym;
-
-    static System * s_instance;
 };
+
+System::System()
+{
+    LISP_ASSERT(s_instance == nullptr);
+    s_instance = this;
+
+    m_impl = new SystemImpl();
+}
+
+System::~System()
+{
+    delete m_impl;
+
+    s_instance = nullptr;
+}
+
+Expr System::make_env(Expr outer)
+{
+    return m_impl->make_env(outer);
+}
+
+Expr System::make_core_env()
+{
+    return m_impl->make_core_env();
+}
+
+void System::env_def(Expr env, Expr var, Expr val)
+{
+    m_impl->env_def(env, var, val);
+}
+
+void System::env_defun(Expr env, char const * name, BuiltinFun fun)
+{
+    m_impl->env_defun(env, name, fun);
+}
+
+void System::env_defun_println(Expr env, char const * name)
+{
+    m_impl->env_defun_println(env, name);
+}
+
+void System::env_defspecial(Expr env, char const * name, BuiltinFun fun)
+{
+    m_impl->env_defspecial(env, name, fun);
+}
+
+void System::env_defspecial_quote(Expr env)
+{
+    m_impl->env_defspecial_quote(env);
+}
+
+void System::env_defspecial_while(Expr env)
+{
+    m_impl->env_defspecial_while(env);
+}
+
+void System::env_defsym(Expr env, char const * name, BuiltinFun fun)
+{
+    m_impl->env_defsym(env, name, fun);
+}
+
+void System::env_del(Expr env, Expr var)
+{
+    return m_impl->env_del(env, var);
+}
+
+Expr System::env_get(Expr env, Expr var)
+{
+    return m_impl->env_get(env, var);
+}
+
+bool System::env_can_set(Expr env, Expr var)
+{
+    return m_impl->env_can_set(env, var);
+}
+
+void System::env_set(Expr env, Expr var, Expr val)
+{
+    m_impl->env_set(env, var, val);
+}
+
+Expr System::make_function(Expr env, Expr name, Expr args, Expr body)
+{
+    return m_impl->make_function(env, name, args, body);
+}
+
+char const * System::symbol_name(Expr exp)
+{
+    return m_impl->symbol_name(exp);
+}
+
+char const * System::repr(Expr exp)
+{
+    return m_impl->repr(exp);
+}
+
+void System::print(Expr exp)
+{
+    m_impl->print(exp);
+}
+
+void System::println(Expr exp)
+{
+    m_impl->println(exp);
+}
+
+void System::display(Expr exp)
+{
+    m_impl->display(exp);
+}
+
+void System::displayln(Expr exp)
+{
+    m_impl->displayln(exp);
+}
+
+Expr System::intern(char const * name)
+{
+    return m_impl->intern(name);
+}
+
+Expr System::read_one_from_string(char const * src)
+{
+    return m_impl->read_one_from_string(src);
+}
+
+Expr System::cons(Expr a, Expr b)
+{
+    return m_impl->cons(a, b);
+}
+
+Expr System::car(Expr exp)
+{
+    return m_impl->car(exp);
+}
+
+Expr System::cdr(Expr exp)
+{
+    return m_impl->cdr(exp);
+}
+
+void System::rplaca(Expr exp, Expr val)
+{
+    return m_impl->rplaca(exp, val);
+}
+
+void System::rplacd(Expr exp, Expr val)
+{
+    return m_impl->rplacd(exp, val);
+}
+
+Expr System::list(Expr exp1)
+{
+    return m_impl->list(exp1);
+}
+
+Expr System::list(Expr exp1, Expr exp2)
+{
+    return m_impl->list(exp1, exp2);
+}
+
+Expr System::list(Expr exp1, Expr exp2, Expr exp3)
+{
+    return m_impl->list(exp1, exp2, exp3);
+}
+
+Expr System::list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
+{
+    return m_impl->list(exp1, exp2, exp3, exp4, exp5);
+}
+
+Expr System::first(Expr seq)
+{
+    return m_impl->first(seq);
+}
+
+Expr System::second(Expr seq)
+{
+    return m_impl->second(seq);
+}
+
+bool System::equal(Expr a, Expr b)
+{
+    return m_impl->equal(a, b);
+}
+
+Expr System::eval(Expr exp, Expr env)
+{
+    return m_impl->eval(exp, env);
+}
+
+void System::load_file(char const * path, Expr env)
+{
+    m_impl->load_file(path, env);
+}
+
+void System::repl(Expr env)
+{
+    return m_impl->repl(env);
+}
 
 System * System::s_instance = nullptr;
 
