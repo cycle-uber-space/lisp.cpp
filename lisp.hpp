@@ -1764,7 +1764,7 @@ public:
 
         for (; tmp; tmp = cdr(tmp))
         {
-            Expr const exp = car(tmp);
+            auto const exp = car(tmp);
             if (!equal(prv, exp))
             {
                 return false;
@@ -1781,8 +1781,8 @@ public:
         {
             LISP_FAIL("not enough arguments in call to eq: %s\n", repr(exps));
         }
-        Expr prv = car(exps);
-        Expr tmp = cdr(exps);
+        auto prv = car(exps);
+        auto tmp = cdr(exps);
         if (is_nil(tmp))
         {
             LISP_FAIL("not enough arguments in call to eq: %s\n", repr(exps));
@@ -1790,7 +1790,7 @@ public:
 
         for (; tmp; tmp = cdr(tmp))
         {
-            Expr const exp = car(tmp);
+            auto const exp = car(tmp);
             if (!eq(prv, exp))
             {
                 return false;
