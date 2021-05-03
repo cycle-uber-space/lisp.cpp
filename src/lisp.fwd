@@ -330,7 +330,7 @@ bool fixnum_lt(Expr a, Expr b);
 
 /* char */
 
-inline bool is_char(Expr exp)
+func is_char(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_CHAR;
 }
@@ -342,7 +342,7 @@ U32 char_code(Expr exp);
 
 /* string */
 
-inline bool is_string(Expr exp)
+func is_string(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_STRING;
 }
@@ -371,7 +371,7 @@ typedef struct
     Expr stderr;
 } StreamState;
 
-inline bool is_stream(Expr exp)
+func is_stream(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_STREAM;
 }
@@ -386,22 +386,22 @@ struct BuiltinInfo
     BuiltinFunc func;
 };
 
-inline bool is_builtin_special(Expr exp)
+func is_builtin_special(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
 }
 
-inline bool is_builtin_function(Expr exp)
+func is_builtin_function(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
 }
 
-inline bool is_builtin_symbol(Expr exp)
+func is_builtin_symbol(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_BUILTIN_SYMBOL;
 }
 
-inline bool is_builtin(Expr exp)
+func is_builtin(exp: Expr): inline bool
 {
     return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
 }
@@ -494,5 +494,5 @@ public:
 
 private:
     SystemImpl * m_impl = nullptr;
-    static System * s_instance;
+    static var s_instance: System *;
 };

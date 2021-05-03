@@ -49,7 +49,7 @@ def assemble(srcs):
 #define _LISP_HPP_
 """
     for src in srcs:
-        if has_ext(src, ".hpp"):
+        if has_ext(src, ".hpp", ".fwd"):
             text += load_source(src)
     text += """
 #endif /* _LISP_HPP_ */
@@ -60,7 +60,7 @@ def assemble(srcs):
 #define _LISP_CPP_
 """
     for src in srcs:
-        if has_ext(src, ".cpp"):
+        if has_ext(src, ".cpp", ".def"):
             text += load_source(src)
     text += """
 #endif /* _LISP_CPP_ */
