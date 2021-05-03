@@ -292,9 +292,13 @@ Expr gensym();
 
 /* char */
 
-bool is_character(Expr exp);
-Expr make_character(U32 code);
-U32 character_code(Expr exp);
+inline bool is_char(Expr exp)
+{
+    return expr_type(exp) == TYPE_CHAR;
+}
+
+Expr make_char(U32 code);
+U32 char_code(Expr exp);
 
 /* fixnum */
 
@@ -712,19 +716,14 @@ Expr gensym()
 
 /* char */
 
-bool is_character(Expr exp)
-{
-    return expr_type(exp) == TYPE_CHAR;
-}
-
-Expr make_character(U32 code)
+Expr make_char(U32 code)
 {
     return make_expr(TYPE_CHAR, code);
 }
 
-U32 character_code(Expr exp)
+U32 char_code(Expr exp)
 {
-    LISP_ASSERT(is_character(exp));
+    LISP_ASSERT(is_char(exp));
     return (U32) expr_data(exp);
 }
 
@@ -1790,15 +1789,15 @@ public:
             // handle printable characters
             if (lexeme[2] == 0)
             {
-                return make_character(lexeme[1]);
+                return make_char(lexeme[1]);
             }
             else if (!strcmp("\\bel", lexeme))
             {
-                return make_character('\a');
+                return make_char('\a');
             }
             else if (!strcmp("\\space", lexeme))
             {
-                return make_character(' ');
+                return make_char(' ');
             }
             else
             {
@@ -2219,7 +2218,7 @@ public:
             stream_put_string(out, string_value(exp));
             break;
         case TYPE_CHAR:
-            stream_put_char(out, character_code(exp));
+            stream_put_char(out, char_code(exp));
             break;
         default:
             print_expr(exp, out, seen);
@@ -2354,8 +2353,8 @@ public:
 
     void print_char(Expr exp, Expr out)
     {
-        LISP_ASSERT_DEBUG(is_character(exp));
-        U32 const code = character_code(exp);
+        LISP_ASSERT_DEBUG(is_char(exp));
+        U32 const code = char_code(exp);
         // TODO
         if (is_printable_ascii(code))
         {

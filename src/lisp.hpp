@@ -288,9 +288,13 @@ Expr gensym();
 
 /* char */
 
-bool is_character(Expr exp);
-Expr make_character(U32 code);
-U32 character_code(Expr exp);
+inline bool is_char(Expr exp)
+{
+    return expr_type(exp) == TYPE_CHAR;
+}
+
+Expr make_char(U32 code);
+U32 char_code(Expr exp);
 
 /* fixnum */
 
