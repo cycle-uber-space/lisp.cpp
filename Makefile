@@ -18,7 +18,7 @@ clean:
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 lisp.hpp: make_lib.py src/lisp.hpp src/lisp.cpp
-	./make_lib.py src/lisp.hpp src/lisp.cpp
+	./make_lib.py --hack src/lisp.hpp src/lisp.cpp
 
 test:
 	./std unit

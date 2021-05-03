@@ -35,9 +35,7 @@ def save_lines(path, lines):
 def load_source(path):
     return f"\n#line 2 \"{path}\"" + load_text(path)
 
-def main(args):
-    srcs = list(args)
-
+def assemble(srcs):
     text = ""
     text += """
 #ifndef _LISP_HPP_
@@ -62,6 +60,30 @@ def main(args):
 
 #endif /* LISP_IMPLEMENTATION */
 """
+    return text
+
+def process(lines):
+    for line in lines:
+        if False:
+            yield line
+        else:
+            yield line
+
+def main(args):
+    srcs = list()
+    hack = False
+    for arg in args:
+        if arg == "--hack":
+            hack = True
+        else:
+            srcs.append(arg)
+
+    text = assemble(srcs)
+
+    if hack:
+        lines = split_text(text)
+        lines = list(process(lines))
+        text = join_lines(lines)
 
     save_text("lisp.hpp", text)
 
