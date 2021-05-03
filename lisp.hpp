@@ -58,8 +58,10 @@
 #include <string.h>
 
 #include <functional>
-#include <vector>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #if LISP_DEBUG_USE_SIGNAL
 #include <signal.h>
@@ -149,6 +151,51 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 
 void error_fail(char const * fmt, ...);
 void error_warn(char const * fmt, ...);
+
+/* HashMap */
+
+template <typename Key, typename Value>
+class HashMap
+{
+public:
+    bool has(Key const & key) const
+    {
+        return m_impl.find(key) != m_impl.end();
+    }
+
+    void put(Key const & key, Value const & value)
+    {
+        m_impl[key] = value;
+    }
+
+    Value get(Key const & key) const
+    {
+        return m_impl.at(key);
+    }
+
+private:
+    std::unordered_map<Key, Value> m_impl;
+};
+
+/* HashSet */
+
+template <typename Element>
+class HashSet
+{
+public:
+    bool contains(Element const & element) const
+    {
+        return m_impl.find(element) != m_impl.end();
+    }
+
+    void add(Element const & element)
+    {
+        m_impl.insert(element);
+    }
+
+private:
+    std::unordered_set<Element> m_impl;
+};
 
 /* expr */
 
