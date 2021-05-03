@@ -17,6 +17,9 @@ clean:
 %: %.cpp lisp.hpp Makefile
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
+lisp.hpp: make_lib.py src/lisp.hpp src/lisp.cpp
+	./make_lib.py src/lisp.hpp src/lisp.cpp
+
 test:
 	./std unit
 	./std load bel.lisp test.bel
