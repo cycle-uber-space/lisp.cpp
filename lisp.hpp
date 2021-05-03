@@ -226,21 +226,6 @@ inline bool is_keyword(Expr exp)
 
 /* cons */
 
-#define LISP_MAX_CONSES -1
-#define LISP_DEF_CONSES  4
-
-struct Pair
-{
-    Expr a, b;
-};
-
-typedef struct
-{
-    U64 num;
-    U64 max;
-    struct Pair * pairs;
-} ConsState;
-
 inline bool is_cons(Expr exp)
 {
     return expr_type(exp) == TYPE_CONS;
@@ -490,46 +475,6 @@ U64 expr_data(Expr exp)
     return exp >> LISP_TYPE_BITS;
 }
 
-static void _cons_realloc(ConsState * cons)
-{
-    cons->pairs = (struct Pair *) LISP_REALLOC(cons->pairs, sizeof(struct Pair) * cons->max);
-    if (!cons->pairs)
-    {
-        LISP_FAIL("cons memory allocation failed\n");
-    }
-}
-
-static void _cons_maybe_realloc(ConsState * cons)
-{
-    if (cons->num < cons->max)
-    {
-        return;
-    }
-
-    if (LISP_MAX_CONSES == -1 || cons->max * 2 <= (U64) LISP_MAX_CONSES)
-    {
-        if (cons->max == 0)
-        {
-            cons->max = LISP_DEF_CONSES;
-        }
-        else
-        {
-            cons->max *= 2;
-        }
-
-        _cons_realloc(cons);
-        return;
-    }
-
-    LISP_FAIL("cons ran over memory budget\n");
-}
-
-static struct Pair * _cons_lookup(ConsState * cons, U64 index)
-{
-    LISP_ASSERT_DEBUG(index < cons->num);
-    return &cons->pairs[index];
-}
-
 bool is_character(Expr exp)
 {
     return expr_type(exp) == TYPE_CHAR;
@@ -720,6 +665,75 @@ private:
     std::vector<std::string> m_names;
 };
 
+struct ExprPair
+{
+    Expr exp1, exp2;
+};
+
+class ConsImpl
+{
+public:
+    ConsImpl(U64 type) : m_type(type)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make(Expr a, Expr b)
+    {
+        U64 const index = count();
+        ExprPair pair;
+        pair.exp1 = a;
+        pair.exp2 = b;
+        m_pairs.push_back(pair);
+        return make_expr(m_type, index);
+    }
+
+    Expr car(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_pairs[index].exp1;
+    }
+
+    Expr cdr(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_pairs[index].exp2;
+    }
+
+    void set_car(Expr exp, Expr val)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        m_pairs[index].exp1 = val;
+    }
+
+    void set_cdr(Expr exp, Expr val)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        m_pairs[index].exp2 = val;
+    }
+
+    U64 count() const
+    {
+        return (U64) m_pairs.size();
+    }
+
+private:
+    U64 m_type;
+    std::vector<ExprPair> m_pairs;
+};
+
 class GensymImpl
 {
 public:
@@ -746,7 +760,7 @@ private:
 class SystemImpl
 {
 public:
-    SystemImpl() : m_symbol(TYPE_SYMBOL), m_keyword(TYPE_KEYWORD)
+    SystemImpl() : m_symbol(TYPE_SYMBOL), m_keyword(TYPE_KEYWORD), m_cons(TYPE_CONS), m_gensym(TYPE_GENSYM)
     {
         system_init(&global);
 
@@ -772,7 +786,6 @@ public:
 
     void system_init(SystemState * system)
     {
-        cons_init(&system->cons);
         string_init(&system->string);
         stream_init(&system->stream);
         builtin_init(&system->builtin);
@@ -783,7 +796,6 @@ public:
         builtin_quit(&system->builtin);
         string_quit(&system->string);
         stream_quit(&system->stream);
-        cons_quit(&system->cons);
     }
 
     /* core */
@@ -1055,85 +1067,29 @@ public:
 
     /* cons */
 
-    void cons_init(ConsState * cons)
-    {
-        memset(cons, 0, sizeof(ConsState));
-    }
-
-    void cons_quit(ConsState * cons)
-    {
-    }
-
-    Expr lisp_cons(ConsState * cons, Expr a, Expr b)
-    {
-        _cons_maybe_realloc(cons);
-
-        U64 const index = cons->num++;
-        struct Pair * pair = _cons_lookup(cons, index);
-        pair->a = a;
-        pair->b = b;
-        return make_expr(TYPE_CONS, index);
-    }
-
-    Expr lisp_car(ConsState * cons, Expr exp)
-    {
-        LISP_ASSERT(is_cons(exp));
-
-        U64 const index = expr_data(exp);
-        struct Pair * pair = _cons_lookup(cons, index);
-        return pair->a;
-    }
-
-    Expr lisp_cdr(ConsState * cons, Expr exp)
-    {
-        LISP_ASSERT(is_cons(exp));
-
-        U64 const index = expr_data(exp);
-        struct Pair * pair = _cons_lookup(cons, index);
-        return pair->b;
-    }
-
-    void lisp_rplaca(ConsState * cons, Expr exp, Expr val)
-    {
-        LISP_ASSERT(is_cons(exp));
-
-        U64 const index = expr_data(exp);
-        struct Pair * pair = _cons_lookup(cons, index);
-        pair->a = val;
-    }
-
-    void lisp_rplacd(ConsState * cons, Expr exp, Expr val)
-    {
-        LISP_ASSERT(is_cons(exp));
-
-        U64 const index = expr_data(exp);
-        struct Pair * pair = _cons_lookup(cons, index);
-        pair->b = val;
-    }
-
     Expr cons(Expr a, Expr b)
     {
-        return lisp_cons(&global.cons, a, b);
+        return m_cons.make(a, b);
     }
 
     Expr car(Expr exp)
     {
-        return lisp_car(&global.cons, exp);
+        return m_cons.car(exp);
     }
 
     Expr cdr(Expr exp)
     {
-        return lisp_cdr(&global.cons, exp);
+        return m_cons.cdr(exp);
     }
 
     void rplaca(Expr exp, Expr val)
     {
-        lisp_rplaca(&global.cons, exp, val);
+        m_cons.set_car(exp, val);
     }
 
     void rplacd(Expr exp, Expr val)
     {
-        lisp_rplacd(&global.cons, exp, val);
+        m_cons.set_cdr(exp, val);
     }
 
     Expr caar(Expr exp)
@@ -3051,6 +3007,7 @@ public:
     TypeImpl m_type;
     SymbolImpl m_symbol;
     SymbolImpl m_keyword;
+    ConsImpl m_cons;
     GensymImpl m_gensym;
 };
 
