@@ -2108,7 +2108,7 @@ public:
         return val;
     }
 
-    bool is_whitespace(char ch)
+    bool is_whitespace(U32 ch)
     {
         return
             ch == ' ' ||
@@ -2116,12 +2116,12 @@ public:
             ch == '\t';
     }
 
-    bool is_whitespace_or_eof(char ch)
+    bool is_whitespace_or_eof(U32 ch)
     {
         return ch == 0 || is_whitespace(ch);
     }
 
-    bool is_symbol_start(char ch)
+    bool is_symbol_start(U32 ch)
     {
         return
             ch != 0 &&
@@ -2131,22 +2131,22 @@ public:
             ch != ';' && ch != '\'';
     }
 
-    bool is_symbol_part(char ch)
+    bool is_symbol_part(U32 ch)
     {
         return is_symbol_start(ch);
     }
 
-    bool is_number_part(char ch)
+    bool is_number_part(U32 ch)
     {
         return ch >= '0' && ch <= '9';
     }
 
-    bool is_number_start(char ch)
+    bool is_number_start(U32 ch)
     {
         return is_number_part(ch) || ch == '-' || ch == '+';
     }
 
-    bool is_number_stop(char ch)
+    bool is_number_stop(U32 ch)
     {
         return ch == 0 || ch == ')' || is_whitespace(ch);
     }
