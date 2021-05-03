@@ -203,16 +203,6 @@ inline static bool is_nil(Expr exp)
 #define LISP_SYM_UNQUOTE intern("unquote")
 #define LISP_SYM_UNQUOTE_SPLICING intern("unquote-splicing")
 
-#define LISP_MAX_SYMBOLS -1
-#define LISP_DEF_SYMBOLS 16
-
-typedef struct
-{
-    U64 num;
-    U64 max;
-    char ** names;
-} SymbolState;
-
 inline bool is_symbol(Expr exp)
 {
     return expr_type(exp) == TYPE_SYMBOL;
@@ -301,7 +291,6 @@ typedef struct
 
 typedef struct SystemState
 {
-    SymbolState symbol;
     ConsState cons;
     StreamState stream;
     StringState string;
@@ -482,35 +471,6 @@ U64 expr_data(Expr exp)
     return exp >> LISP_TYPE_BITS;
 }
 
-static void _symbol_maybe_realloc(SymbolState * symbol)
-{
-    if (symbol->num < symbol->max)
-    {
-        return;
-    }
-
-    if (LISP_MAX_SYMBOLS == -1 || symbol->max * 2 <= LISP_MAX_SYMBOLS)
-    {
-        if (symbol->max == 0)
-        {
-            symbol->max = LISP_DEF_SYMBOLS;
-        }
-        else
-        {
-            symbol->max *= 2;
-        }
-
-        symbol->names = (char **) LISP_REALLOC(symbol->names, sizeof(char *) * symbol->max);
-        if (!symbol->names)
-        {
-            LISP_FAIL("symbol memory allocation failed\n");
-        }
-        return;
-    }
-
-    LISP_FAIL("intern ran over memory budget\n");
-}
-
 static void _cons_realloc(ConsState * cons)
 {
     cons->pairs = (struct Pair *) LISP_REALLOC(cons->pairs, sizeof(struct Pair) * cons->max);
@@ -688,6 +648,54 @@ private:
     std::vector<std::string> m_names;
 };
 
+class SymbolImpl
+{
+public:
+    Expr make(char const * name)
+    {
+        LISP_ASSERT_DEBUG(name);
+
+        // TODO check hash set of names first
+        for (U64 index = 0; index < count(); ++index)
+        {
+            if (m_names[index] == name)
+            {
+                return make_expr(TYPE_SYMBOL, index);
+            }
+        }
+
+        U64 const index = count();
+        m_names.push_back(name);
+        return make_expr(TYPE_SYMBOL, index);
+    }
+
+    char const * name(Expr exp)
+    {
+    #if LISP_SYMBOL_NAME_OF_NIL
+        if (exp == nil)
+        {
+            return "nil";
+        }
+    #endif
+
+        LISP_ASSERT(is_symbol(exp));
+        U64 const index = expr_data(exp);
+        if (index >= count())
+        {
+            LISP_FAIL("illegal symbol index %" PRIu64 "\n", index);
+        }
+        return m_names[index].c_str();
+    }
+
+    U64 count() const
+    {
+        return (U64) m_names.size();
+    }
+
+private:
+    std::vector<std::string> m_names;
+};
+
 class GensymImpl
 {
 public:
@@ -739,7 +747,6 @@ public:
 
     void system_init(SystemState * system)
     {
-        symbol_init(&system->symbol);
         cons_init(&system->cons);
         string_init(&system->string);
         stream_init(&system->stream);
@@ -752,7 +759,6 @@ public:
         string_quit(&system->string);
         stream_quit(&system->stream);
         cons_quit(&system->cons);
-        symbol_quit(&system->symbol);
     }
 
     /* core */
@@ -990,76 +996,14 @@ public:
 
     /* symbol */
 
-    void symbol_init(SymbolState * symbol)
-    {
-        LISP_ASSERT_DEBUG(symbol);
-
-        memset(symbol, 0, sizeof(SymbolState));
-        _symbol_maybe_realloc(symbol);
-    }
-
-    void symbol_quit(SymbolState * symbol)
-    {
-        for (U64 i = 0; i < symbol->num; i++)
-        {
-            LISP_FREE(symbol->names[i]);
-        }
-        LISP_FREE(symbol->names);
-        memset(symbol, 0, sizeof(SymbolState));
-    }
-
-    Expr lisp_make_symbol(SymbolState * symbol, char const * name)
-    {
-        LISP_ASSERT(name);
-        size_t const len = strlen(name);
-
-        for (U64 index = 0; index < symbol->num; ++index)
-        {
-            char const * str = symbol->names[index];
-            size_t const tmp = strlen(str); // TODO cache this?
-            if (len == tmp && !strncmp(name, str, len))
-            {
-                return make_expr(TYPE_SYMBOL, index);
-            }
-        }
-
-        _symbol_maybe_realloc(symbol);
-
-        U64 const index = symbol->num;
-        char * buffer = (char *) LISP_MALLOC(len + 1);
-        memcpy(buffer, name, len);
-        buffer[len] = 0;
-        symbol->names[index] = buffer;
-        ++symbol->num;
-
-        return make_expr(TYPE_SYMBOL, index);
-    }
-
-    char const * lisp_symbol_name(SymbolState * symbol, Expr exp)
-    {
-        LISP_ASSERT(is_symbol(exp));
-        U64 const index = expr_data(exp);
-        if (index >= symbol->num)
-        {
-            LISP_FAIL("illegal symbol index %" PRIu64 "\n", index);
-        }
-        return symbol->names[index];
-    }
-
     Expr make_symbol(char const * name)
     {
-        return lisp_make_symbol(&global.symbol, name);
+        return m_symbol.make(name);
     }
 
     char const * symbol_name(Expr exp)
     {
-    #if LISP_SYMBOL_NAME_OF_NIL
-        if (exp == nil)
-        {
-            return "nil";
-        }
-    #endif
-        return lisp_symbol_name(&global.symbol, exp);
+        return m_symbol.name(exp);
     }
 
     /* cons */
@@ -3053,6 +2997,7 @@ public:
     }
 
     TypeImpl m_type;
+    SymbolImpl m_symbol;
     GensymImpl m_gensym;
 };
 
