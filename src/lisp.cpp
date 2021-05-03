@@ -782,6 +782,24 @@ public:
         });
 #endif
 
+#if LISP_WANT_POINTER
+        env_defun(env, "fopen", [this](Expr args, Expr env) -> Expr
+        {
+            // TODO use builtin_arg1(name, args) for better error checking
+            Expr const path = first(args);
+            Expr const mode = second(args);
+            return make_pointer(fopen(string_value(path), string_value(mode)));
+        });
+
+        env_defun(env, "fclose", [this](Expr args, Expr env) -> Expr
+        {
+            // TODO use builtin_arg1(name, args) for better error checking
+            Expr const file = first(args);
+            fclose((FILE *) pointer_value(file));
+            return nil;
+        });
+#endif
+
         env_defun(env, "load-file", [this](Expr args, Expr env) -> Expr
         {
             load_file(string_value(first(args)), env);
