@@ -160,6 +160,16 @@ public:
     {
         LISP_TEST_GROUP(test, "printer");
         LISP_TEST_ASSERT(test, !strcmp("nil", repr(nil)));
+        {
+            Expr exp = cons(nil, nil);
+            rplaca(exp, exp);
+            LISP_TEST_ASSERT(test, strcmp("", repr(exp)));
+        }
+        {
+            Expr exp = cons(nil, nil);
+            rplacd(exp, exp);
+            LISP_TEST_ASSERT(test, strcmp("", repr(exp)));
+        }
     }
 
     void unit_test_util(TestState * test)
