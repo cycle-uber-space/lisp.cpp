@@ -7,17 +7,23 @@
 (def defmacro (syntax (name args . body)
                 `(def ,name (syntax ,args ,@body))))
 
-(defun caar (exp) (car (car exp)))
+(defun caar (exp)
+  (car (car exp)))
 
-(defun cadr (exp) (car (cdr exp)))
+(defun cadr (exp)
+  (car (cdr exp)))
 
-(defun cdar (exp) (cdr (car exp)))
+(defun cdar (exp)
+  (cdr (car exp)))
 
-(defun cddr (exp) (cdr (cdr exp)))
+(defun cddr (exp)
+  (cdr (cdr exp)))
 
-(defun caddr(exp) (car (cdr (cdr exp))))
+(defun caddr(exp)
+  (car (cdr (cdr exp))))
 
-(defun cadddr (exp) (car (cdr (cdr (cdr exp)))))
+(defun cadddr (exp)
+  (car (cdr (cdr (cdr exp)))))
 
 (defun not (arg)
   (if arg
@@ -33,13 +39,19 @@
 (defun list args
   (append args nil))
 
+(defun map (fun seq)
+  (if seq
+      (cons (fun (car seq))
+            (map fun (cdr seq)))))
+
+(defmacro let (decls . body)
+  `((lambda ,(map car decls) ,@body) ,@(map cadr decls)))
+
 (defmacro progn body
-  ;; TODO use backquote
-  ;;`(lambda () ,@body)
-  (list (cons 'lambda (cons '() body))))
+  `(let () ,@body))
 
 (defmacro when (test . body)
-  (cons 'if (cons test (list (cons 'progn body)))))
+  `(if ,test (progn ,@body)))
 
 (defmacro unless (test . body)
-  (cons 'when (cons (cons 'not (list test)) body)))
+  `(when (not ,test) ,@body))
