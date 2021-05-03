@@ -353,6 +353,7 @@ struct StreamInfo
 {
     FILE * file;
     bool close_on_quit;
+    U32 peek;
 
     char * buffer;
     size_t size;

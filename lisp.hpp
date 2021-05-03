@@ -357,6 +357,7 @@ struct StreamInfo
 {
     FILE * file;
     bool close_on_quit;
+    U32 peek;
 
     char * buffer;
     size_t size;
@@ -954,7 +955,7 @@ public:
         return make_buffer(size, buffer);
     }
 
-    char peek_char(Expr exp)
+    U8 read_byte(Expr exp)
     {
         StreamInfo & info = get_info(exp);
         if (info.file)
@@ -964,42 +965,100 @@ public:
             {
                 return 0;
             }
-            ungetc(ch, info.file);
-            return ch;
+            return (U8) ch;
         }
 
         if (info.buffer)
         {
-            if (info.cursor < info.size)
-            {
-                return info.buffer[info.cursor];
-            }
-            else
-            {
-                return 0;
-            }
+            return info.buffer[info.cursor++];
         }
 
+        //LISP_FAIL("cannot read from stream %s\n", repr(exp));
         LISP_FAIL("cannot read from stream\n");
         return 0;
     }
 
-    void skip_char(Expr exp)
+    U32 do_read_char(Expr exp)
+    {
+        U8 ch = read_byte(exp);
+        if (ch & 0x80)
+        {
+            U32 val = 0;
+            if ((ch >> 5) == 0x6)
+            {
+                val |= ch & 0x1f;
+
+                ch = read_byte(exp);
+                val <<= 6;
+                val |= (ch & 0x3f);
+            }
+            else if ((ch >> 4) == 0xe)
+            {
+                val |= ch & 0xf;
+
+                ch = read_byte(exp);
+                val <<= 6;
+                val |= (ch & 0x3f);
+
+                ch = read_byte(exp);
+                val <<= 6;
+                val |= (ch & 0x3f);
+            }
+            else if ((ch >> 3) == 0x1e)
+            {
+                val |= ch & 0x7;
+
+                ch = read_byte(exp);
+                val <<= 6;
+                val |= (ch & 0x3f);
+
+                ch = read_byte(exp);
+                val <<= 6;
+                val |= (ch & 0x3f);
+
+                ch = read_byte(exp);
+                val <<= 6;
+                val |= (ch & 0x3f);
+            }
+            if (val == 0 || (val >= 0xd000 && val <= 0xdfff) || val >= 0x10ffff)
+            {
+                LISP_FAIL("illegal UTF-8\n");
+            }
+
+            return val;
+        }
+        else
+        {
+            return ch;
+        }
+    }
+
+    U32 read_char(Expr exp)
     {
         StreamInfo & info = get_info(exp);
-        if (info.file)
+        if (info.peek)
         {
-            fgetc(info.file);
-            return;
+            auto const ret = info.peek;
+            info.peek = 0;
+            return ret;
         }
 
-        if (info.buffer)
-        {
-            ++info.cursor;
-            return;
-        }
+        return do_read_char(exp);
+    }
 
-        LISP_FAIL("cannot read from stream\n");
+    U32 peek_char(Expr exp)
+    {
+        StreamInfo & info = get_info(exp);
+        if (!info.peek)
+        {
+            info.peek = read_char(exp);
+        }
+        return info.peek;
+    }
+
+    void skip_char(Expr exp)
+    {
+        read_char(exp);
     }
 
     bool at_end(Expr exp)
@@ -1007,33 +1066,74 @@ public:
         return peek_char(exp) == 0;
     }
 
-    void put_string(Expr exp, char const * str)
+    void put_char(Expr exp, U32 code)
+    {
+        U8 bytes[5] = { 0 };
+        U8 * out_bytes = bytes;
+        if (code < 0x80)
+        {
+            *out_bytes++ = (U8) code;
+        }
+        else if (code < 0x800)
+        {
+            *out_bytes++ = (U8) (0xc0 | ((code >> 6) & 0x1f));
+            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
+        }
+        else if ((code >= 0xd800 && code < 0xe000))
+        {
+            LISP_FAIL("illegal code point %" PRIu64 "\n", code);
+        }
+        else if (code < 0x10000)
+        {
+            *out_bytes++ = (U8) (0xe0 | ((code >> 12) & 0xf));
+            *out_bytes++ = (U8) (0x80 | ((code >> 6) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
+        }
+        else if (code <= 0x10ffff)
+        {
+            *out_bytes++ = (U8) (0xf0 | ((code >> 18) & 0x7));
+            *out_bytes++ = (U8) (0x80 | ((code >> 12) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | ((code >> 6) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
+        }
+        else
+        {
+            LISP_FAIL("illegal code point %" PRIu64 " for utf-8 encoder\n", code);
+        }
+
+        put_bytes(exp, out_bytes - bytes, bytes);
+    }
+
+    void put_bytes(Expr exp, size_t size, U8 const * bytes)
     {
         StreamInfo & info = get_info(exp);
         if (info.file)
         {
-            fputs(str, info.file);
+            fwrite(bytes, size, 1, info.file);
             return;
         }
 
         if (info.buffer)
         {
-            size_t const len = strlen(str);
-            LISP_ASSERT(info.cursor + len + 1 < info.size);
-            memcpy(info.buffer + info.cursor, str, len + 1);
-            info.cursor += len;
+            LISP_ASSERT(info.cursor + size < info.size);
+            memcpy(info.buffer + info.cursor, bytes, size);
+            info.cursor += size;
             return;
         }
 
-        LISP_FAIL("cannot write to stream\n");
+        LISP_FAIL("cannot put bytes into stream\n");
     }
 
-    // TODO put_char32
-    void put_char(Expr exp, char ch)
+    void put_cstring(Expr exp, char const * str)
     {
-        // TODO make this more efficient
-        char const tmp[2] = { ch, 0 };
-        put_string(exp, tmp);
+        put_bytes(exp, strlen(str), (U8 const *) str);
+    }
+
+    void put_cchar(Expr exp, char ch)
+    {
+        //LISP_ASSERT(ch < 0x80);
+        U8 val = (U8) ch;
+        put_bytes(exp, 1, &val);
     }
 
     void release(Expr exp)
@@ -1832,40 +1932,41 @@ public:
         return make_string((char const *) str);
     }
 
-    Expr make_string_from_utf32_char(U32 ch)
+    Expr make_string_from_utf32_char(U32 code)
     {
+        // TODO use string output stream
         U8 bytes[5];
         U8 * out_bytes = bytes;
 
-        if (ch < 0x80)
+        if (code < 0x80)
         {
-            *out_bytes++ = (U8) ch;
+            *out_bytes++ = (U8) code;
         }
-        else if (ch < 0x800)
+        else if (code < 0x800)
         {
-            *out_bytes++ = (U8) (0xc0 | ((ch >> 6) & 0x1f));
-            *out_bytes++ = (U8) (0x80 | (ch & 0x3f));
+            *out_bytes++ = (U8) (0xc0 | ((code >> 6) & 0x1f));
+            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
         }
-        else if (ch >= 0xd800 && ch < 0xe000)
+        else if ((code >= 0xd800 && code < 0xe000))
         {
-            LISP_FAIL("illegal code point %" PRIu64 " for utf-8 encoder\n", ch);
+            LISP_FAIL("illegal code point %" PRIu64 "\n", code);
         }
-        else if (ch < 0x10000)
+        else if (code < 0x10000)
         {
-            *out_bytes++ = (U8) (0xe0 | ((ch >> 12) & 0xf));
-            *out_bytes++ = (U8) (0x80 | ((ch >> 6) & 0x3f));
-            *out_bytes++ = (U8) (0x80 | (ch & 0x3f));
+            *out_bytes++ = (U8) (0xe0 | ((code >> 12) & 0xf));
+            *out_bytes++ = (U8) (0x80 | ((code >> 6) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
         }
-        else if (ch < 0x200000)
+        else if (code <= 0x10ffff)
         {
-            *out_bytes++ = (U8) (0xf0 | ((ch >> 18) & 0x7));
-            *out_bytes++ = (U8) (0x80 | ((ch >> 12) & 0x3f));
-            *out_bytes++ = (U8) (0x80 | ((ch >> 6) & 0x3f));
-            *out_bytes++ = (U8) (0x80 | (ch & 0x3f));
+            *out_bytes++ = (U8) (0xf0 | ((code >> 18) & 0x7));
+            *out_bytes++ = (U8) (0x80 | ((code >> 12) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | ((code >> 6) & 0x3f));
+            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
         }
         else
         {
-            LISP_FAIL("illegal code point %" PRIu64 " for utf-8 encoder\n", ch);
+            LISP_FAIL("illegal code point %" PRIu64 " for utf-8 encoder\n", code);
         }
 
         *out_bytes++ = 0;
@@ -2086,7 +2187,7 @@ public:
         Expr const out = stream_get_stdout();
         HashSet<Expr> seen;
         print_expr(exp, out, seen);
-        stream_put_string(out, "\n");
+        stream_put_char(out, '\n');
     }
 
     void display(Expr exp)
@@ -2101,7 +2202,7 @@ public:
         Expr const out = stream_get_stdout();
         HashSet<Expr> seen;
         display_expr(exp, out, seen);
-        stream_put_string(out, "\n");
+        stream_put_char(out, '\n');
     }
 
     /* reader */
@@ -2130,7 +2231,7 @@ public:
     {
         skip_whitespace_or_comment(in);
 
-        char lexeme[4096];
+        char lexeme[4096] = { 0 };
         Expr tok = nil;
 
         if (stream_peek_char(in) == '(')
@@ -2582,7 +2683,7 @@ public:
         switch (expr_type(exp))
         {
         case TYPE_STRING:
-            stream_put_string(out, string_value(exp));
+            stream_put_cstring(out, string_value(exp));
             break;
         case TYPE_CHAR:
             stream_put_char(out, char_code(exp));
@@ -2599,29 +2700,29 @@ public:
         {
         case TYPE_NIL:
             LISP_ASSERT_DEBUG(expr_data(exp) == 0);
-            stream_put_string(out, "nil");
+            stream_put_cstring(out, "nil");
             break;
         case TYPE_KEYWORD:
             stream_put_char(out, ':');
-            stream_put_string(out, keyword_name(exp));
+            stream_put_cstring(out, keyword_name(exp));
             break;
         case TYPE_SYMBOL:
-            stream_put_string(out, symbol_name(exp));
+            stream_put_cstring(out, symbol_name(exp));
             break;
         case TYPE_CONS:
             print_cons(exp, out, seen);
             break;
 #if LISP_WANT_GENSYM
         case TYPE_GENSYM:
-            stream_put_string(out, "#:G");
+            stream_put_cstring(out, "#:G");
             stream_put_u64(out, expr_data(exp));
             break;
 #endif
 #if LISP_WANT_POINTER
         case TYPE_POINTER:
-            stream_put_string(out, "#:<pointer ");
+            stream_put_cstring(out, "#:<pointer ");
             stream_put_pointer(out, pointer_value(exp));
-            stream_put_string(out, ">");
+            stream_put_cstring(out, ">");
             break;
 #endif
         case TYPE_CHAR:
@@ -2661,7 +2762,7 @@ public:
 
         if (seen.contains(exp))
         {
-            stream_put_string(out, "...");
+            stream_put_cstring(out, "...");
             return;
         }
         seen.add(exp);
@@ -2673,7 +2774,7 @@ public:
         {
             if (tmp == exp)
             {
-                stream_put_string(out, " ...");
+                stream_put_cstring(out, " ...");
                 break;
             }
             else if (is_cons(tmp))
@@ -2683,7 +2784,7 @@ public:
             }
             else
             {
-                stream_put_string(out, " . ");
+                stream_put_cstring(out, " . ");
                 print_expr(tmp, out, seen);
                 break;
             }
@@ -2694,15 +2795,15 @@ public:
 
     void print_builtin(Expr exp, Expr out, char const * flavor)
     {
-        stream_put_string(out, "#:<");
-        stream_put_string(out, flavor);
+        stream_put_cstring(out, "#:<");
+        stream_put_cstring(out, flavor);
         char const * name = builtin_name(exp);
         if (name)
         {
-            stream_put_string(out, " ");
-            stream_put_string(out, name);
+            stream_put_cstring(out, " ");
+            stream_put_cstring(out, name);
         }
-        stream_put_string(out, ">");
+        stream_put_cstring(out, ">");
     }
 
     void print_builtin_special(Expr exp, Expr out)
@@ -2732,11 +2833,11 @@ public:
         }
         else if (code == '\a')
         {
-            stream_put_string(out, "\\bel");
+            stream_put_cstring(out, "\\bel");
         }
         else if (code == ' ')
         {
-            stream_put_string(out, "\\space");
+            stream_put_cstring(out, "\\space");
         }
         else
         {
@@ -2777,7 +2878,7 @@ public:
                 }
                 else
                 {
-                    stream_put_char(out, ch);
+                    stream_put_cchar(out, ch);
                 }
                 break;
             }
@@ -2804,7 +2905,12 @@ public:
         return m_stream.make_buffer_output(size, str);
     }
 
-    char stream_peek_char(Expr exp)
+    U32 stream_read_char(Expr exp)
+    {
+        return m_stream.read_char(exp);
+    }
+
+    U32 stream_peek_char(Expr exp)
     {
         return m_stream.peek_char(exp);
     }
@@ -2814,55 +2920,52 @@ public:
         m_stream.skip_char(exp);
     }
 
-    void stream_put_char(Expr exp, char ch)
+    void stream_put_cchar(Expr exp, char ch)
+    {
+        m_stream.put_cchar(exp, ch);
+    }
+
+    void stream_put_char(Expr exp, U32 ch)
     {
         m_stream.put_char(exp, ch);
     }
 
-    void stream_put_string(Expr exp, char const * str)
+    void stream_put_cstring(Expr exp, char const * str)
     {
-        m_stream.put_string(exp, str);
+        m_stream.put_cstring(exp, str);
     }
 
     void stream_put_u64(Expr exp, U64 val)
     {
         char str[32];
         sprintf(str, "%" PRIu64, val);
-        stream_put_string(exp, str);
+        stream_put_cstring(exp, str);
     }
 
     void stream_put_i64(Expr exp, U64 val)
     {
         char str[32];
         sprintf(str, "%" PRIi64, val);
-        stream_put_string(exp, str);
+        stream_put_cstring(exp, str);
     }
 
     void stream_put_x64(Expr exp, U64 val)
     {
         char str[32];
         sprintf(str, "%016" PRIx64, val);
-        stream_put_string(exp, str);
+        stream_put_cstring(exp, str);
     }
 
     void stream_put_pointer(Expr exp, void const * ptr)
     {
         char str[32];
         sprintf(str, "%p", ptr);
-        stream_put_string(exp, str);
+        stream_put_cstring(exp, str);
     }
 
     void stream_release(Expr exp)
     {
         m_stream.release(exp);
-    }
-
-    char stream_read_char(Expr exp)
-    {
-        /* TODO inline implementation */
-        char const ret = stream_peek_char(exp);
-        stream_skip_char(exp);
-        return ret;
     }
 
     bool stream_at_end(Expr exp)
