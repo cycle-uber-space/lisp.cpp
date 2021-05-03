@@ -400,10 +400,6 @@ inline bool is_builtin(Expr exp)
 
 /* system */
 
-typedef struct SystemState
-{
-} SystemState;
-
 class SystemImpl;
 
 class System
@@ -1345,8 +1341,6 @@ private:
 
 /* system */
 
-SystemState global;
-
 class SystemImpl
 {
 public:
@@ -1363,8 +1357,6 @@ public:
 #endif
         m_dummy(0)
     {
-        system_init(&global);
-
         // TODO move to type_init?
         LISP_ASSERT_ALWAYS(TYPE_NIL == make_type("nil"));
         LISP_ASSERT_ALWAYS(TYPE_SYMBOL == make_type("symbol"));
@@ -1386,15 +1378,6 @@ public:
     }
 
     virtual ~SystemImpl()
-    {
-        system_quit(&global);
-    }
-
-    void system_init(SystemState * system)
-    {
-    }
-
-    void system_quit(SystemState * system)
     {
     }
 

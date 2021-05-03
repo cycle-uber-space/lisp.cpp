@@ -396,10 +396,6 @@ func is_builtin(exp: Expr): inline bool
 
 /* system */
 
-typedef struct SystemState
-{
-} SystemState;
-
 class SystemImpl;
 
 class System
