@@ -9,6 +9,10 @@
 #define LISP_WANT_GLOBAL_API 1
 #endif
 
+#ifndef LISP_WANT_SYSTEM_API
+#define LISP_WANT_SYSTEM_API 1
+#endif
+
 #ifndef LISP_DEBUG
 #define LISP_DEBUG 1
 #endif
@@ -278,6 +282,13 @@ inline bool is_cons(Expr exp)
 {
     return expr_type(exp) == TYPE_CONS;
 }
+
+/* gensym */
+
+#if LISP_WANT_GLOBAL_API
+bool is_gensym(Expr exp);
+Expr gensym();
+#endif
 
 /* string */
 
@@ -640,7 +651,7 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
-SystemState global;
+/* type */
 
 class TypeImpl
 {
@@ -666,6 +677,49 @@ public:
 private:
     std::vector<std::string> m_names;
 };
+
+/* gensym */
+
+class GensymImpl
+{
+public:
+    GensymImpl(U64 type) : m_type(type), m_counter(0)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make()
+    {
+        U64 const data = m_counter++;
+        return make_expr(m_type, data);
+    }
+
+private:
+    U64 m_type;
+    U64 m_counter;
+};
+
+#if LISP_WANT_GLOBAL_API
+GensymImpl g_gensym(TYPE_GENSYM);
+
+bool is_gensym(Expr exp)
+{
+    return g_gensym.isinstance(exp);
+}
+
+Expr gensym()
+{
+    return g_gensym.make();
+}
+#endif
+
+/* system */
+
+SystemState global;
 
 class SymbolImpl
 {
@@ -794,29 +848,6 @@ protected:
 private:
     U64 m_type;
     std::vector<ExprPair> m_pairs;
-};
-
-class GensymImpl
-{
-public:
-    GensymImpl(U64 type) : m_type(type), m_counter(0)
-    {
-    }
-
-    inline bool isinstance(Expr exp) const
-    {
-        return expr_type(exp) == m_type;
-    }
-
-    Expr make()
-    {
-        U64 const data = m_counter++;
-        return make_expr(m_type, data);
-    }
-
-private:
-    U64 m_type;
-    U64 m_counter;
 };
 
 class StringImpl

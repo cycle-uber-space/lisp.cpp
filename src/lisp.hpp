@@ -5,6 +5,10 @@
 #define LISP_WANT_GLOBAL_API 1
 #endif
 
+#ifndef LISP_WANT_SYSTEM_API
+#define LISP_WANT_SYSTEM_API 1
+#endif
+
 #ifndef LISP_DEBUG
 #define LISP_DEBUG 1
 #endif
@@ -274,6 +278,13 @@ inline bool is_cons(Expr exp)
 {
     return expr_type(exp) == TYPE_CONS;
 }
+
+/* gensym */
+
+#if LISP_WANT_GLOBAL_API
+bool is_gensym(Expr exp);
+Expr gensym();
+#endif
 
 /* string */
 
