@@ -1124,7 +1124,8 @@ public:
                     stream_put_char(out, ' ');
                 }
                 Expr exp = car(tmp);
-                print_expr(exp, out);
+                HashSet<Expr> seen;
+                print_expr(exp, out, seen);
             }
             stream_put_char(out, '\n');
             return nil;
@@ -1594,7 +1595,8 @@ public:
         size_t const size = 4096;
         char * buffer = get_temp_buf(size);
         Expr out = lisp_make_buffer_output_stream(&global.stream, size, buffer);
-        print_expr(exp, out);
+        HashSet<Expr> seen;
+        print_expr(exp, out, seen);
         stream_release(out);
         return buffer;
     }
@@ -1602,26 +1604,30 @@ public:
     void print(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        print_expr(exp, out);
+        HashSet<Expr> seen;
+        print_expr(exp, out, seen);
     }
 
     void println(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        print_expr(exp, out);
+        HashSet<Expr> seen;
+        print_expr(exp, out, seen);
         stream_put_string(out, "\n");
     }
 
     void display(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        display_expr(exp, out);
+        HashSet<Expr> seen;
+        display_expr(exp, out, seen);
     }
 
     void displayln(Expr exp)
     {
         Expr const out = global.stream.stdout;
-        display_expr(exp, out);
+        HashSet<Expr> seen;
+        display_expr(exp, out, seen);
         stream_put_string(out, "\n");
     }
 
@@ -2098,7 +2104,7 @@ public:
 
     /* printer */
 
-    void display_expr(Expr exp, Expr out)
+    void display_expr(Expr exp, Expr out, HashSet<Expr> & seen)
     {
         switch (expr_type(exp))
         {
@@ -2109,12 +2115,12 @@ public:
             stream_put_char(out, character_code(exp));
             break;
         default:
-            print_expr(exp, out);
+            print_expr(exp, out, seen);
             break;
         }
     }
 
-    void print_expr(Expr exp, Expr out)
+    void print_expr(Expr exp, Expr out, HashSet<Expr> & seen)
     {
         switch (expr_type(exp))
         {
@@ -2130,7 +2136,7 @@ public:
             stream_put_string(out, symbol_name(exp));
             break;
         case TYPE_CONS:
-            print_cons(exp, out);
+            print_cons(exp, out, seen);
             break;
         case TYPE_GENSYM:
             print_gensym(exp, out);
@@ -2159,18 +2165,26 @@ public:
         }
     }
 
-    void print_cons(Expr exp, Expr out)
+    void print_cons(Expr exp, Expr out, HashSet<Expr> & seen)
     {
 #if LISP_PRINTER_PRINT_QUOTE
         if (is_quote_call(exp))
         {
             stream_put_char(out, '\'');
-            print_expr(cadr(exp), out);
+            print_expr(cadr(exp), out, seen);
             return;
         }
 #endif
+
+        if (seen.contains(exp))
+        {
+            stream_put_string(out, "...");
+            return;
+        }
+        seen.add(exp);
+
         stream_put_char(out, '(');
-        print_expr(car(exp), out);
+        print_expr(car(exp), out, seen);
 
         for (Expr tmp = cdr(exp); tmp; tmp = cdr(tmp))
         {
@@ -2182,12 +2196,12 @@ public:
             else if (is_cons(tmp))
             {
                 stream_put_char(out, ' ');
-                print_expr(car(tmp), out);
+                print_expr(car(tmp), out, seen);
             }
             else
             {
                 stream_put_string(out, " . ");
-                print_expr(tmp, out);
+                print_expr(tmp, out, seen);
                 break;
             }
         }
