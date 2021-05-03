@@ -2,6 +2,8 @@
 //#define LISP_IMPLEMENTATION
 #include "lisp.hpp"
 
+namespace lisp {
+
 class SchemeSystem : public System
 {
 public:
@@ -57,9 +59,11 @@ public:
     }
 };
 
+}
+
 int main(int argc, char ** argv)
 {
-    return SchemeSystem().main(argc, argv);
+    return lisp::SchemeSystem().main(argc, argv);
 }
 
 #define LISP_IMPLEMENTATION

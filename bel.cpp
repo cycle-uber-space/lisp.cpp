@@ -5,6 +5,8 @@
 #define LISP_SYM_LIT intern("lit")
 #define LISP_SYM_CLO intern("clo")
 
+namespace lisp {
+
 class BelSystem : public System
 {
 public:
@@ -45,9 +47,11 @@ public:
     }
 };
 
+}
+
 int main(int argc, char ** argv)
 {
-    return BelSystem().main(argc, argv);
+    return lisp::BelSystem().main(argc, argv);
 }
 
 #define LISP_IMPLEMENTATION
