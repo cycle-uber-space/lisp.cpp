@@ -292,7 +292,6 @@ typedef struct
 
 typedef struct SystemState
 {
-    ConsState cons;
     StreamState stream;
     StringState string;
     BuiltinState builtin;
