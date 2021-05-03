@@ -308,6 +308,83 @@ typedef struct SystemState
     BuiltinState builtin;
 } SystemState;
 
+class SystemImpl;
+
+class System
+{
+public:
+    System();
+    virtual ~System();
+
+    /* env */
+
+    Expr make_env(Expr outer);
+    virtual Expr make_core_env();
+
+    void env_def(Expr env, Expr var, Expr val);
+    void env_defun(Expr env, char const * name, BuiltinFun fun);
+    void env_defun_println(Expr env, char const * name);
+    void env_defspecial(Expr env, char const * name, BuiltinFun fun);
+    void env_defspecial_quote(Expr env);
+    void env_defspecial_while(Expr env);
+    void env_defsym(Expr env, char const * name, BuiltinFun fun);
+    void env_del(Expr env, Expr var);
+
+    Expr env_get(Expr env, Expr var);
+    bool env_can_set(Expr env, Expr var);
+    void env_set(Expr env, Expr var, Expr val);
+
+    /* function */
+
+    Expr make_function(Expr env, Expr name, Expr args, Expr body);
+
+    /* symbol */
+
+    char const * symbol_name(Expr exp);
+
+    /* print */
+
+    char const * repr(Expr exp);
+    void print(Expr exp);
+    void println(Expr exp);
+    void display(Expr exp);
+    void displayln(Expr exp);
+
+    /* read */
+
+    Expr intern(char const * name);
+    Expr read_one_from_string(char const * src);
+
+    /* cons */
+
+    Expr cons(Expr a, Expr b);
+    Expr car(Expr exp);
+    Expr cdr(Expr exp);
+    void rplaca(Expr exp, Expr val);
+    void rplacd(Expr exp, Expr val);
+
+    /* core */
+
+    Expr list(Expr exp1);
+    Expr list(Expr exp1, Expr exp2);
+    Expr list(Expr exp1, Expr exp2, Expr exp3);
+    Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
+
+    Expr first(Expr seq);
+    Expr second(Expr seq);
+
+    bool equal(Expr a, Expr b);
+
+    /* eval */
+
+    Expr eval(Expr exp, Expr env);
+    void load_file(char const * path, Expr env);
+    void repl(Expr env);
+
+    SystemImpl * m_impl = nullptr;
+    static System * s_instance;
+};
+
 #endif /* _LISP_HPP_ */
 
 #ifdef LISP_IMPLEMENTATION
@@ -626,83 +703,6 @@ public:
 private:
     U64 m_type;
     U64 m_counter;
-};
-
-class SystemImpl;
-
-class System
-{
-public:
-    System();
-    virtual ~System();
-
-    /* env */
-
-    Expr make_env(Expr outer);
-    virtual Expr make_core_env();
-
-    void env_def(Expr env, Expr var, Expr val);
-    void env_defun(Expr env, char const * name, BuiltinFun fun);
-    void env_defun_println(Expr env, char const * name);
-    void env_defspecial(Expr env, char const * name, BuiltinFun fun);
-    void env_defspecial_quote(Expr env);
-    void env_defspecial_while(Expr env);
-    void env_defsym(Expr env, char const * name, BuiltinFun fun);
-    void env_del(Expr env, Expr var);
-
-    Expr env_get(Expr env, Expr var);
-    bool env_can_set(Expr env, Expr var);
-    void env_set(Expr env, Expr var, Expr val);
-
-    /* function */
-
-    Expr make_function(Expr env, Expr name, Expr args, Expr body);
-
-    /* symbol */
-
-    char const * symbol_name(Expr exp);
-
-    /* print */
-
-    char const * repr(Expr exp);
-    void print(Expr exp);
-    void println(Expr exp);
-    void display(Expr exp);
-    void displayln(Expr exp);
-
-    /* read */
-
-    Expr intern(char const * name);
-    Expr read_one_from_string(char const * src);
-
-    /* cons */
-
-    Expr cons(Expr a, Expr b);
-    Expr car(Expr exp);
-    Expr cdr(Expr exp);
-    void rplaca(Expr exp, Expr val);
-    void rplacd(Expr exp, Expr val);
-
-    /* core */
-
-    Expr list(Expr exp1);
-    Expr list(Expr exp1, Expr exp2);
-    Expr list(Expr exp1, Expr exp2, Expr exp3);
-    Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
-
-    Expr first(Expr seq);
-    Expr second(Expr seq);
-
-    bool equal(Expr a, Expr b);
-
-    /* eval */
-
-    Expr eval(Expr exp, Expr env);
-    void load_file(char const * path, Expr env);
-    void repl(Expr env);
-
-    SystemImpl * m_impl = nullptr;
-    static System * s_instance;
 };
 
 class SystemImpl
