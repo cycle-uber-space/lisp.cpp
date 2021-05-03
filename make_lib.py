@@ -103,6 +103,13 @@ def hack_lines(lines):
             type_decl = re_group(4)
             yield f"{indent}{type_decl} {name};"
 
+        elif re_match(fr"^( *)(static var) ({ID}) *: *([^;]+);$", line):
+            indent = re_group(1)
+            keyword = re_group(2)
+            name = re_group(3)
+            type_decl = re_group(4)
+            yield f"{indent}static {type_decl} {name};"
+
         elif re_match(fr"^( *)(func) +({ID})\(([^)]*)\): *([^;]+)(;?)$", line):
             indent = re_group(1)
             keyword = re_group(2)
