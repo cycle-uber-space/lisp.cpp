@@ -236,7 +236,7 @@ private:
 #if LISP_WANT_GLOBAL_API
 var g_gensym: GensymImpl(TYPE_GENSYM);
 
-func is_gensym(Expr exp): bool
+func is_gensym(exp: Expr): bool
 {
     return g_gensym.isinstance(exp);
 }

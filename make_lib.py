@@ -86,10 +86,19 @@ def hack_lines(lines):
             type_decl = re_group(4)
             yield f"{indent}{type_decl} {name};"
         elif re_match(fr"^( *)(func) ({ID})\(([^)]*)\): *(.+)$", line):
+            def fix_arg(arg):
+                if ":" in arg:
+                    name, type = map(str.strip, arg.split(":"))
+                    arg = f"{type} {name}"
+                return arg
             indent = re_group(1)
             keyword = re_group(2)
             name = re_group(3)
             args = re_group(4)
+            if ":" in args:
+                args = args.split(", ")
+                args = map(fix_arg, args)
+                args = ", ".join(args)
             ret_type = re_group(5)
             yield f"{indent}{ret_type} {name}({args})"
         else:
