@@ -164,51 +164,6 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 void error_fail(char const * fmt, ...);
 void error_warn(char const * fmt, ...);
 
-/* HashMap */
-
-template <typename Key, typename Value>
-class HashMap
-{
-public:
-    bool has(Key const & key) const
-    {
-        return m_impl.find(key) != m_impl.end();
-    }
-
-    void put(Key const & key, Value const & value)
-    {
-        m_impl[key] = value;
-    }
-
-    Value get(Key const & key) const
-    {
-        return m_impl.at(key);
-    }
-
-private:
-    std::unordered_map<Key, Value> m_impl;
-};
-
-/* HashSet */
-
-template <typename Element>
-class HashSet
-{
-public:
-    bool contains(Element const & element) const
-    {
-        return m_impl.find(element) != m_impl.end();
-    }
-
-    void add(Element const & element)
-    {
-        m_impl.insert(element);
-    }
-
-private:
-    std::unordered_set<Element> m_impl;
-};
-
 /* expr */
 
 #define LISP_TYPE_BITS UINT64_C(8)
@@ -227,7 +182,11 @@ U64 expr_data(Expr exp);
 
 enum
 {
+    // data embedded in expr
     TYPE_NIL = 0,
+    TYPE_CHAR,
+    TYPE_FIXNUM,
+    // needs separate memory
     TYPE_SYMBOL,
     TYPE_KEYWORD,
     TYPE_CONS,
@@ -237,8 +196,6 @@ enum
 #if LISP_WANT_POINTER
     TYPE_POINTER,
 #endif
-    TYPE_CHAR,
-    TYPE_FIXNUM,
     TYPE_STRING,
     TYPE_STREAM,
     TYPE_BUILTIN_SPECIAL,
@@ -315,6 +272,7 @@ void * pointer_value(Expr exp);
 #endif
 #endif
 
+/* fixnum */
 
 inline bool is_fixnum(Expr exp)
 {
@@ -341,8 +299,6 @@ inline bool is_char(Expr exp)
 
 Expr make_char(U32 code);
 U32 char_code(Expr exp);
-
-/* fixnum */
 
 /* string */
 
@@ -400,6 +356,8 @@ inline bool is_builtin(Expr exp)
 }
 
 /* system */
+
+#if LISP_WANT_SYSTEM_API
 
 class SystemImpl;
 
@@ -485,6 +443,8 @@ private:
     static System * s_instance;
 };
 
+#endif
+
 #endif /* _LISP_HPP_ */
 
 #ifdef LISP_IMPLEMENTATION
@@ -493,6 +453,53 @@ private:
 #define _LISP_CPP_
 
 #line 2 "src/lisp.def"
+/* HashMap */
+
+template <typename Key, typename Value>
+class HashMap
+{
+public:
+    bool has(Key const & key) const
+    {
+        return m_impl.find(key) != m_impl.end();
+    }
+
+    void put(Key const & key, Value const & value)
+    {
+        m_impl[key] = value;
+    }
+
+    Value get(Key const & key) const
+    {
+        return m_impl.at(key);
+    }
+
+private:
+    std::unordered_map<Key, Value> m_impl;
+};
+
+/* HashSet */
+
+template <typename Element>
+class HashSet
+{
+public:
+    bool contains(Element const & element) const
+    {
+        return m_impl.find(element) != m_impl.end();
+    }
+
+    void add(Element const & element)
+    {
+        m_impl.insert(element);
+    }
+
+private:
+    std::unordered_set<Element> m_impl;
+};
+
+/* test */
+
 #define LISP_TEST_FILE stdout
 
 void test_begin(TestState * test)
@@ -541,6 +548,8 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
     }
 }
 
+/* error */
+
 void error_fail(char const * fmt, ...)
 {
     auto const file = stderr;
@@ -565,6 +574,8 @@ void error_warn(char const * fmt, ...)
     va_end(ap);
 }
 
+/* expr */
+
 Expr make_expr(U64 type, U64 data)
 {
     return (data << LISP_TYPE_BITS) | (type & LISP_TYPE_MASK);
@@ -579,6 +590,8 @@ U64 expr_data(Expr exp)
 {
     return exp >> LISP_TYPE_BITS;
 }
+
+/* util? */
 
 bool is_printable_ascii(U32 ch)
 {
@@ -700,6 +713,81 @@ public:
 private:
     std::vector<std::string> m_names;
 };
+
+/* fixnum */
+
+#define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
+#define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
+#define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
+#define LISP_FIXNUM_MAXVAL    ((INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))) - INT64_C(1))
+
+Expr make_fixnum(I64 value)
+{
+    LISP_ASSERT(value >= LISP_FIXNUM_MINVAL);
+    LISP_ASSERT(value <= LISP_FIXNUM_MAXVAL);
+
+    /* TODO probably no need to mask off the sign
+       bits, as they get shifted out by make_expr */
+    U64 const data = i64_as_u64(value) & LISP_DATA_MASK;
+    return make_expr(TYPE_FIXNUM, data);
+}
+
+I64 fixnum_value(Expr exp)
+{
+    LISP_ASSERT(is_fixnum(exp));
+
+    U64 data = expr_data(exp);
+
+    if (data & LISP_FIXNUM_SIGN_MASK)
+    {
+        data |= LISP_EXPR_MASK << LISP_DATA_BITS;
+    }
+
+    return u64_as_i64(data);
+}
+
+Expr fixnum_neg(Expr a)
+{
+    return make_fixnum(-fixnum_value(a));
+}
+
+Expr fixnum_add(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) + fixnum_value(b));
+}
+
+Expr fixnum_mul(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) * fixnum_value(b));
+}
+
+Expr fixnum_div(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) / fixnum_value(b));
+}
+
+bool fixnum_eq(Expr a, Expr b)
+{
+    return a == b;
+}
+
+bool fixnum_lt(Expr a, Expr b)
+{
+    return fixnum_value(a) < fixnum_value(b);
+}
+
+/* char */
+
+Expr make_char(U32 code)
+{
+    return make_expr(TYPE_CHAR, code);
+}
+
+U32 char_code(Expr exp)
+{
+    LISP_ASSERT(is_char(exp));
+    return (U32) expr_data(exp);
+}
 
 /* symbol */
 
@@ -1307,79 +1395,6 @@ void * pointer_value(Expr exp)
 }
 #endif
 #endif
-
-#define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
-#define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
-#define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
-#define LISP_FIXNUM_MAXVAL    ((INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))) - INT64_C(1))
-
-Expr make_fixnum(I64 value)
-{
-    LISP_ASSERT(value >= LISP_FIXNUM_MINVAL);
-    LISP_ASSERT(value <= LISP_FIXNUM_MAXVAL);
-
-    /* TODO probably no need to mask off the sign
-       bits, as they get shifted out by make_expr */
-    U64 const data = i64_as_u64(value) & LISP_DATA_MASK;
-    return make_expr(TYPE_FIXNUM, data);
-}
-
-I64 fixnum_value(Expr exp)
-{
-    LISP_ASSERT(is_fixnum(exp));
-
-    U64 data = expr_data(exp);
-
-    if (data & LISP_FIXNUM_SIGN_MASK)
-    {
-        data |= LISP_EXPR_MASK << LISP_DATA_BITS;
-    }
-
-    return u64_as_i64(data);
-}
-
-Expr fixnum_neg(Expr a)
-{
-    return make_fixnum(-fixnum_value(a));
-}
-
-Expr fixnum_add(Expr a, Expr b)
-{
-    return make_fixnum(fixnum_value(a) + fixnum_value(b));
-}
-
-Expr fixnum_mul(Expr a, Expr b)
-{
-    return make_fixnum(fixnum_value(a) * fixnum_value(b));
-}
-
-Expr fixnum_div(Expr a, Expr b)
-{
-    return make_fixnum(fixnum_value(a) / fixnum_value(b));
-}
-
-bool fixnum_eq(Expr a, Expr b)
-{
-    return a == b;
-}
-
-bool fixnum_lt(Expr a, Expr b)
-{
-    return fixnum_value(a) < fixnum_value(b);
-}
-
-/* char */
-
-Expr make_char(U32 code)
-{
-    return make_expr(TYPE_CHAR, code);
-}
-
-U32 char_code(Expr exp)
-{
-    LISP_ASSERT(is_char(exp));
-    return (U32) expr_data(exp);
-}
 
 /* builtin */
 
@@ -3415,6 +3430,8 @@ public:
 
 /* system */
 
+#if LISP_WANT_SYSTEM_API
+
 System * System::s_instance = nullptr;
 
 System::System()
@@ -3649,6 +3666,8 @@ void System::repl(Expr env)
 {
     return m_impl->repl(env);
 }
+
+#endif
 
 #endif /* _LISP_CPP_ */
 

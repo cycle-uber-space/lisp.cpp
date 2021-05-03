@@ -160,51 +160,6 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 void error_fail(char const * fmt, ...);
 void error_warn(char const * fmt, ...);
 
-/* HashMap */
-
-template <typename Key, typename Value>
-class HashMap
-{
-public:
-    bool has(Key const & key) const
-    {
-        return m_impl.find(key) != m_impl.end();
-    }
-
-    void put(Key const & key, Value const & value)
-    {
-        m_impl[key] = value;
-    }
-
-    Value get(Key const & key) const
-    {
-        return m_impl.at(key);
-    }
-
-private:
-    std::unordered_map<Key, Value> m_impl;
-};
-
-/* HashSet */
-
-template <typename Element>
-class HashSet
-{
-public:
-    bool contains(Element const & element) const
-    {
-        return m_impl.find(element) != m_impl.end();
-    }
-
-    void add(Element const & element)
-    {
-        m_impl.insert(element);
-    }
-
-private:
-    std::unordered_set<Element> m_impl;
-};
-
 /* expr */
 
 #define LISP_TYPE_BITS UINT64_C(8)
@@ -223,7 +178,11 @@ U64 expr_data(Expr exp);
 
 enum
 {
+    // data embedded in expr
     TYPE_NIL = 0,
+    TYPE_CHAR,
+    TYPE_FIXNUM,
+    // needs separate memory
     TYPE_SYMBOL,
     TYPE_KEYWORD,
     TYPE_CONS,
@@ -233,8 +192,6 @@ enum
 #if LISP_WANT_POINTER
     TYPE_POINTER,
 #endif
-    TYPE_CHAR,
-    TYPE_FIXNUM,
     TYPE_STRING,
     TYPE_STREAM,
     TYPE_BUILTIN_SPECIAL,
@@ -311,6 +268,7 @@ void * pointer_value(Expr exp);
 #endif
 #endif
 
+/* fixnum */
 
 inline bool is_fixnum(Expr exp)
 {
@@ -337,8 +295,6 @@ func is_char(exp: Expr): inline bool
 
 Expr make_char(U32 code);
 U32 char_code(Expr exp);
-
-/* fixnum */
 
 /* string */
 
@@ -396,6 +352,8 @@ func is_builtin(exp: Expr): inline bool
 }
 
 /* system */
+
+#if LISP_WANT_SYSTEM_API
 
 class SystemImpl;
 
@@ -480,3 +438,5 @@ private:
     SystemImpl * m_impl = nullptr;
     static var s_instance: System *;
 };
+
+#endif
