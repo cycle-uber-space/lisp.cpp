@@ -1,4 +1,27 @@
 
+(defun write-utf8 (file code)
+  (cond
+    ((< code 128)
+     (write-u8 file code))
+
+    (t
+     (error "not implemented"))))
+
+(let ((file (fopen "test.txt" "wb")))
+  (write-utf8 file (ord "A"))
+  (write-utf8 file (ord "b"))
+  (write-utf8 file (ord "r"))
+  (write-utf8 file (ord "a"))
+  (write-utf8 file (ord "c"))
+  (write-utf8 file (ord "a"))
+  (write-utf8 file (ord "d"))
+  (write-utf8 file (ord "a"))
+  (write-utf8 file (ord "b"))
+  (write-utf8 file (ord "r"))
+  (write-utf8 file (ord "a"))
+  (write-utf8 file (ord "\n"))
+  (fclose file))
+
 ;;(def std (make-env *env*))
 ;;
 ;;(with-env std

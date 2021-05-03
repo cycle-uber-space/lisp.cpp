@@ -23,4 +23,4 @@ lisp.hpp: make_lib.py src/lisp.hpp src/lisp.cpp
 test:
 	./std unit
 	./std load bel.lisp test.bel
-	./std load test.std
+	./std load std.lisp test.std.lisp
