@@ -232,6 +232,7 @@ private:
     U64 m_counter;
 };
 
+#if LISP_WANT_GENSYM
 #if LISP_WANT_GLOBAL_API
 GensymImpl g_gensym(TYPE_GENSYM);
 
@@ -244,6 +245,7 @@ Expr gensym()
 {
     return g_gensym.make();
 }
+#endif
 #endif
 
 /* char */
@@ -504,7 +506,15 @@ private:
 class SystemImpl
 {
 public:
-    SystemImpl() : m_symbol(TYPE_SYMBOL), m_keyword(TYPE_KEYWORD), m_cons(TYPE_CONS), m_string(TYPE_STRING), m_gensym(TYPE_GENSYM)
+    SystemImpl() :
+        m_symbol(TYPE_SYMBOL),
+        m_keyword(TYPE_KEYWORD),
+        m_cons(TYPE_CONS),
+        m_string(TYPE_STRING),
+#if LISP_WANT_GENSYM
+        m_gensym(TYPE_GENSYM),
+#endif
+        m_dummy(0)
     {
         system_init(&global);
 
@@ -513,7 +523,9 @@ public:
         LISP_ASSERT_ALWAYS(TYPE_SYMBOL           == make_type("symbol"));
         LISP_ASSERT_ALWAYS(TYPE_KEYWORD          == make_type("keyword"));
         LISP_ASSERT_ALWAYS(TYPE_CONS             == make_type("cons"));
+#if LISP_WANT_GENSYM
         LISP_ASSERT_ALWAYS(TYPE_GENSYM           == make_type("gensym"));
+#endif
         LISP_ASSERT_ALWAYS(TYPE_CHAR             == make_type("char"));
         LISP_ASSERT_ALWAYS(TYPE_FIXNUM           == make_type("fixnum"));
         LISP_ASSERT_ALWAYS(TYPE_STRING           == make_type("string"));
@@ -696,10 +708,12 @@ public:
             return intern(string_value(car(args)));
         });
 
+#if LISP_WANT_GENSYM
         env_defun(env, "gensym", [this](Expr args, Expr env) -> Expr
         {
             return gensym();
         });
+#endif
 
         env_defun(env, "load-file", [this](Expr args, Expr env) -> Expr
         {
@@ -873,6 +887,8 @@ public:
         return cdr(cdr(cdr(cdr(exp))));
     }
 
+#if LISP_WANT_GENSYM
+
     /* gensym */
 
     bool is_gensym(Expr exp)
@@ -884,6 +900,7 @@ public:
     {
         return m_gensym.make();
     }
+#endif
 
     /* fixnum */
 
@@ -1776,9 +1793,12 @@ public:
         case TYPE_CONS:
             print_cons(exp, out, seen);
             break;
+#if LISP_WANT_GENSYM
         case TYPE_GENSYM:
-            print_gensym(exp, out);
+            stream_put_string(out, "#:G");
+            stream_put_u64(out, expr_data(exp));
             break;
+#endif
         case TYPE_CHAR:
             print_char(exp, out);
             break;
@@ -1873,14 +1893,6 @@ public:
     void print_builtin_symbol(Expr exp, Expr out)
     {
         print_builtin(exp, out, "symbol macro");
-    }
-
-    void print_gensym(Expr exp, Expr out)
-    {
-        LISP_ASSERT_DEBUG(is_gensym(exp));
-        U64 const num = expr_data(exp);
-        stream_put_string(out, "#:G");
-        stream_put_u64(out, num);
     }
 
     void print_char(Expr exp, Expr out)
@@ -2495,7 +2507,9 @@ public:
         case TYPE_KEYWORD:
             return exp;
         case TYPE_SYMBOL:
+#if LISP_WANT_GENSYM
         case TYPE_GENSYM:
+#endif
             return env_get(env, exp);
         case TYPE_CONS:
             return apply(car(exp), cdr(exp), env);
@@ -2621,7 +2635,10 @@ public:
     ConsImpl m_cons;
     StringImpl m_string;
     BuiltinImpl m_builtin;
+#if LISP_WANT_GENSYM
     GensymImpl m_gensym;
+#endif
+    int m_dummy;
 };
 
 /* system */

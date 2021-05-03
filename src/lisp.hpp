@@ -9,6 +9,10 @@
 #define LISP_WANT_SYSTEM_API 1
 #endif
 
+#ifndef LISP_WANT_GENSYM
+#define LISP_WANT_GENSYM 1
+#endif
+
 #ifndef LISP_DEBUG
 #define LISP_DEBUG 1
 #endif
@@ -219,7 +223,9 @@ enum
     TYPE_SYMBOL,
     TYPE_KEYWORD,
     TYPE_CONS,
+#if LISP_WANT_GENSYM
     TYPE_GENSYM,
+#endif
     TYPE_CHAR,
     TYPE_FIXNUM,
     TYPE_STRING,
@@ -279,11 +285,13 @@ inline bool is_cons(Expr exp)
     return expr_type(exp) == TYPE_CONS;
 }
 
+#if LISP_WANT_GENSYM
 /* gensym */
 
 #if LISP_WANT_GLOBAL_API
 bool is_gensym(Expr exp);
 Expr gensym();
+#endif
 #endif
 
 /* char */
