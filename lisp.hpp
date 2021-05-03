@@ -91,7 +91,7 @@
 #define LISP_CYAN    "\x1b[36m"
 #define LISP_RESET   "\x1b[0m"
 
-#line 2 "src/lisp.fwd"
+#line 2 "src/base.decl"
 /* base */
 
 typedef uint8_t U8;
@@ -129,6 +129,7 @@ static_assert(sizeof(F64) == 8, "");
 
 static_assert(sizeof(V64) == 8, "");
 
+#line 2 "src/test.decl"
 /* test */
 
 typedef struct
@@ -149,6 +150,7 @@ void test_finish(TestState * test);
 void test_group(TestState * test, char const * text);
 void test_assert_try(TestState * test, bool exp, char const * msg);
 
+#line 2 "src/error.decl"
 /* error */
 
 #define LISP_FAIL(...)    error_fail(__VA_ARGS__);
@@ -167,6 +169,7 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 void error_fail(char const * fmt, ...);
 void error_warn(char const * fmt, ...);
 
+#line 2 "src/expr.decl"
 /* expr */
 
 #define LISP_TYPE_BITS UINT64_C(8)
@@ -218,6 +221,7 @@ inline bool eq(Expr a, Expr b)
 
 typedef struct SystemState SystemState;
 
+#line 2 "src/nil.decl"
 /* nil */
 
 #define nil 0
@@ -227,6 +231,7 @@ inline static bool is_nil(Expr exp)
     return exp == nil;
 }
 
+#line 2 "src/symbol.decl"
 /* symbol */
 
 #define LISP_SYMBOL_T intern("t")
@@ -242,6 +247,7 @@ inline bool is_symbol(Expr exp)
     return expr_type(exp) == TYPE_SYMBOL;
 }
 
+#line 2 "src/keyword.decl"
 /* keyword */
 
 inline bool is_keyword(Expr exp)
@@ -249,6 +255,7 @@ inline bool is_keyword(Expr exp)
     return expr_type(exp) == TYPE_KEYWORD;
 }
 
+#line 2 "src/cons.decl"
 /* cons */
 
 inline bool is_cons(Expr exp)
@@ -256,18 +263,20 @@ inline bool is_cons(Expr exp)
     return expr_type(exp) == TYPE_CONS;
 }
 
-#if LISP_WANT_GENSYM
+#line 2 "src/gensym.decl"
 /* gensym */
 
+#if LISP_WANT_GENSYM
 #if LISP_WANT_GLOBAL_API
 bool is_gensym(Expr exp);
 Expr gensym();
 #endif
 #endif
 
-#if LISP_WANT_POINTER
+#line 2 "src/pointer.decl"
 /* pointer */
 
+#if LISP_WANT_POINTER
 #if LISP_WANT_GLOBAL_API
 bool is_pointer(Expr exp);
 Expr make_pointer(void * ptr);
@@ -275,6 +284,7 @@ void * pointer_value(Expr exp);
 #endif
 #endif
 
+#line 2 "src/fixnum.decl"
 /* fixnum */
 
 inline bool is_fixnum(Expr exp)
@@ -293,6 +303,7 @@ Expr fixnum_div(Expr a, Expr b);
 bool fixnum_eq(Expr a, Expr b);
 bool fixnum_lt(Expr a, Expr b);
 
+#line 2 "src/char.decl"
 /* char */
 
 inline bool is_char(Expr exp)
@@ -303,6 +314,7 @@ inline bool is_char(Expr exp)
 Expr make_char(U32 code);
 U32 char_code(Expr exp);
 
+#line 2 "src/string.decl"
 /* string */
 
 inline bool is_string(Expr exp)
@@ -310,6 +322,7 @@ inline bool is_string(Expr exp)
     return expr_type(exp) == TYPE_STRING;
 }
 
+#line 2 "src/stream.decl"
 /* stream */
 
 struct StreamInfo
@@ -328,6 +341,7 @@ inline bool is_stream(Expr exp)
     return expr_type(exp) == TYPE_STREAM;
 }
 
+#line 2 "src/builtin.decl"
 /* builtin */
 
 typedef std::function<Expr(Expr args, Expr env)> BuiltinFunc;
@@ -358,6 +372,7 @@ inline bool is_builtin(Expr exp)
     return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
 }
 
+#line 2 "src/system.decl"
 /* system */
 
 #if LISP_WANT_SYSTEM_API

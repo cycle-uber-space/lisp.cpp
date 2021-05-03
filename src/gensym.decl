@@ -1,0 +1,9 @@
+
+/* gensym */
+
+#if LISP_WANT_GENSYM
+#if LISP_WANT_GLOBAL_API
+bool is_gensym(Expr exp);
+Expr gensym();
+#endif
+#endif

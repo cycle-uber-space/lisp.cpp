@@ -1,0 +1,20 @@
+
+/* test */
+
+typedef struct
+{
+    int num_tests;
+    int num_failed;
+    bool show_pass;
+    bool exit_on_fail;
+} TestState;
+
+#define LISP_TEST_GROUP(test, text) test_group(test, text)
+#define LISP_TEST_BEGIN(test)       test_begin(test)
+#define LISP_TEST_FINISH(test)      test_finish(test)
+#define LISP_TEST_ASSERT(test, exp) do { test_assert_try(test, exp, #exp); } while (0)
+
+void test_begin(TestState * test);
+void test_finish(TestState * test);
+void test_group(TestState * test, char const * text);
+void test_assert_try(TestState * test, bool exp, char const * msg);

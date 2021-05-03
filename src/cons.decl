@@ -1,0 +1,7 @@
+
+/* cons */
+
+inline bool is_cons(Expr exp)
+{
+    return expr_type(exp) == TYPE_CONS;
+}

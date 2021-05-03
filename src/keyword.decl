@@ -1,0 +1,7 @@
+
+/* keyword */
+
+inline bool is_keyword(Expr exp)
+{
+    return expr_type(exp) == TYPE_KEYWORD;
+}

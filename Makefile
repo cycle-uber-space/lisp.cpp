@@ -4,7 +4,26 @@
 .PHONY: all clean test
 
 BIN = bel scheme std unit
-LISP_SRC =  src/config.decl src/includes.decl src/defines.decl src/lisp.fwd src/lisp.def
+LISP_SRC = src/config.decl\
+src/includes.decl\
+src/defines.decl\
+src/base.decl\
+src/test.decl\
+src/error.decl\
+src/expr.decl\
+src/nil.decl\
+src/symbol.decl\
+src/keyword.decl\
+src/cons.decl\
+src/gensym.decl\
+src/pointer.decl\
+src/fixnum.decl\
+src/char.decl\
+src/string.decl\
+src/stream.decl\
+src/builtin.decl\
+src/system.decl\
+src/lisp.def
 
 CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess
 #CXXFLAGS += -O2

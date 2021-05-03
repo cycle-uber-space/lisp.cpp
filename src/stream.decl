@@ -1,0 +1,18 @@
+
+/* stream */
+
+struct StreamInfo
+{
+    FILE * file;
+    bool close_on_quit;
+    U32 peek;
+
+    char * buffer;
+    size_t size;
+    size_t cursor;
+};
+
+func is_stream(exp: Expr): inline bool
+{
+    return expr_type(exp) == TYPE_STREAM;
+}

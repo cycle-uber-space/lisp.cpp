@@ -1,0 +1,10 @@
+
+/* char */
+
+func is_char(exp: Expr): inline bool
+{
+    return expr_type(exp) == TYPE_CHAR;
+}
+
+Expr make_char(U32 code);
+U32 char_code(Expr exp);

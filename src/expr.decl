@@ -1,0 +1,51 @@
+
+/* expr */
+
+#define LISP_TYPE_BITS UINT64_C(8)
+#define LISP_TYPE_MASK ((UINT64_C(1) << LISP_TYPE_BITS) - UINT64_C(1))
+
+#define LISP_DATA_BITS (UINT64_C(64) - LISP_TYPE_BITS)
+#define LISP_DATA_MASK ((UINT64_C(1) << LISP_DATA_BITS) - UINT64_C(1))
+
+#define LISP_EXPR_MASK UINT64_C(0xffffffffffffffff)
+
+typedef U64 Expr;
+
+Expr make_expr(U64 type, U64 data);
+U64 expr_type(Expr exp);
+U64 expr_data(Expr exp);
+
+enum
+{
+    // data embedded in expr
+    TYPE_NIL = 0,
+    TYPE_CHAR,
+    TYPE_FIXNUM,
+    // needs separate memory
+    TYPE_SYMBOL,
+    TYPE_KEYWORD,
+    TYPE_CONS,
+#if LISP_WANT_GENSYM
+    TYPE_GENSYM,
+#endif
+#if LISP_WANT_POINTER
+    TYPE_POINTER,
+#endif
+    TYPE_STRING,
+    TYPE_STREAM,
+    TYPE_BUILTIN_SPECIAL,
+    TYPE_BUILTIN_FUNCTION,
+    TYPE_BUILTIN_SYMBOL,
+};
+
+enum
+{
+    DATA_NIL = 0,
+};
+
+inline bool eq(Expr a, Expr b)
+{
+    return a == b;
+}
+
+typedef struct SystemState SystemState;

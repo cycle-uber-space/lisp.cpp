@@ -1,0 +1,30 @@
+
+/* builtin */
+
+typedef std::function<Expr(Expr args, Expr env)> BuiltinFunc;
+
+struct BuiltinInfo
+{
+    char const * name;
+    BuiltinFunc func;
+};
+
+func is_builtin_special(exp: Expr): inline bool
+{
+    return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
+}
+
+func is_builtin_function(exp: Expr): inline bool
+{
+    return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
+}
+
+func is_builtin_symbol(exp: Expr): inline bool
+{
+    return expr_type(exp) == TYPE_BUILTIN_SYMBOL;
+}
+
+func is_builtin(exp: Expr): inline bool
+{
+    return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
+}

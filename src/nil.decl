@@ -1,0 +1,9 @@
+
+/* nil */
+
+#define nil 0
+
+inline static bool is_nil(Expr exp)
+{
+    return exp == nil;
+}

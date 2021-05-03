@@ -1,0 +1,15 @@
+
+/* symbol */
+
+#define LISP_SYMBOL_T intern("t")
+
+#define LISP_SYM_QUOTE intern("quote")
+#define LISP_SYM_IF intern("if")
+#define LISP_SYM_BACKQUOTE intern("backquote")
+#define LISP_SYM_UNQUOTE intern("unquote")
+#define LISP_SYM_UNQUOTE_SPLICING intern("unquote-splicing")
+
+inline bool is_symbol(Expr exp)
+{
+    return expr_type(exp) == TYPE_SYMBOL;
+}

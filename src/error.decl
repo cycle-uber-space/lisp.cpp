@@ -1,0 +1,18 @@
+
+/* error */
+
+#define LISP_FAIL(...)    error_fail(__VA_ARGS__);
+#define LISP_WARN(...)    error_warn(__VA_ARGS__);
+
+#define LISP_ASSERT_ALWAYS(x) assert(x)
+
+#define LISP_ASSERT(x) LISP_ASSERT_ALWAYS(x)
+
+#if LISP_DEBUG
+#define LISP_ASSERT_DEBUG(x) LISP_ASSERT(x)
+#else
+#define LISP_ASSERT_DEBUG(x)
+#endif
+
+void error_fail(char const * fmt, ...);
+void error_warn(char const * fmt, ...);
