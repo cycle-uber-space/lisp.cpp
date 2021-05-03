@@ -3,7 +3,7 @@
 .SUFFIXES:
 .PHONY: all clean test
 
-BIN = bel scheme std
+BIN = bel scheme std unit
 
 CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess
 #CXXFLAGS += -O2
@@ -24,3 +24,4 @@ test:
 	./std unit
 	./std load bel.lisp test.bel
 	./std load std.lisp test.std.lisp
+	./unit
