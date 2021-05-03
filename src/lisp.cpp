@@ -271,6 +271,7 @@ public:
         return m_names[index].c_str();
     }
 
+protected:
     U64 count() const
     {
         return (U64) m_names.size();
@@ -340,6 +341,7 @@ public:
         m_pairs[index].exp2 = val;
     }
 
+protected:
     U64 count() const
     {
         return (U64) m_pairs.size();
@@ -373,10 +375,63 @@ private:
     U64 m_counter;
 };
 
+class StringImpl
+{
+public:
+    StringImpl(U64 type) : m_type(type)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make(char const * str)
+    {
+        U64 const index = count();
+        m_strings.push_back(str);
+        return make_expr(m_type, index);
+    }
+
+    char const * value(Expr exp)
+    {
+        return impl(exp).c_str();
+    }
+
+    U64 length(Expr exp)
+    {
+        return (U64) impl(exp).size();
+    }
+
+    bool equal(Expr exp1, Expr exp2)
+    {
+        return impl(exp1) == impl(exp2);
+    }
+
+protected:
+    U64 count() const
+    {
+        return (U64) m_strings.size();
+    }
+
+    std::string const & impl(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        U64 const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_strings[index];
+    }
+
+private:
+    U64 m_type;
+    std::vector<std::string> m_strings;
+};
+
 class SystemImpl
 {
 public:
-    SystemImpl() : m_symbol(TYPE_SYMBOL), m_keyword(TYPE_KEYWORD), m_cons(TYPE_CONS), m_gensym(TYPE_GENSYM)
+    SystemImpl() : m_symbol(TYPE_SYMBOL), m_keyword(TYPE_KEYWORD), m_cons(TYPE_CONS), m_string(TYPE_STRING), m_gensym(TYPE_GENSYM)
     {
         system_init(&global);
 
@@ -402,7 +457,6 @@ public:
 
     void system_init(SystemState * system)
     {
-        string_init(&system->string);
         stream_init(&system->stream);
         builtin_init(&system->builtin);
     }
@@ -410,7 +464,6 @@ public:
     void system_quit(SystemState * system)
     {
         builtin_quit(&system->builtin);
-        string_quit(&system->string);
         stream_quit(&system->stream);
     }
 
@@ -861,55 +914,14 @@ public:
 
     /* string */
 
-    void string_init(StringState * string)
-    {
-        memset(string, 0, sizeof(StringState));
-        string->values = (char **) LISP_MALLOC(sizeof(char *) * LISP_MAX_STRINGS);
-    }
-
-    void string_quit(StringState * string)
-    {
-        LISP_FREE(string->values);
-        memset(string, 0, sizeof(StringState));
-    }
-
-    bool is_string(Expr exp)
-    {
-        return expr_type(exp) == TYPE_STRING;
-    }
-
-    Expr lisp_make_string(StringState * string, char const * str)
-    {
-        size_t const len = strlen(str);
-
-        /* TODO fixstrs sound attractive,
-           but the string_value API breaks
-           b/c it has to return a pointer */
-
-        Expr ret = _string_alloc(string, len);
-        memcpy(_string_buffer(string, ret), str, len + 1);
-        return ret;
-    }
-
-    char const * lisp_string_value(StringState * string, Expr exp)
-    {
-        return _string_buffer(string, exp);
-    }
-
-    U64 lisp_string_length(StringState * string, Expr exp)
-    {
-        // TODO cache this
-        return (U64) strlen(lisp_string_value(string, exp));
-    }
-
     Expr make_string(char const * str)
     {
-        return lisp_make_string(&global.string, str);
+        return m_string.make(str);
     }
 
     Expr make_string_from_utf8(U8 const * str)
     {
-        // TODO this is not portable
+        // TODO assert this works?
         return make_string((char const *) str);
     }
 
@@ -955,7 +967,7 @@ public:
 
     char const * string_value(Expr exp)
     {
-        return lisp_string_value(&global.string, exp);
+        return m_string.value(exp);
     }
 
     U8 const * string_value_utf8(Expr exp)
@@ -966,40 +978,12 @@ public:
 
     U64 string_length(Expr exp)
     {
-        return lisp_string_length(&global.string, exp);
+        return m_string.length(exp);
     }
 
     bool string_equal(Expr exp1, Expr exp2)
     {
-        // TODO use cached length test first
-        return !strcmp(string_value(exp1), string_value(exp2));
-    }
-
-    Expr _string_alloc(StringState * string, size_t len)
-    {
-        if (string->count < LISP_MAX_STRINGS)
-        {
-            U64 const index = string->count;
-            string->values[index] = (char *) LISP_MALLOC(len + 1);
-            ++string->count;
-            return make_expr(TYPE_STRING, index);
-        }
-
-        LISP_FAIL("cannot make string of length %d\n", (int) len);
-        return nil;
-    }
-
-    char * _string_buffer(StringState * string, Expr exp)
-    {
-        LISP_ASSERT(is_string(exp));
-
-        U64 const index = expr_data(exp);
-        if (index >= string->count)
-        {
-            LISP_FAIL("illegal string index %" PRIu64 "\n", index);
-        }
-
-        return string->values[index];
+        return m_string.equal(exp1, exp2);
     }
 
     /* util */
@@ -2624,6 +2608,7 @@ public:
     SymbolImpl m_symbol;
     SymbolImpl m_keyword;
     ConsImpl m_cons;
+    StringImpl m_string;
     GensymImpl m_gensym;
 };
 

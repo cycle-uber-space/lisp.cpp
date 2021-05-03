@@ -277,13 +277,10 @@ inline bool is_cons(Expr exp)
 
 /* string */
 
-#define LISP_MAX_STRINGS 500000
-
-typedef struct
+inline bool is_string(Expr exp)
 {
-    U64 count;
-    char ** values;
-} StringState;
+    return expr_type(exp) == TYPE_STRING;
+}
 
 /* stream */
 
@@ -337,7 +334,6 @@ typedef struct
 typedef struct SystemState
 {
     StreamState stream;
-    StringState string;
     BuiltinState builtin;
 } SystemState;
 
