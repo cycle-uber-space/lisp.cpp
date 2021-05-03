@@ -169,6 +169,7 @@ enum
 {
     TYPE_NIL = 0,
     TYPE_SYMBOL,
+    TYPE_KEYWORD,
     TYPE_CONS,
     TYPE_GENSYM,
     TYPE_CHAR,
@@ -214,6 +215,13 @@ inline static bool is_nil(Expr exp)
 inline bool is_symbol(Expr exp)
 {
     return expr_type(exp) == TYPE_SYMBOL;
+}
+
+/* keyword */
+
+inline bool is_keyword(Expr exp)
+{
+    return expr_type(exp) == TYPE_KEYWORD;
 }
 
 /* cons */
@@ -738,13 +746,14 @@ private:
 class SystemImpl
 {
 public:
-    SystemImpl() : m_symbol(TYPE_SYMBOL)
+    SystemImpl() : m_symbol(TYPE_SYMBOL), m_keyword(TYPE_KEYWORD)
     {
         system_init(&global);
 
         // TODO move to type_init?
         LISP_ASSERT_ALWAYS(TYPE_NIL              == make_type("nil"));
         LISP_ASSERT_ALWAYS(TYPE_SYMBOL           == make_type("symbol"));
+        LISP_ASSERT_ALWAYS(TYPE_KEYWORD          == make_type("keyword"));
         LISP_ASSERT_ALWAYS(TYPE_CONS             == make_type("cons"));
         LISP_ASSERT_ALWAYS(TYPE_GENSYM           == make_type("gensym"));
         LISP_ASSERT_ALWAYS(TYPE_CHAR             == make_type("char"));
@@ -784,6 +793,10 @@ public:
         if (!strcmp("nil", name))
         {
             return nil;
+        }
+        else if (name[0] == ':')
+        {
+            return make_keyword(name + 1);
         }
         else
         {
@@ -1020,6 +1033,18 @@ public:
     char const * symbol_name(Expr exp)
     {
         return m_symbol.name(exp);
+    }
+
+    /* keyword */
+
+    Expr make_keyword(char const * name)
+    {
+        return m_keyword.make(name);
+    }
+
+    char const * keyword_name(Expr exp)
+    {
+        return m_keyword.name(exp);
     }
 
     /* cons */
@@ -2102,6 +2127,10 @@ public:
             LISP_ASSERT_DEBUG(expr_data(exp) == 0);
             stream_put_string(out, "nil");
             break;
+        case TYPE_KEYWORD:
+            stream_put_char(out, ':');
+            stream_put_string(out, keyword_name(exp));
+            break;
         case TYPE_SYMBOL:
             stream_put_string(out, symbol_name(exp));
             break;
@@ -2890,6 +2919,7 @@ public:
         case TYPE_CHAR:
         case TYPE_FIXNUM:
         case TYPE_STRING:
+        case TYPE_KEYWORD:
             return exp;
         case TYPE_SYMBOL:
         case TYPE_GENSYM:
@@ -3014,6 +3044,7 @@ public:
 
     TypeImpl m_type;
     SymbolImpl m_symbol;
+    SymbolImpl m_keyword;
     GensymImpl m_gensym;
 };
 
