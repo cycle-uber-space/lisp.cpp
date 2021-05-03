@@ -15,7 +15,7 @@ clean:
 	rm -f $(BIN)
 
 %: %.cpp lisp.hpp Makefile
-	c++ $(CXXFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 test:
 	./std unit
