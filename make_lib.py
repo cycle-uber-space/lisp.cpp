@@ -64,6 +64,21 @@ def assemble(srcs):
 
 def hack_lines(lines):
     ID = "[_a-zA-Z][_a-zA-Z0-9]*"
+
+    def fix_arg(arg):
+        if ":" in arg:
+            name, type = map(str.strip, arg.split(":"))
+            arg = f"{type} {name}"
+        return arg
+
+    def fix_args(args):
+        if ":" in args:
+            args = args.split(", ")
+            args = map(fix_arg, args)
+            args = ", ".join(args)
+        return args
+
+    prev_class = None
     for line in lines:
         if re_match(fr"^( *)(let|var) ({ID}) = ([^;]+);$", line):
             indent = re_group(1)
@@ -72,6 +87,7 @@ def hack_lines(lines):
             code = re_group(4)
             type_decl = "auto const" if keyword == "let" else "auto"
             yield f"{indent}{type_decl} {name} = {code};"
+
         elif re_match(fr"^( *)(var) ({ID}) *: *([^(]+)(\(.*\));$", line):
             indent = re_group(1)
             keyword = re_group(2)
@@ -79,28 +95,36 @@ def hack_lines(lines):
             type_decl = re_group(4)
             args = re_group(5)
             yield f"{indent}{type_decl} {name}{args};"
+
         elif re_match(fr"^( *)(var) ({ID}) *: *([^;]+);$", line):
             indent = re_group(1)
             keyword = re_group(2)
             name = re_group(3)
             type_decl = re_group(4)
             yield f"{indent}{type_decl} {name};"
+
         elif re_match(fr"^( *)(func) ({ID})\(([^)]*)\): *(.+)$", line):
-            def fix_arg(arg):
-                if ":" in arg:
-                    name, type = map(str.strip, arg.split(":"))
-                    arg = f"{type} {name}"
-                return arg
             indent = re_group(1)
             keyword = re_group(2)
             name = re_group(3)
             args = re_group(4)
-            if ":" in args:
-                args = args.split(", ")
-                args = map(fix_arg, args)
-                args = ", ".join(args)
+            args = fix_args(args)
             ret_type = re_group(5)
             yield f"{indent}{ret_type} {name}({args})"
+
+        elif re_match(fr"^( *)(init) *\(([^)]*)\)(.*)$", line):
+            indent = re_group(1)
+            keyword = re_group(2)
+            args = re_group(3)
+            args = fix_args(args)
+            extra = re_group(4)
+            name = prev_class
+            yield f"{indent}{name}({args}){extra}"
+
+        elif re_match(fr"^ *class ({ID}).*$", line):
+            prev_class = re_group(1)
+            yield line
+
         else:
             yield line
 
