@@ -13,6 +13,10 @@
 #define LISP_WANT_GENSYM 1
 #endif
 
+#ifndef LISP_WANT_POINTER
+#define LISP_WANT_POINTER 1
+#endif
+
 #ifndef LISP_DEBUG
 #define LISP_DEBUG 1
 #endif
@@ -226,6 +230,9 @@ enum
 #if LISP_WANT_GENSYM
     TYPE_GENSYM,
 #endif
+#if LISP_WANT_POINTER
+    TYPE_POINTER,
+#endif
     TYPE_CHAR,
     TYPE_FIXNUM,
     TYPE_STRING,
@@ -291,6 +298,16 @@ inline bool is_cons(Expr exp)
 #if LISP_WANT_GLOBAL_API
 bool is_gensym(Expr exp);
 Expr gensym();
+#endif
+#endif
+
+#if LISP_WANT_POINTER
+/* pointer */
+
+#if LISP_WANT_GLOBAL_API
+bool is_pointer(Expr exp);
+Expr make_pointer(void * ptr);
+void * pointer_value(Expr exp);
 #endif
 #endif
 

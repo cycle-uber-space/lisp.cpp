@@ -248,6 +248,67 @@ Expr gensym()
 #endif
 #endif
 
+/* pointer */
+
+class PointerImpl
+{
+public:
+    PointerImpl(U64 type) : m_type(type)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make(void * ptr)
+    {
+        U64 const index = count();
+        m_values.push_back(ptr);
+        return make_expr(m_type, index);
+    }
+
+    void * value(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        auto const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_values[index];
+    }
+
+protected:
+    U64 count() const
+    {
+        return m_values.size();
+    }
+
+private:
+    U64 m_type;
+    std::vector<void *> m_values;
+};
+
+#if LISP_WANT_POINTER
+#if LISP_WANT_GLOBAL_API
+PointerImpl g_pointer(TYPE_POINTER);
+
+bool is_pointer(Expr exp)
+{
+    return g_pointer.isinstance(exp);
+}
+
+Expr make_pointer(void * ptr)
+{
+    return g_pointer.make(ptr);
+}
+
+void * pointer_value(Expr exp)
+{
+    return g_pointer.value(exp);
+}
+#endif
+#endif
+
 /* char */
 
 Expr make_char(U32 code)
@@ -514,25 +575,31 @@ public:
 #if LISP_WANT_GENSYM
         m_gensym(TYPE_GENSYM),
 #endif
+#if LISP_WANT_POINTER
+        m_pointer(TYPE_POINTER),
+#endif
         m_dummy(0)
     {
         system_init(&global);
 
         // TODO move to type_init?
-        LISP_ASSERT_ALWAYS(TYPE_NIL              == make_type("nil"));
-        LISP_ASSERT_ALWAYS(TYPE_SYMBOL           == make_type("symbol"));
-        LISP_ASSERT_ALWAYS(TYPE_KEYWORD          == make_type("keyword"));
-        LISP_ASSERT_ALWAYS(TYPE_CONS             == make_type("cons"));
+        LISP_ASSERT_ALWAYS(TYPE_NIL == make_type("nil"));
+        LISP_ASSERT_ALWAYS(TYPE_SYMBOL == make_type("symbol"));
+        LISP_ASSERT_ALWAYS(TYPE_KEYWORD == make_type("keyword"));
+        LISP_ASSERT_ALWAYS(TYPE_CONS == make_type("cons"));
 #if LISP_WANT_GENSYM
-        LISP_ASSERT_ALWAYS(TYPE_GENSYM           == make_type("gensym"));
+        LISP_ASSERT_ALWAYS(TYPE_GENSYM == make_type("gensym"));
 #endif
-        LISP_ASSERT_ALWAYS(TYPE_CHAR             == make_type("char"));
-        LISP_ASSERT_ALWAYS(TYPE_FIXNUM           == make_type("fixnum"));
-        LISP_ASSERT_ALWAYS(TYPE_STRING           == make_type("string"));
-        LISP_ASSERT_ALWAYS(TYPE_STREAM           == make_type("stream"));
-        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SPECIAL  == make_type("builtin-special"));
+#if LISP_WANT_POINTER
+        LISP_ASSERT_ALWAYS(TYPE_POINTER == make_type("pointer"));
+#endif
+        LISP_ASSERT_ALWAYS(TYPE_CHAR == make_type("char"));
+        LISP_ASSERT_ALWAYS(TYPE_FIXNUM == make_type("fixnum"));
+        LISP_ASSERT_ALWAYS(TYPE_STRING == make_type("string"));
+        LISP_ASSERT_ALWAYS(TYPE_STREAM == make_type("stream"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SPECIAL == make_type("builtin-special"));
         LISP_ASSERT_ALWAYS(TYPE_BUILTIN_FUNCTION == make_type("builtin-function"));
-        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SYMBOL   == make_type("builtin-symbol"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SYMBOL == make_type("builtin-symbol"));
     }
 
     virtual ~SystemImpl()
@@ -899,6 +966,26 @@ public:
     Expr gensym()
     {
         return m_gensym.make();
+    }
+#endif
+
+#if LISP_WANT_POINTER
+
+    /* pointer */
+
+    bool is_pointer(Expr exp)
+    {
+        return m_pointer.isinstance(exp);
+    }
+
+    Expr make_pointer(void * ptr)
+    {
+        return m_pointer.make(ptr);
+    }
+
+    void * pointer_value(Expr exp)
+    {
+        return m_pointer.value(exp);
     }
 #endif
 
@@ -1799,6 +1886,13 @@ public:
             stream_put_u64(out, expr_data(exp));
             break;
 #endif
+#if LISP_WANT_POINTER
+        case TYPE_POINTER:
+            stream_put_string(out, "#:<pointer ");
+            stream_put_pointer(out, pointer_value(exp));
+            stream_put_string(out, ">");
+            break;
+#endif
         case TYPE_CHAR:
             print_char(exp, out);
             break;
@@ -2190,6 +2284,13 @@ public:
         stream_put_string(exp, str);
     }
 
+    void stream_put_pointer(Expr exp, void const * ptr)
+    {
+        char str[32];
+        sprintf(str, "%p", ptr);
+        stream_put_string(exp, str);
+    }
+
     void stream_release(Expr exp)
     {
         lisp_stream_release(&global.stream, exp);
@@ -2505,6 +2606,9 @@ public:
         case TYPE_FIXNUM:
         case TYPE_STRING:
         case TYPE_KEYWORD:
+#if LISP_WANT_POINTER
+        case TYPE_POINTER:
+#endif
             return exp;
         case TYPE_SYMBOL:
 #if LISP_WANT_GENSYM
@@ -2637,6 +2741,9 @@ public:
     BuiltinImpl m_builtin;
 #if LISP_WANT_GENSYM
     GensymImpl m_gensym;
+#endif
+#if LISP_WANT_POINTER
+    PointerImpl m_pointer;
 #endif
     int m_dummy;
 };
