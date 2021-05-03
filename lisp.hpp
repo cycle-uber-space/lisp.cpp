@@ -741,7 +741,7 @@ private:
 class GensymImpl
 {
 public:
-    GensymImpl(U64 type = TYPE_GENSYM) : m_type(type), m_counter(0)
+    GensymImpl(U64 type) : m_type(type), m_counter(0)
     {
     }
 
