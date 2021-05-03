@@ -1,0 +1,54 @@
+
+/* config */
+
+#ifndef LISP_WANT_GLOBAL_API
+#define LISP_WANT_GLOBAL_API 1
+#endif
+
+#ifndef LISP_WANT_SYSTEM_API
+#define LISP_WANT_SYSTEM_API 1
+#endif
+
+#ifndef LISP_WANT_GENSYM
+#define LISP_WANT_GENSYM 1
+#endif
+
+#ifndef LISP_WANT_POINTER
+#define LISP_WANT_POINTER 1
+#endif
+
+#ifndef LISP_DEBUG
+#define LISP_DEBUG 1
+#endif
+
+#ifndef LISP_DEBUG_USE_SIGNAL
+#define LISP_DEBUG_USE_SIGNAL 1
+#endif
+
+#ifndef LISP_SYMBOL_NAME_OF_NIL
+#define LISP_SYMBOL_NAME_OF_NIL 1
+#endif
+
+#ifndef LISP_MALLOC
+#define LISP_MALLOC(size) malloc(size)
+#endif
+
+#ifndef LISP_REALLOC
+#define LISP_REALLOC(ptr, size) realloc(ptr, size)
+#endif
+
+#ifndef LISP_FREE
+#define LISP_FREE(ptr) free(ptr)
+#endif
+
+#ifndef LISP_READER_PARSE_QUOTE
+#define LISP_READER_PARSE_QUOTE 1
+#endif
+
+#ifndef LISP_READER_PARSE_CHARACTER
+#define LISP_READER_PARSE_CHARACTER 1
+#endif
+
+#ifndef LISP_PRINTER_PRINT_QUOTE
+#define LISP_PRINTER_PRINT_QUOTE 1
+#endif

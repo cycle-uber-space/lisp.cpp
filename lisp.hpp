@@ -2,7 +2,7 @@
 #ifndef _LISP_HPP_
 #define _LISP_HPP_
 
-#line 2 "src/lisp.fwd"
+#line 2 "src/config.decl"
 /* config */
 
 #ifndef LISP_WANT_GLOBAL_API
@@ -57,6 +57,7 @@
 #define LISP_PRINTER_PRINT_QUOTE 1
 #endif
 
+#line 2 "src/lisp.fwd"
 /* includes */
 
 #include <stdarg.h>
