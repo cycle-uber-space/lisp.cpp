@@ -798,6 +798,15 @@ public:
             fclose((FILE *) pointer_value(file));
             return nil;
         });
+
+        env_defun(env, "write-u8", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const file = first(args);
+            Expr const value = second(args);
+            U8 const val = fixnum_value(value); // TODO use, say, expr_to_u8()
+            fwrite(&val, 1, 1, (FILE *) pointer_value(file));
+            return nil;
+        });
 #endif
 
         env_defun(env, "load-file", [this](Expr args, Expr env) -> Expr
