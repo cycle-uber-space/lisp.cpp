@@ -313,13 +313,13 @@ inline bool is_stream(Expr exp)
 
 /* builtin */
 
-typedef std::function<Expr(Expr args, Expr env)> BuiltinFun;
+typedef std::function<Expr(Expr args, Expr env)> BuiltinFunc;
 
-typedef struct
+struct BuiltinInfo
 {
     char const * name;
-    BuiltinFun fun;
-} BuiltinInfo;
+    BuiltinFunc func;
+};
 
 inline bool is_builtin_special(Expr exp)
 {
@@ -362,12 +362,12 @@ public:
     virtual Expr make_core_env();
 
     void env_def(Expr env, Expr var, Expr val);
-    void env_defun(Expr env, char const * name, BuiltinFun fun);
+    void env_defun(Expr env, char const * name, BuiltinFunc func);
     void env_defun_println(Expr env, char const * name);
-    void env_defspecial(Expr env, char const * name, BuiltinFun fun);
+    void env_defspecial(Expr env, char const * name, BuiltinFunc func);
     void env_defspecial_quote(Expr env);
     void env_defspecial_while(Expr env);
-    void env_defsym(Expr env, char const * name, BuiltinFun fun);
+    void env_defsym(Expr env, char const * name, BuiltinFunc func);
     void env_del(Expr env, Expr var);
 
     Expr env_get(Expr env, Expr var);

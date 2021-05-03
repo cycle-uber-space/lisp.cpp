@@ -431,19 +431,19 @@ private:
 class BuiltinImpl
 {
 public:
-    Expr make_special(char const * name, BuiltinFun fun)
+    Expr make_special(char const * name, BuiltinFunc func)
     {
-        return make(name, fun, TYPE_BUILTIN_SPECIAL);
+        return make(name, func, TYPE_BUILTIN_SPECIAL);
     }
 
-    Expr make_function(char const * name, BuiltinFun fun)
+    Expr make_function(char const * name, BuiltinFunc func)
     {
-        return make(name, fun, TYPE_BUILTIN_FUNCTION);
+        return make(name, func, TYPE_BUILTIN_FUNCTION);
     }
 
-    Expr make_symbol(char const * name, BuiltinFun fun)
+    Expr make_symbol(char const * name, BuiltinFunc func)
     {
-        return make(name, fun, TYPE_BUILTIN_SYMBOL);
+        return make(name, func, TYPE_BUILTIN_SYMBOL);
     }
 
     char const * name(Expr exp)
@@ -451,9 +451,9 @@ public:
         return info(exp).name;
     }
 
-    BuiltinFun fun(Expr exp)
+    BuiltinFunc func(Expr exp)
     {
-        return info(exp).fun;
+        return info(exp).func;
     }
 
 protected:
@@ -462,12 +462,12 @@ protected:
         return (U64) m_info.size();
     }
 
-    Expr make(char const * name, BuiltinFun fun, U64 type)
+    Expr make(char const * name, BuiltinFunc func, U64 type)
     {
         U64 const index = count();
         BuiltinInfo info;
         info.name = name; /* TODO take ownership of name? */
-        info.fun = fun;
+        info.func = func;
         m_info.push_back(info);
         return make_expr(type, index);
     }
@@ -2196,19 +2196,19 @@ public:
 
     /* builtin */
 
-    Expr make_builtin_special(char const * name, BuiltinFun fun)
+    Expr make_builtin_special(char const * name, BuiltinFunc func)
     {
-        return m_builtin.make_special(name, fun);
+        return m_builtin.make_special(name, func);
     }
 
-    Expr make_builtin_function(char const * name, BuiltinFun fun)
+    Expr make_builtin_function(char const * name, BuiltinFunc func)
     {
-        return m_builtin.make_function(name, fun);
+        return m_builtin.make_function(name, func);
     }
 
-    Expr make_builtin_symbol(char const * name, BuiltinFun fun)
+    Expr make_builtin_symbol(char const * name, BuiltinFunc func)
     {
-        return m_builtin.make_symbol(name, fun);
+        return m_builtin.make_symbol(name, func);
     }
 
     char const * builtin_name(Expr exp)
@@ -2216,9 +2216,9 @@ public:
         return m_builtin.name(exp);
     }
 
-    BuiltinFun builtin_fun(Expr exp)
+    BuiltinFunc builtin_func(Expr exp)
     {
-        return m_builtin.fun(exp);
+        return m_builtin.func(exp);
     }
 
     /* closure */
@@ -2417,19 +2417,19 @@ public:
         }
     }
 
-    void env_defun(Expr env, char const * name, BuiltinFun fun)
+    void env_defun(Expr env, char const * name, BuiltinFunc func)
     {
-        env_def(env, intern(name), make_builtin_function(name, fun));
+        env_def(env, intern(name), make_builtin_function(name, func));
     }
 
-    void env_defspecial(Expr env, char const * name, BuiltinFun fun)
+    void env_defspecial(Expr env, char const * name, BuiltinFunc func)
     {
-        env_def(env, intern(name), make_builtin_special(name, fun));
+        env_def(env, intern(name), make_builtin_special(name, func));
     }
 
-    void env_defsym(Expr env, char const * name, BuiltinFun fun)
+    void env_defsym(Expr env, char const * name, BuiltinFunc func)
     {
-        env_def(env, intern(name), make_builtin_symbol(name, fun));
+        env_def(env, intern(name), make_builtin_symbol(name, func));
     }
 
     Expr _env_find_local(Expr env, Expr var)
@@ -2483,7 +2483,7 @@ public:
         case TYPE_CONS:
             return apply(car(exp), cdr(exp), env);
         case TYPE_BUILTIN_SYMBOL:
-            return builtin_fun(exp)(nil, env);
+            return builtin_func(exp)(nil, env);
         default:
             LISP_FAIL("cannot evaluate %s\n", repr(exp));
             return nil;
@@ -2516,11 +2516,11 @@ public:
     {
         if (is_builtin_function(name))
         {
-            return builtin_fun(name)(eval_list(args, env), env);
+            return builtin_func(name)(eval_list(args, env), env);
         }
         else if (is_builtin_special(name))
         {
-            return builtin_fun(name)(args, env);
+            return builtin_func(name)(args, env);
         }
         else if (is_function(name))
         {
@@ -2637,9 +2637,9 @@ void System::env_def(Expr env, Expr var, Expr val)
     m_impl->env_def(env, var, val);
 }
 
-void System::env_defun(Expr env, char const * name, BuiltinFun fun)
+void System::env_defun(Expr env, char const * name, BuiltinFunc func)
 {
-    m_impl->env_defun(env, name, fun);
+    m_impl->env_defun(env, name, func);
 }
 
 void System::env_defun_println(Expr env, char const * name)
@@ -2647,9 +2647,9 @@ void System::env_defun_println(Expr env, char const * name)
     m_impl->env_defun_println(env, name);
 }
 
-void System::env_defspecial(Expr env, char const * name, BuiltinFun fun)
+void System::env_defspecial(Expr env, char const * name, BuiltinFunc func)
 {
-    m_impl->env_defspecial(env, name, fun);
+    m_impl->env_defspecial(env, name, func);
 }
 
 void System::env_defspecial_quote(Expr env)
@@ -2662,9 +2662,9 @@ void System::env_defspecial_while(Expr env)
     m_impl->env_defspecial_while(env);
 }
 
-void System::env_defsym(Expr env, char const * name, BuiltinFun fun)
+void System::env_defsym(Expr env, char const * name, BuiltinFunc func)
 {
-    m_impl->env_defsym(env, name, fun);
+    m_impl->env_defsym(env, name, func);
 }
 
 void System::env_del(Expr env, Expr var)
