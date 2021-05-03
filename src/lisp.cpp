@@ -309,6 +309,66 @@ void * pointer_value(Expr exp)
 #endif
 #endif
 
+#define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
+#define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
+#define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
+#define LISP_FIXNUM_MAXVAL    ((INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))) - INT64_C(1))
+
+Expr make_fixnum(I64 value)
+{
+    LISP_ASSERT(value >= LISP_FIXNUM_MINVAL);
+    LISP_ASSERT(value <= LISP_FIXNUM_MAXVAL);
+
+    /* TODO probably no need to mask off the sign
+       bits, as they get shifted out by make_expr */
+    U64 const data = i64_as_u64(value) & LISP_DATA_MASK;
+    return make_expr(TYPE_FIXNUM, data);
+}
+
+I64 fixnum_value(Expr exp)
+{
+    LISP_ASSERT(is_fixnum(exp));
+
+    U64 data = expr_data(exp);
+
+    if (data & LISP_FIXNUM_SIGN_MASK)
+    {
+        data |= LISP_EXPR_MASK << LISP_DATA_BITS;
+    }
+
+    return u64_as_i64(data);
+}
+
+Expr fixnum_neg(Expr a)
+{
+    return make_fixnum(-fixnum_value(a));
+}
+
+Expr fixnum_add(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) + fixnum_value(b));
+}
+
+Expr fixnum_mul(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) * fixnum_value(b));
+}
+
+Expr fixnum_div(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) / fixnum_value(b));
+}
+
+bool fixnum_eq(Expr a, Expr b)
+{
+    return a == b;
+}
+
+bool fixnum_lt(Expr a, Expr b)
+{
+    return fixnum_value(a) < fixnum_value(b);
+}
+
 /* char */
 
 Expr make_char(U32 code)
@@ -733,12 +793,12 @@ public:
 
         env_defun(env, "eq", [this](Expr args, Expr) -> Expr
         {
-            return all_eq(args) ? LISP_SYMBOL_T : nil;
+            return all_eq(args) ? LISP_SYMBOL_T : nil; // TODO use make_truth()
         });
 
         env_defun(env, "equal", [this](Expr args, Expr) -> Expr
         {
-            return all_equal(args) ? LISP_SYMBOL_T : nil;
+            return all_equal(args) ? LISP_SYMBOL_T : nil; // TODO use make_truth()
         });
 
         env_defun(env, "cons", [this](Expr args, Expr env) -> Expr
@@ -1018,66 +1078,6 @@ public:
 
     /* fixnum */
 
-#define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
-#define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
-#define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
-#define LISP_FIXNUM_MAXVAL    ((INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))) - INT64_C(1))
-
-    bool is_fixnum(Expr exp)
-    {
-        return expr_type(exp) == TYPE_FIXNUM;
-    }
-
-    Expr make_fixnum(I64 value)
-    {
-        LISP_ASSERT(value >= LISP_FIXNUM_MINVAL);
-        LISP_ASSERT(value <= LISP_FIXNUM_MAXVAL);
-
-        /* TODO probably no need to mask off the sign
-           bits, as they get shifted out by make_expr */
-        U64 const data = i64_as_u64(value) & LISP_DATA_MASK;
-        return make_expr(TYPE_FIXNUM, data);
-    }
-
-    I64 fixnum_value(Expr exp)
-    {
-        LISP_ASSERT(is_fixnum(exp));
-
-        U64 data = expr_data(exp);
-
-        if (data & LISP_FIXNUM_SIGN_MASK)
-        {
-            data |= LISP_EXPR_MASK << LISP_DATA_BITS;
-        }
-
-        return u64_as_i64(data);
-    }
-
-    Expr fixnum_neg(Expr a)
-    {
-        return make_fixnum(-fixnum_value(a));
-    }
-
-    Expr fixnum_add(Expr a, Expr b)
-    {
-        return make_fixnum(fixnum_value(a) + fixnum_value(b));
-    }
-
-    Expr fixnum_mul(Expr a, Expr b)
-    {
-        return make_fixnum(fixnum_value(a) * fixnum_value(b));
-    }
-
-    Expr fixnum_div(Expr a, Expr b)
-    {
-        return make_fixnum(fixnum_value(a) / fixnum_value(b));
-    }
-
-    bool fixnum_equal(Expr a, Expr b)
-    {
-        return a == b;
-    }
-
     /* number */
 
     bool is_number(Expr exp)
@@ -1112,7 +1112,7 @@ public:
 
     bool number_equal(Expr a, Expr b)
     {
-        return fixnum_equal(a, b);
+        return fixnum_eq(a, b);
     }
 
     /* string */

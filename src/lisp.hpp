@@ -311,6 +311,23 @@ void * pointer_value(Expr exp);
 #endif
 #endif
 
+
+inline bool is_fixnum(Expr exp)
+{
+    return expr_type(exp) == TYPE_FIXNUM;
+}
+
+Expr make_fixnum(I64 value);
+I64 fixnum_value(Expr exp);
+
+Expr fixnum_neg(Expr a);
+Expr fixnum_add(Expr a, Expr b);
+Expr fixnum_mul(Expr a, Expr b);
+Expr fixnum_div(Expr a, Expr b);
+
+bool fixnum_eq(Expr a, Expr b);
+bool fixnum_lt(Expr a, Expr b);
+
 /* char */
 
 inline bool is_char(Expr exp)
