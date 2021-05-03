@@ -1,5 +1,5 @@
 
-#define LISP_IMPLEMENTATION
+//#define LISP_IMPLEMENTATION
 #include "lisp.hpp"
 
 class SchemeSystem : public System
@@ -61,3 +61,6 @@ int main(int argc, char ** argv)
 {
     return SchemeSystem().main(argc, argv);
 }
+
+#define LISP_IMPLEMENTATION
+#include "lisp.hpp"

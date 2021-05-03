@@ -1,5 +1,5 @@
 
-#define LISP_IMPLEMENTATION
+//#define LISP_IMPLEMENTATION
 #include "lisp.hpp"
 
 #include <time.h>
@@ -317,3 +317,6 @@ int main(int argc, char ** argv)
 {
     return lisp::MySystem().main(argc, argv);
 }
+
+#define LISP_IMPLEMENTATION
+#include "lisp.hpp"

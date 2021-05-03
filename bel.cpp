@@ -1,5 +1,5 @@
 
-#define LISP_IMPLEMENTATION
+//#define LISP_IMPLEMENTATION
 #include "lisp.hpp"
 
 #define LISP_SYM_LIT intern("lit")
@@ -49,3 +49,6 @@ int main(int argc, char ** argv)
 {
     return BelSystem().main(argc, argv);
 }
+
+#define LISP_IMPLEMENTATION
+#include "lisp.hpp"
