@@ -12,6 +12,10 @@
 #define LISP_DEBUG 1
 #endif
 
+#ifndef LISP_DEBUG_USE_SIGNAL
+#define LISP_DEBUG_USE_SIGNAL 1
+#endif
+
 #ifndef LISP_SYMBOL_NAME_OF_NIL
 #define LISP_SYMBOL_NAME_OF_NIL 1
 #endif
@@ -55,6 +59,10 @@
 #include <functional>
 #include <vector>
 #include <string>
+
+#if LISP_DEBUG_USE_SIGNAL
+#include <signal.h>
+#endif
 
 /* defines */
 
@@ -443,6 +451,9 @@ void error_fail(char const * fmt, ...)
     fprintf(file, LISP_RED "[FAIL] " LISP_RESET);
     vfprintf(file, fmt, ap);
     va_end(ap);
+#if LISP_DEBUG_USE_SIGNAL
+    raise(SIGINT);
+#endif
     exit(1);
 }
 
