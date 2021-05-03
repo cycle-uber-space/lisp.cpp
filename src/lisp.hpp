@@ -325,7 +325,7 @@ Expr fixnum_add(Expr a, Expr b);
 Expr fixnum_mul(Expr a, Expr b);
 Expr fixnum_div(Expr a, Expr b);
 
-bool fixnum_eq(Expr a, Expr b);
+func fixnum_eq(a: Expr, b: Expr): bool;
 bool fixnum_lt(Expr a, Expr b);
 
 /* char */
