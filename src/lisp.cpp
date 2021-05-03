@@ -221,7 +221,7 @@ public:
         return expr_type(exp) == m_type;
     }
 
-    Expr make()
+    func make(): Expr
     {
         U64 const data = m_counter++;
         return make_expr(m_type, data);
@@ -253,7 +253,7 @@ func gensym(): Expr
 class PointerImpl
 {
 public:
-    PointerImpl(U64 type) : m_type(type)
+    init(U64 type) : m_type(type)
     {
     }
 
@@ -262,14 +262,14 @@ public:
         return expr_type(exp) == m_type;
     }
 
-    Expr make(void * ptr)
+    func make(ptr: void *): Expr
     {
         U64 const index = count();
         m_values.push_back(ptr);
         return make_expr(m_type, index);
     }
 
-    void * value(Expr exp)
+    func value(Expr exp): void *
     {
         LISP_ASSERT(isinstance(exp));
         auto const index = expr_data(exp);
