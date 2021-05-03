@@ -619,6 +619,11 @@ public:
     {
     }
 
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
     Expr make(char const * name)
     {
         LISP_ASSERT_DEBUG(name);
@@ -646,7 +651,7 @@ public:
         }
     #endif
 
-        LISP_ASSERT(expr_type(exp) == m_type);
+        LISP_ASSERT(isinstance(exp));
         U64 const index = expr_data(exp);
         if (index >= count())
         {
