@@ -1,0 +1,58 @@
+
+/* builtin */
+
+class BuiltinImpl
+{
+public:
+    Expr make_special(char const * name, BuiltinFunc func)
+    {
+        return make(name, func, TYPE_BUILTIN_SPECIAL);
+    }
+
+    Expr make_function(char const * name, BuiltinFunc func)
+    {
+        return make(name, func, TYPE_BUILTIN_FUNCTION);
+    }
+
+    Expr make_symbol(char const * name, BuiltinFunc func)
+    {
+        return make(name, func, TYPE_BUILTIN_SYMBOL);
+    }
+
+    char const * name(Expr exp)
+    {
+        return info(exp).name;
+    }
+
+    BuiltinFunc func(Expr exp)
+    {
+        return info(exp).func;
+    }
+
+protected:
+    U64 count() const
+    {
+        return (U64) m_info.size();
+    }
+
+    Expr make(char const * name, BuiltinFunc func, U64 type)
+    {
+        U64 const index = count();
+        BuiltinInfo info;
+        info.name = name; /* TODO take ownership of name? */
+        info.func = func;
+        m_info.push_back(info);
+        return make_expr(type, index);
+    }
+
+    BuiltinInfo & info(Expr exp)
+    {
+        LISP_ASSERT(is_builtin(exp));
+        U64 const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_info[index];
+    }
+
+private:
+    std::vector<BuiltinInfo> m_info;
+};

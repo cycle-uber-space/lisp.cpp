@@ -28,7 +28,18 @@ src/HashSet.impl\
 src/test.impl\
 src/error.impl\
 src/expr.impl\
-src/lisp.def
+src/base.impl\
+src/type.impl\
+src/fixnum.impl\
+src/char.impl\
+src/symbol.impl\
+src/cons.impl\
+src/string.impl\
+src/stream.impl\
+src/gensym.impl\
+src/pointer.impl\
+src/builtin.impl\
+src/system.impl
 
 CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess
 #CXXFLAGS += -O2

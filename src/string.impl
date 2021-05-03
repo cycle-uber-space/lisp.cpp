@@ -1,0 +1,55 @@
+
+/* string */
+
+class StringImpl
+{
+public:
+    StringImpl(U64 type) : m_type(type)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make(char const * str)
+    {
+        U64 const index = count();
+        m_strings.push_back(str);
+        return make_expr(m_type, index);
+    }
+
+    char const * value(Expr exp)
+    {
+        return impl(exp).c_str();
+    }
+
+    U64 length(Expr exp)
+    {
+        return (U64) impl(exp).size();
+    }
+
+    bool equal(Expr exp1, Expr exp2)
+    {
+        return impl(exp1) == impl(exp2);
+    }
+
+protected:
+    U64 count() const
+    {
+        return (U64) m_strings.size();
+    }
+
+    std::string const & impl(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        U64 const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_strings[index];
+    }
+
+private:
+    U64 m_type;
+    std::vector<std::string> m_strings;
+};

@@ -1,0 +1,13 @@
+
+/* char */
+
+Expr make_char(U32 code)
+{
+    return make_expr(TYPE_CHAR, code);
+}
+
+U32 char_code(Expr exp)
+{
+    LISP_ASSERT(is_char(exp));
+    return (U32) expr_data(exp);
+}

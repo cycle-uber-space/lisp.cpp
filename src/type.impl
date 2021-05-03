@@ -1,0 +1,27 @@
+
+/* type */
+
+class TypeImpl
+{
+public:
+    U64 make(char const * name)
+    {
+        U64 const type = count();
+        m_names.push_back(name);
+        return type;
+    }
+
+    U64 count() const
+    {
+        return m_names.size();
+    }
+
+    char const * name(U64 type) const
+    {
+        LISP_ASSERT(type < count());
+        return m_names[type].c_str();
+    }
+
+private:
+    var m_names: std::vector<std::string>;
+};

@@ -1,0 +1,72 @@
+
+/* cons */
+
+struct ExprPair
+{
+    Expr exp1, exp2;
+};
+
+class ConsImpl
+{
+public:
+    ConsImpl(U64 type) : m_type(type)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make(Expr a, Expr b)
+    {
+        U64 const index = count();
+        ExprPair pair;
+        pair.exp1 = a;
+        pair.exp2 = b;
+        m_pairs.push_back(pair);
+        return make_expr(m_type, index);
+    }
+
+    Expr car(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_pairs[index].exp1;
+    }
+
+    Expr cdr(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_pairs[index].exp2;
+    }
+
+    void set_car(Expr exp, Expr val)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        m_pairs[index].exp1 = val;
+    }
+
+    void set_cdr(Expr exp, Expr val)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        m_pairs[index].exp2 = val;
+    }
+
+protected:
+    U64 count() const
+    {
+        return (U64) m_pairs.size();
+    }
+
+private:
+    U64 m_type;
+    std::vector<ExprPair> m_pairs;
+};

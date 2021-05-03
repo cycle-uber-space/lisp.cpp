@@ -613,8 +613,8 @@ U64 expr_data(Expr exp)
     return exp >> LISP_TYPE_BITS;
 }
 
-#line 2 "src/lisp.def"
-/* util? */
+#line 2 "src/base.impl"
+/* base */
 
 bool is_printable_ascii(U32 ch)
 {
@@ -710,6 +710,7 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
+#line 2 "src/type.impl"
 /* type */
 
 class TypeImpl
@@ -737,6 +738,7 @@ private:
     std::vector<std::string> m_names;
 };
 
+#line 2 "src/fixnum.impl"
 /* fixnum */
 
 #define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
@@ -799,6 +801,7 @@ bool fixnum_lt(Expr a, Expr b)
     return fixnum_value(a) < fixnum_value(b);
 }
 
+#line 2 "src/char.impl"
 /* char */
 
 Expr make_char(U32 code)
@@ -812,6 +815,7 @@ U32 char_code(Expr exp)
     return (U32) expr_data(exp);
 }
 
+#line 2 "src/symbol.impl"
 /* symbol */
 
 class SymbolImpl
@@ -873,6 +877,7 @@ private:
     std::vector<std::string> m_names;
 };
 
+#line 2 "src/cons.impl"
 /* cons */
 
 struct ExprPair
@@ -945,6 +950,7 @@ private:
     std::vector<ExprPair> m_pairs;
 };
 
+#line 2 "src/string.impl"
 /* string */
 
 class StringImpl
@@ -1000,6 +1006,7 @@ private:
     std::vector<std::string> m_strings;
 };
 
+#line 2 "src/stream.impl"
 /* stream */
 
 class StreamImpl
@@ -1317,6 +1324,7 @@ private:
     std::vector<StreamInfo> m_info;
 };
 
+#line 2 "src/gensym.impl"
 /* gensym */
 
 class GensymImpl
@@ -1358,6 +1366,7 @@ Expr gensym()
 #endif
 #endif
 
+#line 2 "src/pointer.impl"
 /* pointer */
 
 class PointerImpl
@@ -1419,6 +1428,7 @@ void * pointer_value(Expr exp)
 #endif
 #endif
 
+#line 2 "src/builtin.impl"
 /* builtin */
 
 class BuiltinImpl
@@ -1477,6 +1487,7 @@ private:
     std::vector<BuiltinInfo> m_info;
 };
 
+#line 2 "src/system.impl"
 /* system */
 
 class SystemImpl
