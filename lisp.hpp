@@ -1096,42 +1096,42 @@ public:
         m_cons.set_cdr(exp, val);
     }
 
-    Expr caar(Expr exp)
+    inline Expr caar(Expr exp)
     {
         return car(car(exp));
     }
 
-    Expr cadr(Expr exp)
+    inline Expr cadr(Expr exp)
     {
         return car(cdr(exp));
     }
 
-    Expr cdar(Expr exp)
+    inline Expr cdar(Expr exp)
     {
         return cdr(car(exp));
     }
 
-    Expr cddr(Expr exp)
+    inline Expr cddr(Expr exp)
     {
         return cdr(cdr(exp));
     }
 
-    Expr caddr(Expr exp)
+    inline Expr caddr(Expr exp)
     {
         return car(cdr(cdr(exp)));
     }
 
-    Expr cdddr(Expr exp)
+    inline Expr cdddr(Expr exp)
     {
         return cdr(cdr(cdr(exp)));
     }
 
-    Expr cadddr(Expr exp)
+    inline Expr cadddr(Expr exp)
     {
         return car(cdr(cdr(cdr(exp))));
     }
 
-    Expr cddddr(Expr exp)
+    inline Expr cddddr(Expr exp)
     {
         return cdr(cdr(cdr(cdr(exp))));
     }
