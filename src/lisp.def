@@ -106,9 +106,9 @@ char * get_temp_buf(size_t size)
     return ret;
 }
 
-U64 i64_as_u64(I64 val)
+func i64_as_u64(val: I64): U64
 {
-    V64 v;
+    var v: V64;
     v.i = val;
     return v.u;
 }
