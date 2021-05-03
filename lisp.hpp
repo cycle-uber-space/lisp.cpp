@@ -669,23 +669,23 @@ public:
     U64 make(char const * name)
     {
         U64 const type = count();
-        m_type_names.push_back(name);
+        m_names.push_back(name);
         return type;
     }
 
     U64 count() const
     {
-        return m_type_names.size();
+        return m_names.size();
     }
 
     char const * name(U64 type) const
     {
         LISP_ASSERT(type < count());
-        return m_type_names[type].c_str();
+        return m_names[type].c_str();
     }
 
 private:
-    std::vector<std::string> m_type_names;
+    std::vector<std::string> m_names;
 };
 
 class GensymImpl
