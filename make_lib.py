@@ -65,16 +65,13 @@ def assemble(srcs):
 def hack_lines(lines):
     ID = "[_a-zA-Z][_a-zA-Z0-9]*"
     for line in lines:
-        if re_match(fr"^( *)let ({ID}) = ([^;]+);$", line):
+        if re_match(fr"^( *)(let|var) ({ID}) = ([^;]+);$", line):
             indent = re_group(1)
-            name = re_group(2)
-            code = re_group(3)
-            yield f"{indent}auto const {name} = {code};"
-        elif re_match(fr"^( *)var ({ID}) = ([^;]+);$", line):
-            indent = re_group(1)
-            name = re_group(2)
-            code = re_group(3)
-            yield f"{indent}auto {name} = {code};"
+            kw = re_group(2)
+            name = re_group(3)
+            code = re_group(4)
+            type_decl = "auto const" if kw == "let" else "auto"
+            yield f"{indent}{type_decl} {name} = {code};"
         else:
             yield line
 
