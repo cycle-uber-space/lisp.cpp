@@ -2760,19 +2760,19 @@ public:
         }
     }
 
-    TypeImpl m_type;
-    SymbolImpl m_symbol;
-    SymbolImpl m_keyword;
-    ConsImpl m_cons;
-    StringImpl m_string;
-    BuiltinImpl m_builtin;
+    var m_type: TypeImpl;
+    var m_symbol: SymbolImpl;
+    var m_keyword: SymbolImpl;
+    var m_cons: ConsImpl;
+    var m_string: StringImpl;
+    var m_builtin: BuiltinImpl;
 #if LISP_WANT_GENSYM
-    GensymImpl m_gensym;
+    var m_gensym: GensymImpl;
 #endif
 #if LISP_WANT_POINTER
-    PointerImpl m_pointer;
+    var m_pointer: PointerImpl;
 #endif
-    int m_dummy;
+    var m_dummy: int;
 };
 
 /* system */
