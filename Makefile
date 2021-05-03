@@ -5,7 +5,9 @@
 
 BIN = bel scheme std
 
-CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess -O2
+CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess
+#CXXFLAGS += -O2
+CXXFLAGS += -g -O0
 
 all: $(BIN)
 
