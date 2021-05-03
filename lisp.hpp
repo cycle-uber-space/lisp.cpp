@@ -965,6 +965,12 @@ public:
             return make_string_from_utf32_char((U32) fixnum_value(car(args)));
         });
 
+        env_defun(env, "type", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const arg1 = car(args);
+            return intern(type_name(expr_type(arg1)));
+        });
+
         return env;
     }
 
