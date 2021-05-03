@@ -296,6 +296,7 @@ public:
                 "commands:\n"
                 "  unit ......... run unit tests\n"
                 "  load {FILE} .. load source files\n"
+                "  repl {FILE} .. load source files, and drop into a repl\n"
             );
         exit(1);
     }
