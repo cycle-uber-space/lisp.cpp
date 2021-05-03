@@ -86,22 +86,6 @@ U64 expr_data(Expr exp)
     return exp >> LISP_TYPE_BITS;
 }
 
-bool is_character(Expr exp)
-{
-    return expr_type(exp) == TYPE_CHAR;
-}
-
-Expr make_character(U32 code)
-{
-    return make_expr(TYPE_CHAR, code);
-}
-
-U32 character_code(Expr exp)
-{
-    LISP_ASSERT(is_character(exp));
-    return (U32) expr_data(exp);
-}
-
 bool is_printable_ascii(U32 ch)
 {
     // NOTE we exclude space
@@ -261,6 +245,24 @@ Expr gensym()
     return g_gensym.make();
 }
 #endif
+
+/* char */
+
+bool is_character(Expr exp)
+{
+    return expr_type(exp) == TYPE_CHAR;
+}
+
+Expr make_character(U32 code)
+{
+    return make_expr(TYPE_CHAR, code);
+}
+
+U32 character_code(Expr exp)
+{
+    LISP_ASSERT(is_character(exp));
+    return (U32) expr_data(exp);
+}
 
 /* system */
 

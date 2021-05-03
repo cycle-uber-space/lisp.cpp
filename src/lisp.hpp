@@ -288,6 +288,10 @@ Expr gensym();
 
 /* char */
 
+bool is_character(Expr exp);
+Expr make_character(U32 code);
+U32 character_code(Expr exp);
+
 /* fixnum */
 
 /* string */
