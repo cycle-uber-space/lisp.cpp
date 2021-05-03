@@ -6,12 +6,12 @@
 
 namespace lisp {
 
-class MySystem : public System
+class StdSystem : public System
 {
 public:
     typedef System Super;
 
-    MySystem()
+    StdSystem()
     {
         srand(time(NULL));
     }
@@ -315,7 +315,7 @@ public:
 
 int main(int argc, char ** argv)
 {
-    return lisp::MySystem().main(argc, argv);
+    return lisp::StdSystem().main(argc, argv);
 }
 
 #define LISP_IMPLEMENTATION
