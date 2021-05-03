@@ -286,6 +286,10 @@ bool is_gensym(Expr exp);
 Expr gensym();
 #endif
 
+/* char */
+
+/* fixnum */
+
 /* string */
 
 inline bool is_string(Expr exp)
@@ -367,6 +371,49 @@ public:
     System();
     virtual ~System();
 
+    /* symbol */
+
+    char const * symbol_name(Expr exp);
+
+    /* cons */
+
+    Expr cons(Expr a, Expr b);
+    Expr car(Expr exp);
+    Expr cdr(Expr exp);
+    void rplaca(Expr exp, Expr val);
+    void rplacd(Expr exp, Expr val);
+
+    /* stream */
+
+    Expr stream_get_stdin();
+    Expr stream_get_stdout();
+    Expr stream_get_stderr();
+
+    /* core */
+
+    Expr list(Expr exp1);
+    Expr list(Expr exp1, Expr exp2);
+    Expr list(Expr exp1, Expr exp2, Expr exp3);
+    Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
+
+    Expr first(Expr seq);
+    Expr second(Expr seq);
+
+    bool equal(Expr a, Expr b);
+
+    /* print */
+
+    char const * repr(Expr exp);
+    void print(Expr exp);
+    void println(Expr exp);
+    void display(Expr exp);
+    void displayln(Expr exp);
+
+    /* read */
+
+    Expr intern(char const * name);
+    Expr read_one_from_string(char const * src);
+
     /* env */
 
     Expr make_env(Expr outer);
@@ -385,52 +432,9 @@ public:
     bool env_can_set(Expr env, Expr var);
     void env_set(Expr env, Expr var, Expr val);
 
-    /* stream */
-
-    Expr stream_get_stdin();
-    Expr stream_get_stdout();
-    Expr stream_get_stderr();
-
     /* function */
 
     Expr make_function(Expr env, Expr name, Expr args, Expr body);
-
-    /* symbol */
-
-    char const * symbol_name(Expr exp);
-
-    /* print */
-
-    char const * repr(Expr exp);
-    void print(Expr exp);
-    void println(Expr exp);
-    void display(Expr exp);
-    void displayln(Expr exp);
-
-    /* read */
-
-    Expr intern(char const * name);
-    Expr read_one_from_string(char const * src);
-
-    /* cons */
-
-    Expr cons(Expr a, Expr b);
-    Expr car(Expr exp);
-    Expr cdr(Expr exp);
-    void rplaca(Expr exp, Expr val);
-    void rplacd(Expr exp, Expr val);
-
-    /* core */
-
-    Expr list(Expr exp1);
-    Expr list(Expr exp1, Expr exp2);
-    Expr list(Expr exp1, Expr exp2, Expr exp3);
-    Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
-
-    Expr first(Expr seq);
-    Expr second(Expr seq);
-
-    bool equal(Expr a, Expr b);
 
     /* eval */
 
@@ -438,6 +442,7 @@ public:
     void load_file(char const * path, Expr env);
     void repl(Expr env);
 
+private:
     SystemImpl * m_impl = nullptr;
     static System * s_instance;
 };

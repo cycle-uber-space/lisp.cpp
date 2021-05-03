@@ -2627,6 +2627,10 @@ public:
     GensymImpl m_gensym;
 };
 
+/* system */
+
+System * System::s_instance = nullptr;
+
 System::System()
 {
     LISP_ASSERT(s_instance == nullptr);
@@ -2641,6 +2645,135 @@ System::~System()
 
     s_instance = nullptr;
 }
+
+/* symbol */
+
+char const * System::symbol_name(Expr exp)
+{
+    return m_impl->symbol_name(exp);
+}
+
+/* cons */
+
+Expr System::cons(Expr a, Expr b)
+{
+    return m_impl->cons(a, b);
+}
+
+Expr System::car(Expr exp)
+{
+    return m_impl->car(exp);
+}
+
+Expr System::cdr(Expr exp)
+{
+    return m_impl->cdr(exp);
+}
+
+void System::rplaca(Expr exp, Expr val)
+{
+    return m_impl->rplaca(exp, val);
+}
+
+void System::rplacd(Expr exp, Expr val)
+{
+    return m_impl->rplacd(exp, val);
+}
+
+/* stream */
+
+Expr System::stream_get_stdin()
+{
+    return m_impl->stream_get_stdin();
+}
+
+Expr System::stream_get_stdout()
+{
+    return m_impl->stream_get_stdout();
+}
+
+Expr System::stream_get_stderr()
+{
+    return m_impl->stream_get_stderr();
+}
+
+/* core */
+
+Expr System::list(Expr exp1)
+{
+    return m_impl->list(exp1);
+}
+
+Expr System::list(Expr exp1, Expr exp2)
+{
+    return m_impl->list(exp1, exp2);
+}
+
+Expr System::list(Expr exp1, Expr exp2, Expr exp3)
+{
+    return m_impl->list(exp1, exp2, exp3);
+}
+
+Expr System::list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
+{
+    return m_impl->list(exp1, exp2, exp3, exp4, exp5);
+}
+
+Expr System::first(Expr seq)
+{
+    return m_impl->first(seq);
+}
+
+Expr System::second(Expr seq)
+{
+    return m_impl->second(seq);
+}
+
+bool System::equal(Expr a, Expr b)
+{
+    return m_impl->equal(a, b);
+}
+
+/* print */
+
+char const * System::repr(Expr exp)
+{
+    return m_impl->repr(exp);
+}
+
+void System::print(Expr exp)
+{
+    m_impl->print(exp);
+}
+
+void System::println(Expr exp)
+{
+    m_impl->println(exp);
+}
+
+void System::display(Expr exp)
+{
+    m_impl->display(exp);
+}
+
+void System::displayln(Expr exp)
+{
+    m_impl->displayln(exp);
+}
+
+/* read */
+
+Expr System::intern(char const * name)
+{
+    return m_impl->intern(name);
+}
+
+Expr System::read_one_from_string(char const * src)
+{
+    return m_impl->read_one_from_string(src);
+}
+
+/* env */
 
 Expr System::make_env(Expr outer)
 {
@@ -2707,125 +2840,14 @@ void System::env_set(Expr env, Expr var, Expr val)
     m_impl->env_set(env, var, val);
 }
 
-Expr System::stream_get_stdin()
-{
-    return m_impl->stream_get_stdin();
-}
-
-Expr System::stream_get_stdout()
-{
-    return m_impl->stream_get_stdout();
-}
-
-Expr System::stream_get_stderr()
-{
-    return m_impl->stream_get_stderr();
-}
+/* function */
 
 Expr System::make_function(Expr env, Expr name, Expr args, Expr body)
 {
     return m_impl->make_function(env, name, args, body);
 }
 
-char const * System::symbol_name(Expr exp)
-{
-    return m_impl->symbol_name(exp);
-}
-
-char const * System::repr(Expr exp)
-{
-    return m_impl->repr(exp);
-}
-
-void System::print(Expr exp)
-{
-    m_impl->print(exp);
-}
-
-void System::println(Expr exp)
-{
-    m_impl->println(exp);
-}
-
-void System::display(Expr exp)
-{
-    m_impl->display(exp);
-}
-
-void System::displayln(Expr exp)
-{
-    m_impl->displayln(exp);
-}
-
-Expr System::intern(char const * name)
-{
-    return m_impl->intern(name);
-}
-
-Expr System::read_one_from_string(char const * src)
-{
-    return m_impl->read_one_from_string(src);
-}
-
-Expr System::cons(Expr a, Expr b)
-{
-    return m_impl->cons(a, b);
-}
-
-Expr System::car(Expr exp)
-{
-    return m_impl->car(exp);
-}
-
-Expr System::cdr(Expr exp)
-{
-    return m_impl->cdr(exp);
-}
-
-void System::rplaca(Expr exp, Expr val)
-{
-    return m_impl->rplaca(exp, val);
-}
-
-void System::rplacd(Expr exp, Expr val)
-{
-    return m_impl->rplacd(exp, val);
-}
-
-Expr System::list(Expr exp1)
-{
-    return m_impl->list(exp1);
-}
-
-Expr System::list(Expr exp1, Expr exp2)
-{
-    return m_impl->list(exp1, exp2);
-}
-
-Expr System::list(Expr exp1, Expr exp2, Expr exp3)
-{
-    return m_impl->list(exp1, exp2, exp3);
-}
-
-Expr System::list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
-{
-    return m_impl->list(exp1, exp2, exp3, exp4, exp5);
-}
-
-Expr System::first(Expr seq)
-{
-    return m_impl->first(seq);
-}
-
-Expr System::second(Expr seq)
-{
-    return m_impl->second(seq);
-}
-
-bool System::equal(Expr a, Expr b)
-{
-    return m_impl->equal(a, b);
-}
+/* eval */
 
 Expr System::eval(Expr exp, Expr env)
 {
@@ -2841,5 +2863,3 @@ void System::repl(Expr env)
 {
     return m_impl->repl(env);
 }
-
-System * System::s_instance = nullptr;
