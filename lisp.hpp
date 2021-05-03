@@ -334,6 +334,12 @@ public:
     bool env_can_set(Expr env, Expr var);
     void env_set(Expr env, Expr var, Expr val);
 
+    /* stream */
+
+    Expr stream_get_stdin();
+    Expr stream_get_stdout();
+    Expr stream_get_stderr();
+
     /* function */
 
     Expr make_function(Expr env, Expr name, Expr args, Expr body);
@@ -2554,6 +2560,21 @@ public:
         return lisp_stream_at_end(&global.stream, exp);
     }
 
+    Expr stream_get_stdin()
+    {
+        return global.stream.stdin;
+    }
+
+    Expr stream_get_stdout()
+    {
+        return global.stream.stdout;
+    }
+
+    Expr stream_get_stderr()
+    {
+        return global.stream.stderr;
+    }
+
     /* builtin */
 
     void builtin_init(BuiltinState * builtin)
@@ -3113,6 +3134,21 @@ bool System::env_can_set(Expr env, Expr var)
 void System::env_set(Expr env, Expr var, Expr val)
 {
     m_impl->env_set(env, var, val);
+}
+
+Expr System::stream_get_stdin()
+{
+    return m_impl->stream_get_stdin();
+}
+
+Expr System::stream_get_stdout()
+{
+    return m_impl->stream_get_stdout();
+}
+
+Expr System::stream_get_stderr()
+{
+    return m_impl->stream_get_stderr();
 }
 
 Expr System::make_function(Expr env, Expr name, Expr args, Expr body)

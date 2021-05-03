@@ -136,9 +136,9 @@ public:
     void unit_test_stream(TestState * test)
     {
         LISP_TEST_GROUP(test, "stream");
-        LISP_TEST_ASSERT(test, is_stream(global.stream.stdin));
-        LISP_TEST_ASSERT(test, is_stream(global.stream.stdout));
-        LISP_TEST_ASSERT(test, is_stream(global.stream.stderr));
+        LISP_TEST_ASSERT(test, is_stream(stream_get_stdin()));
+        LISP_TEST_ASSERT(test, is_stream(stream_get_stdout()));
+        LISP_TEST_ASSERT(test, is_stream(stream_get_stderr()));
     }
 
     void unit_test_reader(TestState * test)
