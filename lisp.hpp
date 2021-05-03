@@ -129,6 +129,13 @@ static_assert(sizeof(F64) == 8, "");
 
 static_assert(sizeof(V64) == 8, "");
 
+bool is_printable_ascii(U32 ch);
+
+char * get_temp_buf(size_t size);
+
+U64 i64_as_u64(I64 val);
+I64 u64_as_i64(U64 val);
+
 #line 2 "src/test.decl"
 /* test */
 
@@ -648,66 +655,6 @@ I64 u64_as_i64(U64 val)
     V64 v;
     v.u = val;
     return v.i;
-}
-
-U32 utf8_decode_one(U8 const * buf)
-{
-    U8 ch = *buf++;
-    if (ch < 0x80)
-    {
-        return ch;
-    }
-
-    // TODO check for leading 0b10 in continuation bytes
-
-    U32 val = 0;
-    if ((ch >> 5) == 0x6)
-    {
-        val |= ch & 0x1f;
-
-        ch = *buf++;
-        val <<= 6;
-        val |= (ch & 0x3f);
-    }
-    else if ((ch >> 4) == 0xe)
-    {
-        val |= ch & 0xf;
-
-        ch = *buf++;
-        val <<= 6;
-        val |= (ch & 0x3f);
-
-        ch = *buf++;
-        val <<= 6;
-        val |= (ch & 0x3f);
-    }
-    else if ((ch >> 3) == 0x1e)
-    {
-        val |= ch & 0x7;
-
-        ch = *buf++;
-        val <<= 6;
-        val |= (ch & 0x3f);
-
-        ch = *buf++;
-        val <<= 6;
-        val |= (ch & 0x3f);
-
-        ch = *buf++;
-        val <<= 6;
-        val |= (ch & 0x3f);
-    }
-    else
-    {
-        LISP_FAIL("illegal utf-8 string\n", val);
-    }
-
-    if (val >= 0xd800 && val < 0xe000)
-    {
-        LISP_FAIL("illegal surrogate pair %" PRIu32 " in utf-8 string\n", val);
-    }
-
-    return val;
 }
 
 #line 2 "src/type.impl"
@@ -1489,6 +1436,66 @@ private:
 
 #line 2 "src/system.impl"
 /* system */
+
+U32 utf8_decode_one(U8 const * buf)
+{
+    U8 ch = *buf++;
+    if (ch < 0x80)
+    {
+        return ch;
+    }
+
+    // TODO check for leading 0b10 in continuation bytes
+
+    U32 val = 0;
+    if ((ch >> 5) == 0x6)
+    {
+        val |= ch & 0x1f;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else if ((ch >> 4) == 0xe)
+    {
+        val |= ch & 0xf;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else if ((ch >> 3) == 0x1e)
+    {
+        val |= ch & 0x7;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else
+    {
+        LISP_FAIL("illegal utf-8 string\n", val);
+    }
+
+    if (val >= 0xd800 && val < 0xe000)
+    {
+        LISP_FAIL("illegal surrogate pair %" PRIu32 " in utf-8 string\n", val);
+    }
+
+    return val;
+}
 
 class SystemImpl
 {

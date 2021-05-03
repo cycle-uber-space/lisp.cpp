@@ -35,3 +35,10 @@ static_assert(sizeof(F32) == 4, "");
 static_assert(sizeof(F64) == 8, "");
 
 static_assert(sizeof(V64) == 8, "");
+
+bool is_printable_ascii(U32 ch);
+
+char * get_temp_buf(size_t size);
+
+func i64_as_u64(val: I64): U64;
+func u64_as_i64(val: U64): I64;
