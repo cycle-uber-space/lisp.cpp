@@ -675,13 +675,13 @@ public:
         {
             if (m_names[index] == name)
             {
-                return make_expr(TYPE_SYMBOL, index);
+                return make_expr(m_type, index);
             }
         }
 
         U64 const index = count();
         m_names.push_back(name);
-        return make_expr(TYPE_SYMBOL, index);
+        return make_expr(m_type, index);
     }
 
     char const * name(Expr exp)
