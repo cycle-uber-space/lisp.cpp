@@ -313,8 +313,6 @@ inline bool is_stream(Expr exp)
 
 /* builtin */
 
-#define LISP_MAX_BUILTINS 64
-
 typedef std::function<Expr(Expr args, Expr env)> BuiltinFun;
 
 typedef struct
@@ -323,18 +321,31 @@ typedef struct
     BuiltinFun fun;
 } BuiltinInfo;
 
-typedef struct
+inline bool is_builtin_special(Expr exp)
 {
-    U64 num;
-    BuiltinInfo info[LISP_MAX_BUILTINS];
-} BuiltinState;
+    return expr_type(exp) == TYPE_BUILTIN_SPECIAL;
+}
+
+inline bool is_builtin_function(Expr exp)
+{
+    return expr_type(exp) == TYPE_BUILTIN_FUNCTION;
+}
+
+inline bool is_builtin_symbol(Expr exp)
+{
+    return expr_type(exp) == TYPE_BUILTIN_SYMBOL;
+}
+
+inline bool is_builtin(Expr exp)
+{
+    return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
+}
 
 /* system */
 
 typedef struct SystemState
 {
     StreamState stream;
-    BuiltinState builtin;
 } SystemState;
 
 class SystemImpl;
