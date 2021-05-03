@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, re
+import os, sys, re
 
 g_match = None
 
@@ -35,6 +35,13 @@ def save_lines(path, lines):
 def load_source(path):
     return f"\n#line 2 \"{path}\"" + load_text(path)
 
+def has_ext(path, *exts):
+    root, ext = os.path.splitext(path)
+    for arg in exts:
+        if arg == ext:
+            return ext
+    return None
+
 def assemble(srcs):
     text = ""
     text += """
@@ -42,7 +49,7 @@ def assemble(srcs):
 #define _LISP_HPP_
 """
     for src in srcs:
-        if src.endswith(".hpp"):
+        if has_ext(src, ".hpp"):
             text += load_source(src)
     text += """
 #endif /* _LISP_HPP_ */
@@ -53,7 +60,7 @@ def assemble(srcs):
 #define _LISP_CPP_
 """
     for src in srcs:
-        if src.endswith(".cpp"):
+        if has_ext(src, ".cpp"):
             text += load_source(src)
     text += """
 #endif /* _LISP_CPP_ */
