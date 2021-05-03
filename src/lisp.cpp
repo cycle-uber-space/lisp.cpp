@@ -49,8 +49,8 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
 
 void error_fail(char const * fmt, ...)
 {
-    FILE * const file = stderr;
-    va_list ap;
+    let file = stderr;
+    var ap: va_list;
     va_start(ap, fmt);
     fprintf(file, LISP_RED "[FAIL] " LISP_RESET);
     vfprintf(file, fmt, ap);
@@ -63,8 +63,8 @@ void error_fail(char const * fmt, ...)
 
 void error_warn(char const * fmt, ...)
 {
-    FILE * const file = stderr;
-    va_list ap;
+    let file = stderr;
+    var ap: va_list;
     va_start(ap, fmt);
     fprintf(file, LISP_YELLOW "[WARN] " LISP_RESET);
     vfprintf(file, fmt, ap);
@@ -204,7 +204,7 @@ public:
     }
 
 private:
-    std::vector<std::string> m_names;
+    var m_names: std::vector<std::string>;
 };
 
 /* gensym */
@@ -228,13 +228,13 @@ public:
     }
 
 private:
-    U64 m_type;
-    U64 m_counter;
+    var m_type: U64;
+    var m_counter: U64;
 };
 
 #if LISP_WANT_GENSYM
 #if LISP_WANT_GLOBAL_API
-GensymImpl g_gensym(TYPE_GENSYM);
+var g_gensym: GensymImpl(TYPE_GENSYM);
 
 bool is_gensym(Expr exp)
 {

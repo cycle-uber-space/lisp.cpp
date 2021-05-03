@@ -559,7 +559,7 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
 
 void error_fail(char const * fmt, ...)
 {
-    FILE * const file = stderr;
+    auto const file = stderr;
     va_list ap;
     va_start(ap, fmt);
     fprintf(file, LISP_RED "[FAIL] " LISP_RESET);
@@ -573,7 +573,7 @@ void error_fail(char const * fmt, ...)
 
 void error_warn(char const * fmt, ...)
 {
-    FILE * const file = stderr;
+    auto const file = stderr;
     va_list ap;
     va_start(ap, fmt);
     fprintf(file, LISP_YELLOW "[WARN] " LISP_RESET);
