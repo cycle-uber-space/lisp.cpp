@@ -41,6 +41,13 @@ public:
             LISP_ASSERT(args == nil);
             return make_truth(rand() & 1);
         });
+
+        env_defun(env, "<", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const exp1 = builtin_arg1(args, "< expects at least two arguments");
+            Expr const exp2 = builtin_arg2(args, "< expects at least two arguments");
+            return make_truth(fixnum_lt(exp1, exp2));
+        });
         return env;
     }
 
