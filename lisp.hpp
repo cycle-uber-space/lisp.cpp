@@ -470,7 +470,7 @@ private:
 #ifndef _LISP_CPP_
 #define _LISP_CPP_
 
-#line 2 "src/lisp.def"
+#line 2 "src/HashMap.impl"
 /* HashMap */
 
 template <typename Key, typename Value>
@@ -496,6 +496,7 @@ private:
     std::unordered_map<Key, Value> m_impl;
 };
 
+#line 2 "src/HashSet.impl"
 /* HashSet */
 
 template <typename Element>
@@ -516,6 +517,7 @@ private:
     std::unordered_set<Element> m_impl;
 };
 
+#line 2 "src/test.impl"
 /* test */
 
 #define LISP_TEST_FILE stdout
@@ -566,6 +568,7 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
     }
 }
 
+#line 2 "src/error.impl"
 /* error */
 
 void error_fail(char const * fmt, ...)
@@ -592,6 +595,7 @@ void error_warn(char const * fmt, ...)
     va_end(ap);
 }
 
+#line 2 "src/expr.impl"
 /* expr */
 
 Expr make_expr(U64 type, U64 data)
@@ -609,6 +613,7 @@ U64 expr_data(Expr exp)
     return exp >> LISP_TYPE_BITS;
 }
 
+#line 2 "src/lisp.def"
 /* util? */
 
 bool is_printable_ascii(U32 ch)

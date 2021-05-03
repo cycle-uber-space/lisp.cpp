@@ -1,0 +1,26 @@
+
+/* error */
+
+void error_fail(char const * fmt, ...)
+{
+    let file = stderr;
+    var ap: va_list;
+    va_start(ap, fmt);
+    fprintf(file, LISP_RED "[FAIL] " LISP_RESET);
+    vfprintf(file, fmt, ap);
+    va_end(ap);
+#if LISP_DEBUG_USE_SIGNAL
+    raise(SIGINT);
+#endif
+    exit(1);
+}
+
+void error_warn(char const * fmt, ...)
+{
+    let file = stderr;
+    var ap: va_list;
+    va_start(ap, fmt);
+    fprintf(file, LISP_YELLOW "[WARN] " LISP_RESET);
+    vfprintf(file, fmt, ap);
+    va_end(ap);
+}

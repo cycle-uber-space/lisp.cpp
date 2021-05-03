@@ -1,0 +1,20 @@
+
+/* HashSet */
+
+template <typename Element>
+class HashSet
+{
+public:
+    bool contains(Element const & element) const
+    {
+        return m_impl.find(element) != m_impl.end();
+    }
+
+    void add(Element const & element)
+    {
+        m_impl.insert(element);
+    }
+
+private:
+    std::unordered_set<Element> m_impl;
+};

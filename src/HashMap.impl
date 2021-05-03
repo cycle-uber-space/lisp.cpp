@@ -1,0 +1,25 @@
+
+/* HashMap */
+
+template <typename Key, typename Value>
+class HashMap
+{
+public:
+    bool has(Key const & key) const
+    {
+        return m_impl.find(key) != m_impl.end();
+    }
+
+    void put(Key const & key, Value const & value)
+    {
+        m_impl[key] = value;
+    }
+
+    Value get(Key const & key) const
+    {
+        return m_impl.at(key);
+    }
+
+private:
+    std::unordered_map<Key, Value> m_impl;
+};

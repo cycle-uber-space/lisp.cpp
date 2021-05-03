@@ -23,6 +23,11 @@ src/string.decl\
 src/stream.decl\
 src/builtin.decl\
 src/system.decl\
+src/HashMap.impl\
+src/HashSet.impl\
+src/test.impl\
+src/error.impl\
+src/expr.impl\
 src/lisp.def
 
 CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess

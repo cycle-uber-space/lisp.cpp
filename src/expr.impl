@@ -1,0 +1,17 @@
+
+/* expr */
+
+Expr make_expr(U64 type, U64 data)
+{
+    return (data << LISP_TYPE_BITS) | (type & LISP_TYPE_MASK);
+}
+
+U64 expr_type(Expr exp)
+{
+    return exp & LISP_TYPE_MASK;
+}
+
+U64 expr_data(Expr exp)
+{
+    return exp >> LISP_TYPE_BITS;
+}
