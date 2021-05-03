@@ -62,30 +62,50 @@ def assemble(srcs):
 """
     return text
 
-def process(lines):
+def hack_lines(lines):
+    ID = "[_a-zA-Z][_a-zA-Z0-9]*"
     for line in lines:
-        if False:
-            yield line
+        if re_match(fr"^( *)let ({ID}) = ([^;]+);$", line):
+            indent = re_group(1)
+            name = re_group(2)
+            code = re_group(3)
+            yield f"{indent}auto const {name} = {code};"
+        elif re_match(fr"^( *)var ({ID}) = ([^;]+);$", line):
+            indent = re_group(1)
+            name = re_group(2)
+            code = re_group(3)
+            yield f"{indent}auto {name} = {code};"
         else:
             yield line
+
+def hack_text(text):
+    return join_lines(hack_lines(split_text(text)))
+
+def hack_file(path):
+    save_text(path, hack_text(load_text(path)))
 
 def main(args):
     srcs = list()
     hack = False
+    undo = False
     for arg in args:
         if arg == "--hack":
             hack = True
+        elif arg == "--undo":
+            undo = True
         else:
             srcs.append(arg)
 
     text = assemble(srcs)
 
     if hack:
-        lines = split_text(text)
-        lines = list(process(lines))
-        text = join_lines(lines)
+        text = hack_text(text)
 
     save_text("lisp.hpp", text)
+
+    if undo:
+        for src in srcs:
+            hack_file(src)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
