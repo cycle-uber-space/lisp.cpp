@@ -4,6 +4,7 @@
 .PHONY: all clean test
 
 BIN = bel scheme std unit
+LISP_SRC =  src/config.decl src/includes.decl src/defines.decl src/lisp.fwd src/lisp.def
 
 CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess
 #CXXFLAGS += -O2
@@ -17,8 +18,8 @@ clean:
 %: %.cpp lisp.hpp Makefile
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-lisp.hpp: make_lib.py src/lisp.fwd src/lisp.def
-	./make_lib.py --hack src/config.decl src/lisp.fwd src/lisp.def
+lisp.hpp: make_lib.py $(LISP_SRC) Makefile
+	./make_lib.py --hack $(LISP_SRC)
 
 test:
 	./std unit

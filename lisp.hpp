@@ -57,7 +57,7 @@
 #define LISP_PRINTER_PRINT_QUOTE 1
 #endif
 
-#line 2 "src/lisp.fwd"
+#line 2 "src/includes.decl"
 /* includes */
 
 #include <stdarg.h>
@@ -80,6 +80,7 @@
 #include <signal.h>
 #endif
 
+#line 2 "src/defines.decl"
 /* defines */
 
 #define LISP_RED     "\x1b[31m"
@@ -90,6 +91,7 @@
 #define LISP_CYAN    "\x1b[36m"
 #define LISP_RESET   "\x1b[0m"
 
+#line 2 "src/lisp.fwd"
 /* base */
 
 typedef uint8_t U8;
