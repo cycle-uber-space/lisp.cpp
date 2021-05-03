@@ -10,11 +10,15 @@ def save_text(path, text):
 
 def main():
     text = ""
+    def inject(path):
+        nonlocal text
+        text += f"\n#line 2 \"{path}\""
+        text += load_text(path)
     text += """
 #ifndef _LISP_HPP_
 #define _LISP_HPP_
 """
-    text += load_text("src/lisp.hpp")
+    inject("src/lisp.hpp")
     text += """
 #endif /* _LISP_HPP_ */
 
@@ -23,7 +27,7 @@ def main():
 #ifndef _LISP_CPP_
 #define _LISP_CPP_
 """
-    text += load_text("src/lisp.cpp")
+    inject("src/lisp.cpp")
     text += """
 #endif /* _LISP_CPP_ */
 

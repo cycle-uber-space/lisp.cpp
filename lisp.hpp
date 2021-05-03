@@ -2,6 +2,7 @@
 #ifndef _LISP_HPP_
 #define _LISP_HPP_
 
+#line 2 "src/lisp.hpp"
 /* config */
 
 #ifndef LISP_GLOBAL_API
@@ -387,6 +388,7 @@ public:
 #ifndef _LISP_CPP_
 #define _LISP_CPP_
 
+#line 2 "src/lisp.cpp"
 #define LISP_TEST_FILE stdout
 
 void test_begin(TestState * test)
