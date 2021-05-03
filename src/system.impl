@@ -79,6 +79,8 @@ public:
     {
         // TODO move to type_init?
         LISP_ASSERT_ALWAYS(TYPE_NIL == make_type("nil"));
+        LISP_ASSERT_ALWAYS(TYPE_CHAR == make_type("char"));
+        LISP_ASSERT_ALWAYS(TYPE_FIXNUM == make_type("fixnum"));
         LISP_ASSERT_ALWAYS(TYPE_SYMBOL == make_type("symbol"));
         LISP_ASSERT_ALWAYS(TYPE_KEYWORD == make_type("keyword"));
         LISP_ASSERT_ALWAYS(TYPE_CONS == make_type("cons"));
@@ -88,8 +90,6 @@ public:
 #if LISP_WANT_POINTER
         LISP_ASSERT_ALWAYS(TYPE_POINTER == make_type("pointer"));
 #endif
-        LISP_ASSERT_ALWAYS(TYPE_CHAR == make_type("char"));
-        LISP_ASSERT_ALWAYS(TYPE_FIXNUM == make_type("fixnum"));
         LISP_ASSERT_ALWAYS(TYPE_STRING == make_type("string"));
         LISP_ASSERT_ALWAYS(TYPE_STREAM == make_type("stream"));
         LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SPECIAL == make_type("builtin-special"));
