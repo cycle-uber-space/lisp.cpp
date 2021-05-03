@@ -651,6 +651,10 @@ private:
 class SymbolImpl
 {
 public:
+    SymbolImpl(U64 type) : m_type(type)
+    {
+    }
+
     Expr make(char const * name)
     {
         LISP_ASSERT_DEBUG(name);
@@ -678,7 +682,7 @@ public:
         }
     #endif
 
-        LISP_ASSERT(is_symbol(exp));
+        LISP_ASSERT(expr_type(exp) == m_type);
         U64 const index = expr_data(exp);
         if (index >= count())
         {
@@ -693,6 +697,7 @@ public:
     }
 
 private:
+    U64 m_type;
     std::vector<std::string> m_names;
 };
 
@@ -722,7 +727,7 @@ private:
 class SystemImpl
 {
 public:
-    SystemImpl()
+    SystemImpl() : m_symbol(TYPE_SYMBOL)
     {
         system_init(&global);
 
