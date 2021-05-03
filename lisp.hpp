@@ -704,6 +704,7 @@ public:
         return m_names[index].c_str();
     }
 
+protected:
     U64 count() const
     {
         return (U64) m_names.size();
@@ -773,6 +774,7 @@ public:
         m_pairs[index].exp2 = val;
     }
 
+protected:
     U64 count() const
     {
         return (U64) m_pairs.size();
