@@ -353,9 +353,7 @@ inline bool is_string(Expr exp)
 
 /* stream */
 
-#define LISP_MAX_STREAMS 64
-
-typedef struct
+struct StreamInfo
 {
     FILE * file;
     bool close_on_quit;
@@ -363,17 +361,7 @@ typedef struct
     char * buffer;
     size_t size;
     size_t cursor;
-} StreamInfo;
-
-typedef struct
-{
-    U64 num;
-    StreamInfo info[LISP_MAX_STREAMS];
-
-    Expr stdin;
-    Expr stdout;
-    Expr stderr;
-} StreamState;
+};
 
 inline bool is_stream(Expr exp)
 {
@@ -414,7 +402,6 @@ inline bool is_builtin(Expr exp)
 
 typedef struct SystemState
 {
-    StreamState stream;
 } SystemState;
 
 class SystemImpl;
@@ -778,6 +765,351 @@ private:
     std::vector<std::string> m_names;
 };
 
+/* cons */
+
+struct ExprPair
+{
+    Expr exp1, exp2;
+};
+
+class ConsImpl
+{
+public:
+    ConsImpl(U64 type) : m_type(type)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make(Expr a, Expr b)
+    {
+        U64 const index = count();
+        ExprPair pair;
+        pair.exp1 = a;
+        pair.exp2 = b;
+        m_pairs.push_back(pair);
+        return make_expr(m_type, index);
+    }
+
+    Expr car(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_pairs[index].exp1;
+    }
+
+    Expr cdr(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_pairs[index].exp2;
+    }
+
+    void set_car(Expr exp, Expr val)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        m_pairs[index].exp1 = val;
+    }
+
+    void set_cdr(Expr exp, Expr val)
+    {
+        LISP_ASSERT(isinstance(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        m_pairs[index].exp2 = val;
+    }
+
+protected:
+    U64 count() const
+    {
+        return (U64) m_pairs.size();
+    }
+
+private:
+    U64 m_type;
+    std::vector<ExprPair> m_pairs;
+};
+
+/* string */
+
+class StringImpl
+{
+public:
+    StringImpl(U64 type) : m_type(type)
+    {
+    }
+
+    inline bool isinstance(Expr exp) const
+    {
+        return expr_type(exp) == m_type;
+    }
+
+    Expr make(char const * str)
+    {
+        U64 const index = count();
+        m_strings.push_back(str);
+        return make_expr(m_type, index);
+    }
+
+    char const * value(Expr exp)
+    {
+        return impl(exp).c_str();
+    }
+
+    U64 length(Expr exp)
+    {
+        return (U64) impl(exp).size();
+    }
+
+    bool equal(Expr exp1, Expr exp2)
+    {
+        return impl(exp1) == impl(exp2);
+    }
+
+protected:
+    U64 count() const
+    {
+        return (U64) m_strings.size();
+    }
+
+    std::string const & impl(Expr exp)
+    {
+        LISP_ASSERT(isinstance(exp));
+        U64 const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_strings[index];
+    }
+
+private:
+    U64 m_type;
+    std::vector<std::string> m_strings;
+};
+
+/* stream */
+
+class StreamImpl
+{
+public:
+    StreamImpl()
+    {
+        m_stdin = make_file_input(stdin, false);
+        m_stdout = make_file_output(stdout, false);
+        m_stderr = make_file_output(stderr, false);
+    }
+
+    ~StreamImpl()
+    {
+        // TODO add this to stream api?
+        for (auto & info : m_info)
+        {
+            if (info.close_on_quit)
+            {
+                if (info.file)
+                {
+                    fclose(info.file);
+                    info.file = NULL;
+                }
+            }
+        }
+        m_info.clear();
+    }
+
+    Expr get_stdin()
+    {
+        return m_stdin;
+    }
+
+    Expr get_stdout()
+    {
+        return m_stdout;
+    }
+
+    Expr get_stderr()
+    {
+        return m_stderr;
+    }
+
+    Expr make_file_input(FILE * file, bool close_on_quit)
+    {
+        return make_file(file, close_on_quit);
+    }
+
+    Expr make_file_output(FILE * file, bool close_on_quit)
+    {
+        return make_file(file, close_on_quit);
+    }
+
+    Expr make_string_input(char const * str)
+    {
+        // TODO copy string into buffer?
+        size_t const len = strlen(str);
+        return make_buffer(len + 1, (char *) str);
+    }
+
+    Expr make_buffer_output(size_t size, char * buffer)
+    {
+        return make_buffer(size, buffer);
+    }
+
+    char peek_char(Expr exp)
+    {
+        StreamInfo & info = get_info(exp);
+        if (info.file)
+        {
+            int ch = fgetc(info.file);
+            if (ch == EOF)
+            {
+                return 0;
+            }
+            ungetc(ch, info.file);
+            return ch;
+        }
+
+        if (info.buffer)
+        {
+            if (info.cursor < info.size)
+            {
+                return info.buffer[info.cursor];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        LISP_FAIL("cannot read from stream\n");
+        return 0;
+    }
+
+    void skip_char(Expr exp)
+    {
+        StreamInfo & info = get_info(exp);
+        if (info.file)
+        {
+            fgetc(info.file);
+            return;
+        }
+
+        if (info.buffer)
+        {
+            ++info.cursor;
+            return;
+        }
+
+        LISP_FAIL("cannot read from stream\n");
+    }
+
+    bool at_end(Expr exp)
+    {
+        return peek_char(exp) == 0;
+    }
+
+    void put_string(Expr exp, char const * str)
+    {
+        StreamInfo & info = get_info(exp);
+        if (info.file)
+        {
+            fputs(str, info.file);
+            return;
+        }
+
+        if (info.buffer)
+        {
+            size_t const len = strlen(str);
+            LISP_ASSERT(info.cursor + len + 1 < info.size);
+            memcpy(info.buffer + info.cursor, str, len + 1);
+            info.cursor += len;
+            return;
+        }
+
+        LISP_FAIL("cannot write to stream\n");
+    }
+
+    // TODO put_char32
+    void put_char(Expr exp, char ch)
+    {
+        // TODO make this more efficient
+        char const tmp[2] = { ch, 0 };
+        put_string(exp, tmp);
+    }
+
+    void release(Expr exp)
+    {
+        auto & info = get_info(exp);
+        if (info.close_on_quit)
+        {
+            if (info.file)
+            {
+                fclose(info.file);
+                info.file = NULL;
+            }
+        }
+
+        // TODO add to free list
+    }
+
+protected:
+    U64 count() const
+    {
+        return (U64) m_info.size();
+    }
+
+    StreamInfo & get_info(Expr exp)
+    {
+        LISP_ASSERT(is_stream(exp));
+        U64 const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_info[index];
+    }
+
+    Expr make_file(FILE * file, bool close_on_quit)
+    {
+        StreamInfo info;
+        memset(&info, 0, sizeof(StreamInfo));
+        info.file = file;
+        info.close_on_quit = close_on_quit;
+        return make_from_info(info);
+    }
+
+    Expr make_buffer(size_t size, char * buffer)
+    {
+        StreamInfo info;
+        memset(&info, 0, sizeof(StreamInfo));
+        info.size = size;
+        info.buffer = buffer;
+        info.cursor = 0;
+        return make_from_info(info);
+    }
+
+    Expr make_from_info(StreamInfo const & info)
+    {
+        U64 const index = count();
+        m_info.push_back(info);
+        return make_expr(TYPE_STREAM, index);
+    }
+
+    StreamInfo & info(Expr exp)
+    {
+        LISP_ASSERT(is_stream(exp));
+        Expr const index = expr_data(exp);
+        LISP_ASSERT(index < count());
+        return m_info[index];
+    }
+
+private:
+    Expr m_stdin;
+    Expr m_stdout;
+    Expr m_stderr;
+    std::vector<StreamInfo> m_info;
+};
+
 /* gensym */
 
 class GensymImpl
@@ -953,134 +1285,7 @@ U32 char_code(Expr exp)
     return (U32) expr_data(exp);
 }
 
-/* stream */
-
-/* system */
-
-SystemState global;
-
-struct ExprPair
-{
-    Expr exp1, exp2;
-};
-
-class ConsImpl
-{
-public:
-    ConsImpl(U64 type) : m_type(type)
-    {
-    }
-
-    inline bool isinstance(Expr exp) const
-    {
-        return expr_type(exp) == m_type;
-    }
-
-    Expr make(Expr a, Expr b)
-    {
-        U64 const index = count();
-        ExprPair pair;
-        pair.exp1 = a;
-        pair.exp2 = b;
-        m_pairs.push_back(pair);
-        return make_expr(m_type, index);
-    }
-
-    Expr car(Expr exp)
-    {
-        LISP_ASSERT(isinstance(exp));
-        Expr const index = expr_data(exp);
-        LISP_ASSERT(index < count());
-        return m_pairs[index].exp1;
-    }
-
-    Expr cdr(Expr exp)
-    {
-        LISP_ASSERT(isinstance(exp));
-        Expr const index = expr_data(exp);
-        LISP_ASSERT(index < count());
-        return m_pairs[index].exp2;
-    }
-
-    void set_car(Expr exp, Expr val)
-    {
-        LISP_ASSERT(isinstance(exp));
-        Expr const index = expr_data(exp);
-        LISP_ASSERT(index < count());
-        m_pairs[index].exp1 = val;
-    }
-
-    void set_cdr(Expr exp, Expr val)
-    {
-        LISP_ASSERT(isinstance(exp));
-        Expr const index = expr_data(exp);
-        LISP_ASSERT(index < count());
-        m_pairs[index].exp2 = val;
-    }
-
-protected:
-    U64 count() const
-    {
-        return (U64) m_pairs.size();
-    }
-
-private:
-    U64 m_type;
-    std::vector<ExprPair> m_pairs;
-};
-
-class StringImpl
-{
-public:
-    StringImpl(U64 type) : m_type(type)
-    {
-    }
-
-    inline bool isinstance(Expr exp) const
-    {
-        return expr_type(exp) == m_type;
-    }
-
-    Expr make(char const * str)
-    {
-        U64 const index = count();
-        m_strings.push_back(str);
-        return make_expr(m_type, index);
-    }
-
-    char const * value(Expr exp)
-    {
-        return impl(exp).c_str();
-    }
-
-    U64 length(Expr exp)
-    {
-        return (U64) impl(exp).size();
-    }
-
-    bool equal(Expr exp1, Expr exp2)
-    {
-        return impl(exp1) == impl(exp2);
-    }
-
-protected:
-    U64 count() const
-    {
-        return (U64) m_strings.size();
-    }
-
-    std::string const & impl(Expr exp)
-    {
-        LISP_ASSERT(isinstance(exp));
-        U64 const index = expr_data(exp);
-        LISP_ASSERT(index < count());
-        return m_strings[index];
-    }
-
-private:
-    U64 m_type;
-    std::vector<std::string> m_strings;
-};
+/* builtin */
 
 class BuiltinImpl
 {
@@ -1138,6 +1343,10 @@ private:
     std::vector<BuiltinInfo> m_info;
 };
 
+/* system */
+
+SystemState global;
+
 class SystemImpl
 {
 public:
@@ -1183,12 +1392,10 @@ public:
 
     void system_init(SystemState * system)
     {
-        stream_init(&system->stream);
     }
 
     void system_quit(SystemState * system)
     {
-        stream_quit(&system->stream);
     }
 
     /* core */
@@ -1223,7 +1430,7 @@ public:
     void repl(Expr env)
     {
         // TODO make a proper prompt input stream
-        Expr in = global.stream.stdin;
+        Expr in = stream_get_stdin();
     loop:
         {
             /* read */
@@ -1436,7 +1643,7 @@ public:
     {
         env_defun(env, name, [this](Expr args, Expr env) -> Expr
         {
-            Expr out = global.stream.stdout;
+            Expr out = stream_get_stdout();
             for (Expr tmp = args; tmp; tmp = cdr(tmp))
             {
                 if (tmp != args)
@@ -1877,7 +2084,7 @@ public:
         // TODO multiple calls => need temp buffer per call
         size_t const size = 4096;
         char * buffer = get_temp_buf(size);
-        Expr out = lisp_make_buffer_output_stream(&global.stream, size, buffer);
+        Expr out = make_buffer_output_stream(size, buffer);
         HashSet<Expr> seen;
         print_expr(exp, out, seen);
         stream_release(out);
@@ -1886,14 +2093,14 @@ public:
 
     void print(Expr exp)
     {
-        Expr const out = global.stream.stdout;
+        Expr const out = stream_get_stdout();
         HashSet<Expr> seen;
         print_expr(exp, out, seen);
     }
 
     void println(Expr exp)
     {
-        Expr const out = global.stream.stdout;
+        Expr const out = stream_get_stdout();
         HashSet<Expr> seen;
         print_expr(exp, out, seen);
         stream_put_string(out, "\n");
@@ -1901,14 +2108,14 @@ public:
 
     void display(Expr exp)
     {
-        Expr const out = global.stream.stdout;
+        Expr const out = stream_get_stdout();
         HashSet<Expr> seen;
         display_expr(exp, out, seen);
     }
 
     void displayln(Expr exp)
     {
-        Expr const out = global.stream.stdout;
+        Expr const out = stream_get_stdout();
         HashSet<Expr> seen;
         display_expr(exp, out, seen);
         stream_put_string(out, "\n");
@@ -1954,7 +2161,7 @@ public:
 #if LISP_READER_PARSE_CHARACTER
         else if (stream_peek_char(in) == '\\')
         {
-            tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+            tok = make_buffer_output_stream(4096, lexeme);
 
             while (!is_whitespace_or_eof(stream_peek_char(in)))
             {
@@ -2010,7 +2217,7 @@ public:
 
         else if (is_number_start(stream_peek_char(in)))
         {
-            tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+            tok = make_buffer_output_stream(4096, lexeme);
 
             bool neg = 0;
             if (stream_peek_char(in) == '-')
@@ -2093,7 +2300,7 @@ public:
 
         else if (is_symbol_start(stream_peek_char(in)))
         {
-            tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+            tok = make_buffer_output_stream(4096, lexeme);
             stream_put_char(tok, stream_read_char(in));
 
         symbol_loop:
@@ -2204,7 +2411,7 @@ public:
         stream_skip_char(in);
 
         char lexeme[4096];
-        Expr tok = lisp_make_buffer_output_stream(&global.stream, 4096, lexeme);
+        Expr tok = make_buffer_output_stream(4096, lexeme);
 
     string_loop:
         if (stream_peek_char(in) == 0)
@@ -2597,211 +2804,41 @@ public:
 
     /* stream */
 
-    void stream_init(StreamState * stream)
-    {
-        memset(stream, 0, sizeof(StreamState));
-
-        stream->stdin = lisp_make_file_input_stream(stream, stdin, false);
-        stream->stdout = lisp_make_file_output_stream(stream, stdout, false);
-        stream->stderr = lisp_make_file_output_stream(stream, stderr, false);
-    }
-
-    void stream_quit(StreamState * stream)
-    {
-        for (U64 i = 0; i < stream->num; i++)
-        {
-            StreamInfo * info = stream->info + i;
-            if (info->close_on_quit)
-            {
-                fclose(info->file);
-            }
-        }
-    }
-
-    static Expr _make_file_stream(StreamState * stream, FILE * file, bool close_on_quit)
-    {
-        LISP_ASSERT(stream->num < LISP_MAX_STREAMS);
-        U64 const index = stream->num++;
-        StreamInfo * info = stream->info + index;
-        memset(info, 0, sizeof(StreamInfo));
-        info->file = file;
-        info->close_on_quit = close_on_quit;
-        return make_expr(TYPE_STREAM, index);
-    }
-
-    static Expr _make_buffer_stream(StreamState * stream, size_t size, char * buffer)
-    {
-        LISP_ASSERT(stream->num < LISP_MAX_STREAMS);
-        U64 const index = stream->num++;
-        StreamInfo * info = stream->info + index;
-        memset(info, 0, sizeof(StreamInfo));
-        info->size = size;
-        info->buffer = buffer;
-        info->cursor = 0;
-
-        return make_expr(TYPE_STREAM, index);
-    }
-
-    void lisp_stream_show_info(StreamState * stream)
-    {
-        for (U64 i = 0; i < stream->num; i++)
-        {
-            StreamInfo * info = stream->info + i;
-            fprintf(stderr, "stream %d:\n", (int) i);
-            fprintf(stderr, "- file: %p\n", info->file);
-            fprintf(stderr, "- buffer: %p\n", info->buffer);
-        }
-    }
-
-    Expr lisp_make_file_input_stream(StreamState * stream, FILE * file, bool close_on_quit)
-    {
-        return _make_file_stream(stream, file, close_on_quit);
-    }
-
-    Expr lisp_make_file_output_stream(StreamState * stream, FILE * file, bool close_on_quit)
-    {
-        return _make_file_stream(stream, file, close_on_quit);
-    }
-
-    Expr lisp_make_string_input_stream(StreamState * stream, char const * str)
-    {
-        // TODO copy string into buffer?
-        size_t const len = strlen(str);
-        return _make_buffer_stream(stream, len + 1, (char *) str);
-    }
-
-    Expr lisp_make_buffer_output_stream(StreamState * stream, size_t size, char * buffer)
-    {
-        return _make_buffer_stream(stream, size, buffer);
-    }
-
-    char lisp_stream_peek_char(StreamState * stream, Expr exp)
-    {
-        U64 const index = expr_data(exp);
-        LISP_ASSERT(index < stream->num);
-        StreamInfo * info = stream->info + index;
-        if (info->file)
-        {
-            int ch = fgetc(info->file);
-            if (ch == EOF)
-            {
-                return 0;
-            }
-            ungetc(ch, info->file);
-            return ch;
-        }
-
-        if (info->buffer)
-        {
-            if (info->cursor < info->size)
-            {
-                return info->buffer[info->cursor];
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        LISP_FAIL("cannot read from stream\n");
-        return 0;
-    }
-
-    void lisp_stream_skip_char(StreamState * stream, Expr exp)
-    {
-        U64 const index = expr_data(exp);
-        LISP_ASSERT(index < stream->num);
-        StreamInfo * info = stream->info + index;
-        if (info->file)
-        {
-            fgetc(info->file);
-            return;
-        }
-
-        if (info->buffer)
-        {
-            ++info->cursor;
-            return;
-        }
-
-        LISP_FAIL("cannot read from stream\n");
-    }
-
-    bool lisp_stream_at_end(StreamState * stream, Expr exp)
-    {
-        return lisp_stream_peek_char(stream, exp) == 0;
-    }
-
-    void lisp_stream_put_string(StreamState * stream, Expr exp, char const * str)
-    {
-        LISP_ASSERT(is_stream(exp));
-        U64 const index = expr_data(exp);
-        LISP_ASSERT(index < stream->num);
-        StreamInfo * info = stream->info + index;
-        if (info->file)
-        {
-            fputs(str, info->file);
-        }
-
-        if (info->buffer)
-        {
-            size_t const len = strlen(str);
-            LISP_ASSERT(info->cursor + len + 1 < info->size);
-            memcpy(info->buffer + info->cursor, str, len + 1);
-            info->cursor += len;
-        }
-    }
-
-    void lisp_stream_put_char(StreamState * stream, Expr exp, char ch)
-    {
-        // TODO make this more efficient
-        char const tmp[2] = { ch, 0 };
-        lisp_stream_put_string(stream, exp, tmp);
-    }
-
-    void lisp_stream_release(StreamState * stream, Expr exp)
-    {
-        LISP_ASSERT(is_stream(exp));
-        U64 const index = expr_data(exp);
-        LISP_ASSERT(index < stream->num);
-        StreamInfo * info = stream->info + index;
-        if (info->close_on_quit)
-        {
-            fclose(info->file);
-        }
-        memcpy(info, stream->info + --stream->num, sizeof(StreamInfo));
-    }
-
     Expr make_file_input_stream_from_path(char const * path)
     {
         FILE * file = fopen(path, "rb");
         LISP_ASSERT(file);
-        return lisp_make_file_input_stream(&global.stream, file, true);
+        return m_stream.make_file_input(file, true);
     }
 
     Expr make_string_input_stream(char const * str)
     {
-        return lisp_make_string_input_stream(&global.stream, str);
+        return m_stream.make_string_input(str);
+    }
+
+    Expr make_buffer_output_stream(size_t size, char * str)
+    {
+        return m_stream.make_buffer_output(size, str);
     }
 
     char stream_peek_char(Expr exp)
     {
-        return lisp_stream_peek_char(&global.stream, exp);
+        return m_stream.peek_char(exp);
     }
 
     void stream_skip_char(Expr exp)
     {
-        lisp_stream_skip_char(&global.stream, exp);
+        m_stream.skip_char(exp);
     }
 
     void stream_put_char(Expr exp, char ch)
     {
-        lisp_stream_put_char(&global.stream, exp, ch);
+        m_stream.put_char(exp, ch);
     }
 
     void stream_put_string(Expr exp, char const * str)
     {
-        lisp_stream_put_string(&global.stream, exp, str);
+        m_stream.put_string(exp, str);
     }
 
     void stream_put_u64(Expr exp, U64 val)
@@ -2834,7 +2871,7 @@ public:
 
     void stream_release(Expr exp)
     {
-        lisp_stream_release(&global.stream, exp);
+        m_stream.release(exp);
     }
 
     char stream_read_char(Expr exp)
@@ -2847,22 +2884,22 @@ public:
 
     bool stream_at_end(Expr exp)
     {
-        return lisp_stream_at_end(&global.stream, exp);
+        return m_stream.at_end(exp);
     }
 
     Expr stream_get_stdin()
     {
-        return global.stream.stdin;
+        return m_stream.get_stdin();
     }
 
     Expr stream_get_stdout()
     {
-        return global.stream.stdout;
+        return m_stream.get_stdout();
     }
 
     Expr stream_get_stderr()
     {
-        return global.stream.stderr;
+        return m_stream.get_stderr();
     }
 
     /* builtin */
@@ -3279,6 +3316,7 @@ public:
     SymbolImpl m_keyword;
     ConsImpl m_cons;
     StringImpl m_string;
+    StreamImpl m_stream;
     BuiltinImpl m_builtin;
 #if LISP_WANT_GENSYM
     GensymImpl m_gensym;

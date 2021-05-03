@@ -349,9 +349,7 @@ func is_string(exp: Expr): inline bool
 
 /* stream */
 
-#define LISP_MAX_STREAMS 64
-
-typedef struct
+struct StreamInfo
 {
     FILE * file;
     bool close_on_quit;
@@ -359,17 +357,7 @@ typedef struct
     char * buffer;
     size_t size;
     size_t cursor;
-} StreamInfo;
-
-typedef struct
-{
-    U64 num;
-    StreamInfo info[LISP_MAX_STREAMS];
-
-    Expr stdin;
-    Expr stdout;
-    Expr stderr;
-} StreamState;
+};
 
 func is_stream(exp: Expr): inline bool
 {
@@ -410,7 +398,6 @@ func is_builtin(exp: Expr): inline bool
 
 typedef struct SystemState
 {
-    StreamState stream;
 } SystemState;
 
 class SystemImpl;
