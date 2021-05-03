@@ -236,12 +236,12 @@ private:
 #if LISP_WANT_GLOBAL_API
 var g_gensym: GensymImpl(TYPE_GENSYM);
 
-bool is_gensym(Expr exp)
+func is_gensym(Expr exp): bool
 {
     return g_gensym.isinstance(exp);
 }
 
-Expr gensym()
+func gensym(): Expr
 {
     return g_gensym.make();
 }

@@ -67,24 +67,31 @@ def hack_lines(lines):
     for line in lines:
         if re_match(fr"^( *)(let|var) ({ID}) = ([^;]+);$", line):
             indent = re_group(1)
-            kw = re_group(2)
+            keyword = re_group(2)
             name = re_group(3)
             code = re_group(4)
-            type_decl = "auto const" if kw == "let" else "auto"
+            type_decl = "auto const" if keyword == "let" else "auto"
             yield f"{indent}{type_decl} {name} = {code};"
         elif re_match(fr"^( *)(var) ({ID}) *: *([^(]+)(\(.*\));$", line):
             indent = re_group(1)
-            kw = re_group(2)
+            keyword = re_group(2)
             name = re_group(3)
             type_decl = re_group(4)
             args = re_group(5)
             yield f"{indent}{type_decl} {name}{args};"
         elif re_match(fr"^( *)(var) ({ID}) *: *([^;]+);$", line):
             indent = re_group(1)
-            kw = re_group(2)
+            keyword = re_group(2)
             name = re_group(3)
             type_decl = re_group(4)
             yield f"{indent}{type_decl} {name};"
+        elif re_match(fr"^( *)(func) ({ID})\(([^)]*)\): *(.+)$", line):
+            indent = re_group(1)
+            keyword = re_group(2)
+            name = re_group(3)
+            args = re_group(4)
+            ret_type = re_group(5)
+            yield f"{indent}{ret_type} {name}({args})"
         else:
             yield line
 
