@@ -16,13 +16,30 @@ public:
         srand(time(NULL));
     }
 
+    Expr builtin_arg1(Expr args, char const * fmt, ...)
+    {
+        // TODO add error checking
+        return first(args);
+    }
+
+    Expr builtin_arg2(Expr args, char const * fmt, ...)
+    {
+        // TODO add error checking
+        return second(args);
+    }
+
+    Expr make_truth(bool value)
+    {
+        return value ? LISP_SYMBOL_T : nil;
+    }
+
     Expr make_core_env()
     {
         Expr env = Super::make_core_env();
         env_defun(env, "coin", [this](Expr args, Expr env) -> Expr
         {
             LISP_ASSERT(args == nil);
-            return (rand() & 1) ? LISP_SYMBOL_T : nil;
+            return make_truth(rand() & 1);
         });
         return env;
     }
