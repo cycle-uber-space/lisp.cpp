@@ -41,7 +41,7 @@ src/pointer.impl\
 src/builtin.impl\
 src/system.impl
 
-CXXFLAGS = -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess
+CXXFLAGS = -std=c++11 -Wall -Wextra
 #CXXFLAGS += -O2
 CXXFLAGS += -g -O0
 
