@@ -534,7 +534,7 @@ void test_finish(TestState * test)
     }
 }
 
-void test_group(TestState * test, char const * text)
+void test_group(TestState *, char const * text)
 {
     fprintf(LISP_TEST_FILE, "==== %s ====\n", text);
 }
@@ -1586,7 +1586,7 @@ public:
 
         env_def(env, intern("t"), intern("t"));
 
-        env_defsym(env, "*env*", [this](Expr args, Expr env) -> Expr
+        env_defsym(env, "*env*", [](Expr, Expr env) -> Expr
         {
             return env;
         });
@@ -1646,28 +1646,28 @@ public:
             return all_equal(args) ? LISP_SYMBOL_T : nil; // TODO use make_truth()
         });
 
-        env_defun(env, "cons", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "cons", [this](Expr args, Expr) -> Expr
         {
             return cons(car(args), cadr(args));
         });
 
-        env_defun(env, "car", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "car", [this](Expr args, Expr) -> Expr
         {
             return car(car(args));
         });
 
-        env_defun(env, "cdr", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "cdr", [this](Expr args, Expr) -> Expr
         {
             return cdr(car(args));
         });
 
-        env_defun(env, "rplaca", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "rplaca", [this](Expr args, Expr) -> Expr
         {
             rplaca(car(args), cadr(args));
             return nil;
         });
 
-        env_defun(env, "rplacd", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "rplacd", [this](Expr args, Expr) -> Expr
         {
             rplacd(car(args), cadr(args));
             return nil;
@@ -1675,20 +1675,20 @@ public:
 
         env_defun_println(env, "println");
 
-        env_defun(env, "intern", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "intern", [this](Expr args, Expr) -> Expr
         {
             return intern(string_value(car(args)));
         });
 
 #if LISP_WANT_GENSYM
-        env_defun(env, "gensym", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "gensym", [this](Expr, Expr) -> Expr
         {
             return gensym();
         });
 #endif
 
 #if LISP_WANT_POINTER
-        env_defun(env, "fopen", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "fopen", [this](Expr args, Expr) -> Expr
         {
             // TODO use builtin_arg1(name, args) for better error checking
             Expr const path = first(args);
@@ -1696,7 +1696,7 @@ public:
             return make_pointer(fopen(string_value(path), string_value(mode)));
         });
 
-        env_defun(env, "fclose", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "fclose", [this](Expr args, Expr) -> Expr
         {
             // TODO use builtin_arg1(name, args) for better error checking
             Expr const file = first(args);
@@ -1704,7 +1704,7 @@ public:
             return nil;
         });
 
-        env_defun(env, "write-u8", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "write-u8", [this](Expr args, Expr) -> Expr
         {
             Expr const file = first(args);
             Expr const value = second(args);
@@ -1720,17 +1720,17 @@ public:
             return nil;
         });
 
-        env_defun(env, "ord", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "ord", [this](Expr args, Expr) -> Expr
         {
             return make_number(utf8_decode_one(string_value_utf8(car(args))));
         });
 
-        env_defun(env, "chr", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "chr", [this](Expr args, Expr) -> Expr
         {
             return make_string_from_utf32_char((U32) fixnum_value(car(args)));
         });
 
-        env_defun(env, "type", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "type", [this](Expr args, Expr) -> Expr
         {
             Expr const arg1 = car(args);
             return intern(type_name(expr_type(arg1)));
@@ -1741,7 +1741,7 @@ public:
 
     void env_defspecial_quote(Expr env)
     {
-        env_defspecial(env, "quote", [this](Expr args, Expr env) -> Expr
+        env_defspecial(env, "quote", [this](Expr args, Expr) -> Expr
         {
             return car(args);
         });
@@ -1765,7 +1765,7 @@ public:
 
     void env_defun_println(Expr env, char const * name)
     {
-        env_defun(env, name, [this](Expr args, Expr env) -> Expr
+        env_defun(env, name, [this](Expr args, Expr) -> Expr
         {
             Expr out = stream_get_stdout();
             for (Expr tmp = args; tmp; tmp = cdr(tmp))
@@ -3074,7 +3074,7 @@ public:
         return is_closure(exp, intern("clo"));
     }
 
-    Expr make_function(Expr env, Expr name, Expr args, Expr body)
+    Expr make_function(Expr env, Expr /*name*/, Expr args, Expr body)
     {
         return cons(intern("lit"), cons(intern("clo"), cons(env, cons(args, body))));
     }
@@ -3084,7 +3084,7 @@ public:
         return is_closure(exp, intern("mac"));
     }
 
-    Expr make_macro(Expr env, Expr name, Expr args, Expr body)
+    Expr make_macro(Expr env, Expr /*name*/, Expr args, Expr body)
     {
         return cons(intern("lit"), cons(intern("mac"), cons(env, cons(args, body))));
     }

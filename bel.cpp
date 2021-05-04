@@ -28,7 +28,7 @@ public:
             return list(LISP_SYM_LIT, LISP_SYM_CLO, env, car(args), cdr(args));
         });
 
-        env_defun(env, "coin", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "coin", [this](Expr args, Expr) -> Expr
         {
             LISP_ASSERT(args == nil);
             return (rand() & 1) ? LISP_SYMBOL_T : nil;

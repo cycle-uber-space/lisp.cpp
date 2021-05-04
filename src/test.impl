@@ -23,7 +23,7 @@ void test_finish(TestState * test)
     }
 }
 
-void test_group(TestState * test, char const * text)
+void test_group(TestState *, char const * text)
 {
     fprintf(LISP_TEST_FILE, "==== %s ====\n", text);
 }

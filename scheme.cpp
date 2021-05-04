@@ -36,13 +36,13 @@ public:
             return make_function(env, nil, fun_args, fun_body);
         });
 
-        env_defun(env, "display", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "display", [this](Expr args, Expr) -> Expr
         {
             display(car(args));
             return nil;
         });
 
-        env_defun(env, "displayln", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "displayln", [this](Expr args, Expr) -> Expr
         {
             displayln(car(args));
             return nil;

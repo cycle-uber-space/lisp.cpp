@@ -38,7 +38,7 @@ static void test()
     LISP_TEST_FINISH(test);
 }
 
-int main(int argc, char ** argv)
+int main(int, char **)
 {
     test();
     return 0;

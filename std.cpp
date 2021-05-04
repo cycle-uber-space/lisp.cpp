@@ -16,13 +16,13 @@ public:
         srand(time(NULL));
     }
 
-    Expr builtin_arg1(Expr args, char const * fmt, ...)
+    Expr builtin_arg1(Expr args, char const * /*fmt*/, ...)
     {
         // TODO add error checking
         return first(args);
     }
 
-    Expr builtin_arg2(Expr args, char const * fmt, ...)
+    Expr builtin_arg2(Expr args, char const * /*fmt*/, ...)
     {
         // TODO add error checking
         return second(args);
@@ -36,13 +36,13 @@ public:
     Expr make_core_env()
     {
         Expr env = Super::make_core_env();
-        env_defun(env, "coin", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "coin", [this](Expr args, Expr) -> Expr
         {
             LISP_ASSERT(args == nil);
             return make_truth(rand() & 1);
         });
 
-        env_defun(env, "<", [this](Expr args, Expr env) -> Expr
+        env_defun(env, "<", [this](Expr args, Expr) -> Expr
         {
             Expr const exp1 = builtin_arg1(args, "< expects at least two arguments");
             Expr const exp2 = builtin_arg2(args, "< expects at least two arguments");
