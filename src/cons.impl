@@ -70,3 +70,34 @@ private:
     U64 m_type;
     std::vector<ExprPair> m_pairs;
 };
+
+#if LISP_WANT_GLOBAL_API
+
+static ConsImpl g_cons(TYPE_CONS);
+
+Expr cons(Expr exp1, Expr exp2)
+{
+    return g_cons.make(exp1, exp2);
+}
+
+Expr car(Expr exp)
+{
+    return g_cons.car(exp);
+}
+
+Expr cdr(Expr exp)
+{
+    return g_cons.cdr(exp);
+}
+
+void set_car(Expr exp, Expr val)
+{
+    g_cons.set_car(exp, val);
+}
+
+void set_cdr(Expr exp, Expr val)
+{
+    g_cons.set_cdr(exp, val);
+}
+
+#endif
