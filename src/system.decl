@@ -53,6 +53,7 @@ public:
 
     Expr intern(char const * name);
     Expr read_one_from_string(char const * src);
+    bool maybe_parse_expr(Expr in, Expr * exp);
 
     /* env */
 
@@ -79,6 +80,7 @@ public:
     /* eval */
 
     Expr eval(Expr exp, Expr env);
+    Expr eval_body(Expr exps, Expr env);
     void load_file(char const * path, Expr env);
     void repl(Expr env);
 

@@ -450,6 +450,7 @@ public:
 
     Expr intern(char const * name);
     Expr read_one_from_string(char const * src);
+    bool maybe_parse_expr(Expr in, Expr * exp);
 
     /* env */
 
@@ -476,6 +477,7 @@ public:
     /* eval */
 
     Expr eval(Expr exp, Expr env);
+    Expr eval_body(Expr exps, Expr env);
     void load_file(char const * path, Expr env);
     void repl(Expr env);
 
@@ -3710,6 +3712,11 @@ Expr System::read_one_from_string(char const * src)
     return m_impl->read_one_from_string(src);
 }
 
+bool System::maybe_parse_expr(Expr in, Expr * exp)
+{
+    return m_impl->maybe_parse_expr(in, exp);
+}
+
 /* env */
 
 Expr System::make_env(Expr outer)
@@ -3789,6 +3796,11 @@ Expr System::make_function(Expr env, Expr name, Expr args, Expr body)
 Expr System::eval(Expr exp, Expr env)
 {
     return m_impl->eval(exp, env);
+}
+
+Expr System::eval_body(Expr exps, Expr env)
+{
+    return m_impl->eval_body(exps, env);
 }
 
 void System::load_file(char const * path, Expr env)
