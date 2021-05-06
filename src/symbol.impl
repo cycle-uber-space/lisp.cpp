@@ -59,3 +59,19 @@ private:
     U64 m_type;
     std::vector<std::string> m_names;
 };
+
+#if LISP_WANT_GLOBAL_API
+
+static SymbolImpl g_symbol(TYPE_SYMBOL);
+
+Expr make_symbol(char const * name)
+{
+    return g_symbol.make(name);
+}
+
+char const * symbol_name(Expr exp)
+{
+    return g_symbol.name(exp);
+}
+
+#endif

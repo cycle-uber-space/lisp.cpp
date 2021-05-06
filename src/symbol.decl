@@ -13,3 +13,10 @@ inline bool is_symbol(Expr exp)
 {
     return expr_type(exp) == TYPE_SYMBOL;
 }
+
+#if LISP_WANT_GLOBAL_API
+
+Expr make_symbol(char const * name);
+char const * symbol_name(Expr exp);
+
+#endif
