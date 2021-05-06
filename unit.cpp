@@ -1,7 +1,10 @@
 
+#define LISP_NAMESPACE foo
 #define LISP_WANT_SYSTEM_API 0
 #define LISP_WANT_GLOBAL_API 1
 #include "lisp.hpp"
+
+using namespace foo;
 
 static void test_base(TestState * test)
 {
