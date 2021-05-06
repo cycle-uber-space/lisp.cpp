@@ -1,6 +1,10 @@
 
 /* builtin */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 typedef std::function<Expr(Expr args, Expr env)> BuiltinFunc;
 
 struct BuiltinInfo
@@ -28,3 +32,7 @@ func is_builtin(exp: Expr): inline bool
 {
     return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

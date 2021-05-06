@@ -1,6 +1,10 @@
 
 /* cons */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 struct ExprPair
 {
     Expr exp1, exp2;
@@ -100,4 +104,8 @@ void set_cdr(Expr exp, Expr val)
     g_cons.set_cdr(exp, val);
 }
 
+#endif
+
+#ifdef LISP_NAMESPACE
+}
 #endif

@@ -1,6 +1,10 @@
 
 /* HashSet */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 template <typename Element>
 class HashSet
 {
@@ -18,3 +22,7 @@ public:
 private:
     std::unordered_set<Element> m_impl;
 };
+
+#ifdef LISP_NAMESPACE
+}
+#endif

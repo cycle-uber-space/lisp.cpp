@@ -1,6 +1,10 @@
 
 /* symbol */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class SymbolImpl
 {
 public:
@@ -74,4 +78,8 @@ char const * symbol_name(Expr exp)
     return g_symbol.name(exp);
 }
 
+#endif
+
+#ifdef LISP_NAMESPACE
+}
 #endif

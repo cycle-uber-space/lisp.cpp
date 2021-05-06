@@ -1,6 +1,10 @@
 
 /* type */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class TypeImpl
 {
 public:
@@ -25,3 +29,7 @@ public:
 private:
     var m_names: std::vector<std::string>;
 };
+
+#ifdef LISP_NAMESPACE
+}
+#endif

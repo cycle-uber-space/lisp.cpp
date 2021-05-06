@@ -1,6 +1,10 @@
 
 /* builtin */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class BuiltinImpl
 {
 public:
@@ -56,3 +60,7 @@ protected:
 private:
     std::vector<BuiltinInfo> m_info;
 };
+
+#ifdef LISP_NAMESPACE
+}
+#endif

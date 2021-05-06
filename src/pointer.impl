@@ -1,6 +1,12 @@
 
 /* pointer */
 
+#if LISP_WANT_POINTER
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class PointerImpl
 {
 public:
@@ -39,7 +45,6 @@ private:
     std::vector<void *> m_values;
 };
 
-#if LISP_WANT_POINTER
 #if LISP_WANT_GLOBAL_API
 PointerImpl g_pointer(TYPE_POINTER);
 
@@ -57,5 +62,11 @@ void * pointer_value(Expr exp)
 {
     return g_pointer.value(exp);
 }
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif

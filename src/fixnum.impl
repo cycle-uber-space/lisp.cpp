@@ -1,6 +1,10 @@
 
 /* fixnum */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
 #define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
 #define LISP_FIXNUM_MINVAL    (-(INT64_C(1) << ((I64) LISP_DATA_BITS - INT64_C(1))))
@@ -60,3 +64,7 @@ bool fixnum_lt(Expr a, Expr b)
 {
     return fixnum_value(a) < fixnum_value(b);
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

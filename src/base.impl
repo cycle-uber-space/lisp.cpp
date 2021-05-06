@@ -1,6 +1,10 @@
 
 /* base */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 bool is_printable_ascii(U32 ch)
 {
     // NOTE we exclude space
@@ -34,3 +38,7 @@ I64 u64_as_i64(U64 val)
     v.u = val;
     return v.i;
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

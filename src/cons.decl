@@ -1,6 +1,10 @@
 
 /* cons */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 inline bool is_cons(Expr exp)
 {
     return expr_type(exp) == TYPE_CONS;
@@ -17,4 +21,8 @@ void set_cdr(Expr exp, Expr val);
 inline void rplaca(Expr exp, Expr val) { set_car(exp, val); }
 inline void rplacd(Expr exp, Expr val) { set_cdr(exp, val); }
 
+#endif
+
+#ifdef LISP_NAMESPACE
+}
 #endif

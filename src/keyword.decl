@@ -1,7 +1,15 @@
 
 /* keyword */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 inline bool is_keyword(Expr exp)
 {
     return expr_type(exp) == TYPE_KEYWORD;
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

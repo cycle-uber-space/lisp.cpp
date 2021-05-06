@@ -1,7 +1,15 @@
 
 /* string */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 func is_string(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_STRING;
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

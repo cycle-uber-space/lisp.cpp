@@ -1,6 +1,10 @@
 
 /* string */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class StringImpl
 {
 public:
@@ -53,3 +57,7 @@ private:
     U64 m_type;
     std::vector<std::string> m_strings;
 };
+
+#ifdef LISP_NAMESPACE
+}
+#endif

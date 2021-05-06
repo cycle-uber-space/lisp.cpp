@@ -1,6 +1,10 @@
 
 /* error */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class PrintAndExit : public ErrorHandler
 {
 public:
@@ -101,3 +105,7 @@ void error_pop()
 {
     g_error.pop();
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

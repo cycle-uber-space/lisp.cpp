@@ -2,9 +2,21 @@
 /* pointer */
 
 #if LISP_WANT_POINTER
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #if LISP_WANT_GLOBAL_API
+
 bool is_pointer(Expr exp);
 Expr make_pointer(void * ptr);
 void * pointer_value(Expr exp);
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif

@@ -1,6 +1,10 @@
 
 /* base */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 typedef uint8_t U8;
 typedef uint16_t U16;
 typedef uint32_t U32;
@@ -27,3 +31,7 @@ char * get_temp_buf(size_t size);
 
 func i64_as_u64(val: I64): U64;
 func u64_as_i64(val: U64): I64;
+
+#ifdef LISP_NAMESPACE
+}
+#endif

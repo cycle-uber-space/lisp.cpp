@@ -3,6 +3,10 @@
 
 #if LISP_WANT_SYSTEM_API
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class SystemImpl;
 
 class System
@@ -88,5 +92,9 @@ private:
     SystemImpl * m_impl = nullptr;
     static var s_instance: System *;
 };
+
+#ifdef LISP_NAMESPACE
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 
 /* stream */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class StreamImpl
 {
 public:
@@ -315,3 +319,7 @@ private:
     Expr m_stderr;
     std::vector<StreamInfo> m_info;
 };
+
+#ifdef LISP_NAMESPACE
+}
+#endif

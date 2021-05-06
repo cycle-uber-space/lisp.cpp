@@ -1,6 +1,10 @@
 
 /* system */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 U32 utf8_decode_one(U8 const * buf)
 {
     U8 ch = *buf++;
@@ -2282,4 +2286,8 @@ void System::repl(Expr env)
     return m_impl->repl(env);
 }
 
+#endif
+
+#ifdef LISP_NAMESPACE
+}
 #endif

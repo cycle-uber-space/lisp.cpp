@@ -1,6 +1,10 @@
 
 /* expr */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 Expr make_expr(U64 type, U64 data)
 {
     return (data << LISP_TYPE_BITS) | (type & LISP_TYPE_MASK);
@@ -15,3 +19,7 @@ U64 expr_data(Expr exp)
 {
     return exp >> LISP_TYPE_BITS;
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

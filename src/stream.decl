@@ -1,6 +1,10 @@
 
 /* stream */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 struct StreamInfo
 {
     FILE * file;
@@ -16,3 +20,7 @@ func is_stream(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_STREAM;
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

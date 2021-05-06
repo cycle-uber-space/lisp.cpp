@@ -2,8 +2,20 @@
 /* gensym */
 
 #if LISP_WANT_GENSYM
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #if LISP_WANT_GLOBAL_API
+
 bool is_gensym(Expr exp);
 Expr gensym();
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif

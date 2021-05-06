@@ -1,6 +1,10 @@
 
 /* expr */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #define LISP_TYPE_BITS UINT64_C(8)
 #define LISP_TYPE_MASK ((UINT64_C(1) << LISP_TYPE_BITS) - UINT64_C(1))
 
@@ -49,3 +53,7 @@ inline bool eq(Expr a, Expr b)
 }
 
 typedef struct SystemState SystemState;
+
+#ifdef LISP_NAMESPACE
+}
+#endif

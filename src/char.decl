@@ -1,6 +1,10 @@
 
 /* char */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 func is_char(exp: Expr): inline bool
 {
     return expr_type(exp) == TYPE_CHAR;
@@ -8,3 +12,7 @@ func is_char(exp: Expr): inline bool
 
 Expr make_char(U32 code);
 U32 char_code(Expr exp);
+
+#ifdef LISP_NAMESPACE
+}
+#endif

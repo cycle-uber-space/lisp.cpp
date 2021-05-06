@@ -1,6 +1,10 @@
 
 /* test */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #define LISP_TEST_FILE stdout
 
 void test_begin(TestState * test)
@@ -48,3 +52,7 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
         }
     }
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

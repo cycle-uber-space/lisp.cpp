@@ -94,6 +94,10 @@
 #line 2 "src/base.decl"
 /* base */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 typedef uint8_t U8;
 typedef uint16_t U16;
 typedef uint32_t U32;
@@ -121,8 +125,16 @@ char * get_temp_buf(size_t size);
 U64 i64_as_u64(I64 val);
 I64 u64_as_i64(U64 val);
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/test.decl"
 /* test */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 typedef struct
 {
@@ -142,8 +154,16 @@ void test_finish(TestState * test);
 void test_group(TestState * test, char const * text);
 void test_assert_try(TestState * test, bool exp, char const * msg);
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/error.decl"
 /* error */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 #define LISP_FAIL(...)    error_fail(__VA_ARGS__);
 #define LISP_WARN(...)    error_warn(__VA_ARGS__);
@@ -191,8 +211,16 @@ void error_warn(char const * fmt, ...);
 void error_push(ErrorHandler * handler);
 void error_pop();
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/expr.decl"
 /* expr */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 #define LISP_TYPE_BITS UINT64_C(8)
 #define LISP_TYPE_MASK ((UINT64_C(1) << LISP_TYPE_BITS) - UINT64_C(1))
@@ -243,8 +271,16 @@ inline bool eq(Expr a, Expr b)
 
 typedef struct SystemState SystemState;
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/nil.decl"
 /* nil */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 #define nil 0
 
@@ -253,8 +289,16 @@ inline static bool is_nil(Expr exp)
     return exp == nil;
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/symbol.decl"
 /* symbol */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 #define LISP_SYMBOL_T intern("t")
 
@@ -276,16 +320,32 @@ char const * symbol_name(Expr exp);
 
 #endif
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/keyword.decl"
 /* keyword */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 inline bool is_keyword(Expr exp)
 {
     return expr_type(exp) == TYPE_KEYWORD;
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/cons.decl"
 /* cons */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 inline bool is_cons(Expr exp)
 {
@@ -305,29 +365,61 @@ inline void rplacd(Expr exp, Expr val) { set_cdr(exp, val); }
 
 #endif
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/gensym.decl"
 /* gensym */
 
 #if LISP_WANT_GENSYM
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #if LISP_WANT_GLOBAL_API
+
 bool is_gensym(Expr exp);
 Expr gensym();
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif
 
 #line 2 "src/pointer.decl"
 /* pointer */
 
 #if LISP_WANT_POINTER
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #if LISP_WANT_GLOBAL_API
+
 bool is_pointer(Expr exp);
 Expr make_pointer(void * ptr);
 void * pointer_value(Expr exp);
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif
 
 #line 2 "src/fixnum.decl"
 /* fixnum */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 inline bool is_fixnum(Expr exp)
 {
@@ -345,8 +437,16 @@ Expr fixnum_div(Expr a, Expr b);
 bool fixnum_eq(Expr a, Expr b);
 bool fixnum_lt(Expr a, Expr b);
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/char.decl"
 /* char */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 inline bool is_char(Expr exp)
 {
@@ -356,16 +456,32 @@ inline bool is_char(Expr exp)
 Expr make_char(U32 code);
 U32 char_code(Expr exp);
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/string.decl"
 /* string */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 inline bool is_string(Expr exp)
 {
     return expr_type(exp) == TYPE_STRING;
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/stream.decl"
 /* stream */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 struct StreamInfo
 {
@@ -383,8 +499,16 @@ inline bool is_stream(Expr exp)
     return expr_type(exp) == TYPE_STREAM;
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/builtin.decl"
 /* builtin */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 typedef std::function<Expr(Expr args, Expr env)> BuiltinFunc;
 
@@ -414,10 +538,18 @@ inline bool is_builtin(Expr exp)
     return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.decl"
 /* system */
 
 #if LISP_WANT_SYSTEM_API
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class SystemImpl;
 
@@ -505,6 +637,10 @@ private:
     static System * s_instance;
 };
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif
 
 #endif /* _LISP_HPP_ */
@@ -516,6 +652,10 @@ private:
 
 #line 2 "src/HashMap.impl"
 /* HashMap */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 template <typename Key, typename Value>
 class HashMap
@@ -540,8 +680,16 @@ private:
     std::unordered_map<Key, Value> m_impl;
 };
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/HashSet.impl"
 /* HashSet */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 template <typename Element>
 class HashSet
@@ -561,8 +709,16 @@ private:
     std::unordered_set<Element> m_impl;
 };
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/test.impl"
 /* test */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 #define LISP_TEST_FILE stdout
 
@@ -612,8 +768,16 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
     }
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/error.impl"
 /* error */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class PrintAndExit : public ErrorHandler
 {
@@ -716,8 +880,16 @@ void error_pop()
     g_error.pop();
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/expr.impl"
 /* expr */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 Expr make_expr(U64 type, U64 data)
 {
@@ -734,8 +906,16 @@ U64 expr_data(Expr exp)
     return exp >> LISP_TYPE_BITS;
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/base.impl"
 /* base */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 bool is_printable_ascii(U32 ch)
 {
@@ -771,8 +951,16 @@ I64 u64_as_i64(U64 val)
     return v.i;
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/type.impl"
 /* type */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class TypeImpl
 {
@@ -799,8 +987,16 @@ private:
     std::vector<std::string> m_names;
 };
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/fixnum.impl"
 /* fixnum */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 #define LISP_FIXNUM_SIGN_MASK (UINT64_C(1) << ((U64) LISP_DATA_BITS - UINT64_C(1)))
 #define LISP_FIXNUM_BITS_MASK (LISP_EXPR_MASK >> (UINT64_C(64) + UINT64_C(1) - (U64) LISP_DATA_BITS))
@@ -862,8 +1058,16 @@ bool fixnum_lt(Expr a, Expr b)
     return fixnum_value(a) < fixnum_value(b);
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/char.impl"
 /* char */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 Expr make_char(U32 code)
 {
@@ -876,8 +1080,16 @@ U32 char_code(Expr exp)
     return (U32) expr_data(exp);
 }
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/symbol.impl"
 /* symbol */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class SymbolImpl
 {
@@ -954,8 +1166,16 @@ char const * symbol_name(Expr exp)
 
 #endif
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/cons.impl"
 /* cons */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 struct ExprPair
 {
@@ -1058,8 +1278,16 @@ void set_cdr(Expr exp, Expr val)
 
 #endif
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/string.impl"
 /* string */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class StringImpl
 {
@@ -1114,8 +1342,16 @@ private:
     std::vector<std::string> m_strings;
 };
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/stream.impl"
 /* stream */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class StreamImpl
 {
@@ -1432,8 +1668,18 @@ private:
     std::vector<StreamInfo> m_info;
 };
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/gensym.impl"
 /* gensym */
+
+#if LISP_WANT_GENSYM
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class GensymImpl
 {
@@ -1458,8 +1704,8 @@ private:
     U64 m_counter;
 };
 
-#if LISP_WANT_GENSYM
 #if LISP_WANT_GLOBAL_API
+
 GensymImpl g_gensym(TYPE_GENSYM);
 
 bool is_gensym(Expr exp)
@@ -1471,11 +1717,23 @@ Expr gensym()
 {
     return g_gensym.make();
 }
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif
 
 #line 2 "src/pointer.impl"
 /* pointer */
+
+#if LISP_WANT_POINTER
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class PointerImpl
 {
@@ -1515,7 +1773,6 @@ private:
     std::vector<void *> m_values;
 };
 
-#if LISP_WANT_POINTER
 #if LISP_WANT_GLOBAL_API
 PointerImpl g_pointer(TYPE_POINTER);
 
@@ -1533,11 +1790,21 @@ void * pointer_value(Expr exp)
 {
     return g_pointer.value(exp);
 }
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif
 
 #line 2 "src/builtin.impl"
 /* builtin */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 class BuiltinImpl
 {
@@ -1595,8 +1862,16 @@ private:
     std::vector<BuiltinInfo> m_info;
 };
 
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.impl"
 /* system */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 U32 utf8_decode_one(U8 const * buf)
 {
@@ -3879,6 +4154,10 @@ void System::repl(Expr env)
     return m_impl->repl(env);
 }
 
+#endif
+
+#ifdef LISP_NAMESPACE
+}
 #endif
 
 #endif /* _LISP_CPP_ */

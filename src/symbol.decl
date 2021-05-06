@@ -1,6 +1,10 @@
 
 /* symbol */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #define LISP_SYMBOL_T intern("t")
 
 #define LISP_SYM_QUOTE intern("quote")
@@ -19,4 +23,8 @@ inline bool is_symbol(Expr exp)
 Expr make_symbol(char const * name);
 char const * symbol_name(Expr exp);
 
+#endif
+
+#ifdef LISP_NAMESPACE
+}
 #endif

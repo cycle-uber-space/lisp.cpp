@@ -1,6 +1,12 @@
 
 /* gensym */
 
+#if LISP_WANT_GENSYM
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 class GensymImpl
 {
 public:
@@ -24,8 +30,8 @@ private:
     var m_counter: U64;
 };
 
-#if LISP_WANT_GENSYM
 #if LISP_WANT_GLOBAL_API
+
 var g_gensym: GensymImpl(TYPE_GENSYM);
 
 func is_gensym(exp: Expr): bool
@@ -37,5 +43,11 @@ func gensym(): Expr
 {
     return g_gensym.make();
 }
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #endif

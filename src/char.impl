@@ -1,6 +1,10 @@
 
 /* char */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 Expr make_char(U32 code)
 {
     return make_expr(TYPE_CHAR, code);
@@ -11,3 +15,7 @@ U32 char_code(Expr exp)
     LISP_ASSERT(is_char(exp));
     return (U32) expr_data(exp);
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif

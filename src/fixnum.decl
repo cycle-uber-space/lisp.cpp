@@ -1,6 +1,10 @@
 
 /* fixnum */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 inline bool is_fixnum(Expr exp)
 {
     return expr_type(exp) == TYPE_FIXNUM;
@@ -16,3 +20,7 @@ Expr fixnum_div(Expr a, Expr b);
 
 func fixnum_eq(a: Expr, b: Expr): bool;
 bool fixnum_lt(Expr a, Expr b);
+
+#ifdef LISP_NAMESPACE
+}
+#endif

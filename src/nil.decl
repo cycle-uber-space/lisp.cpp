@@ -1,9 +1,17 @@
 
 /* nil */
 
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
 #define nil 0
 
 inline static bool is_nil(Expr exp)
 {
     return exp == nil;
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif
