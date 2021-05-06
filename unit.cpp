@@ -27,6 +27,20 @@ static void test_fixnum(TestState * test)
     LISP_TEST_ASSERT(test, fixnum_value(make_fixnum(-1)) == -1);
 }
 
+static void test_symbol(TestState * test)
+{
+    LISP_TEST_GROUP(test, "symbol");
+    LISP_TEST_ASSERT(test, is_symbol(make_symbol("foo")));
+    LISP_TEST_ASSERT(test, !strcmp("foo", symbol_name(make_symbol("foo"))));
+}
+
+static void test_cons(TestState * test)
+{
+    LISP_TEST_GROUP(test, "cons");
+    LISP_TEST_ASSERT(test, is_cons(cons(nil, nil)));
+    LISP_TEST_ASSERT(test, !eq(cons(nil, nil), cons(nil, nil)));
+}
+
 static void test()
 {
     TestState _test;
@@ -34,6 +48,8 @@ static void test()
     LISP_TEST_BEGIN(test);
     test_base(test);
     test_fixnum(test);
+    test_symbol(test);
+    test_cons(test);
     LISP_TEST_GROUP(test, "summary");
     LISP_TEST_FINISH(test);
 }
