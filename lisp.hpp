@@ -191,7 +191,6 @@ void error_warn(char const * fmt, ...);
 void error_push(ErrorHandler * handler);
 void error_pop();
 
-
 #line 2 "src/expr.decl"
 /* expr */
 
@@ -270,6 +269,13 @@ inline bool is_symbol(Expr exp)
     return expr_type(exp) == TYPE_SYMBOL;
 }
 
+#if LISP_WANT_GLOBAL_API
+
+Expr make_symbol(char const * name);
+char const * symbol_name(Expr exp);
+
+#endif
+
 #line 2 "src/keyword.decl"
 /* keyword */
 
@@ -285,6 +291,19 @@ inline bool is_cons(Expr exp)
 {
     return expr_type(exp) == TYPE_CONS;
 }
+
+#if LISP_WANT_GLOBAL_API
+
+Expr cons(Expr exp1, Expr exp2);
+Expr car(Expr exp);
+Expr cdr(Expr exp);
+void set_car(Expr exp, Expr val);
+void set_cdr(Expr exp, Expr val);
+
+inline void rplaca(Expr exp, Expr val) { set_car(exp, val); }
+inline void rplacd(Expr exp, Expr val) { set_cdr(exp, val); }
+
+#endif
 
 #line 2 "src/gensym.decl"
 /* gensym */
@@ -919,6 +938,22 @@ private:
     std::vector<std::string> m_names;
 };
 
+#if LISP_WANT_GLOBAL_API
+
+static SymbolImpl g_symbol(TYPE_SYMBOL);
+
+Expr make_symbol(char const * name)
+{
+    return g_symbol.make(name);
+}
+
+char const * symbol_name(Expr exp)
+{
+    return g_symbol.name(exp);
+}
+
+#endif
+
 #line 2 "src/cons.impl"
 /* cons */
 
@@ -991,6 +1026,37 @@ private:
     U64 m_type;
     std::vector<ExprPair> m_pairs;
 };
+
+#if LISP_WANT_GLOBAL_API
+
+static ConsImpl g_cons(TYPE_CONS);
+
+Expr cons(Expr exp1, Expr exp2)
+{
+    return g_cons.make(exp1, exp2);
+}
+
+Expr car(Expr exp)
+{
+    return g_cons.car(exp);
+}
+
+Expr cdr(Expr exp)
+{
+    return g_cons.cdr(exp);
+}
+
+void set_car(Expr exp, Expr val)
+{
+    g_cons.set_car(exp, val);
+}
+
+void set_cdr(Expr exp, Expr val)
+{
+    g_cons.set_cdr(exp, val);
+}
+
+#endif
 
 #line 2 "src/string.impl"
 /* string */
