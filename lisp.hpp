@@ -158,8 +158,39 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 #define LISP_ASSERT_DEBUG(x)
 #endif
 
+class ErrorHandler
+{
+public:
+    virtual ~ErrorHandler()
+    {
+    }
+
+    void fail(char const * fmt, ...)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        vfail(fmt, ap);
+        va_end(ap);
+    }
+
+    void warn(char const * fmt, ...)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        vwarn(fmt, ap);
+        va_end(ap);
+    }
+
+    virtual void vfail(char const * fmt, va_list ap) = 0;
+    virtual void vwarn(char const * fmt, va_list ap) = 0;
+};
+
 void error_fail(char const * fmt, ...);
 void error_warn(char const * fmt, ...);
+
+void error_push(ErrorHandler * handler);
+void error_pop();
+
 
 #line 2 "src/expr.decl"
 /* expr */
@@ -563,28 +594,105 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
 #line 2 "src/error.impl"
 /* error */
 
+class PrintAndExit : public ErrorHandler
+{
+public:
+    PrintAndExit(FILE * file, int code) : m_file(file), m_code(code)
+    {
+    }
+
+    void vfail(char const * fmt, va_list ap)
+    {
+        fprintf(m_file, LISP_RED "[FAIL] " LISP_RESET);
+        vfprintf(m_file, fmt, ap);
+#if LISP_DEBUG_USE_SIGNAL
+        raise(SIGINT);
+#endif
+        exit(m_code);
+    }
+
+    void vwarn(char const * fmt, va_list ap)
+    {
+        fprintf(m_file, LISP_YELLOW "[WARN] " LISP_RESET);
+        vfprintf(m_file, fmt, ap);
+    }
+
+private:
+    FILE * m_file;
+    int m_code;
+};
+
+class ErrorSystem
+{
+public:
+    ErrorSystem() : m_default(stderr, 1)
+    {
+    }
+
+    void vfail(char const * fmt, va_list ap)
+    {
+        if (m_handlers.empty())
+        {
+            m_default.vfail(fmt, ap);
+        }
+        else
+        {
+            m_handlers.back()->vfail(fmt, ap);
+        }
+    }
+
+    void vwarn(char const * fmt, va_list ap)
+    {
+        if (m_handlers.empty())
+        {
+            m_default.vwarn(fmt, ap);
+        }
+        else
+        {
+            m_handlers.back()->vwarn(fmt, ap);
+        }
+    }
+
+    void push(ErrorHandler * handler)
+    {
+        m_handlers.push_back(handler);
+    }
+
+    void pop()
+    {
+        assert(!m_handlers.empty());
+        m_handlers.pop_back();
+    }
+
+private:
+    PrintAndExit m_default;
+    std::vector<ErrorHandler *> m_handlers;
+} g_error;
+
 void error_fail(char const * fmt, ...)
 {
-    auto const file = stderr;
     va_list ap;
     va_start(ap, fmt);
-    fprintf(file, LISP_RED "[FAIL] " LISP_RESET);
-    vfprintf(file, fmt, ap);
+    g_error.vfail(fmt, ap);
     va_end(ap);
-#if LISP_DEBUG_USE_SIGNAL
-    raise(SIGINT);
-#endif
-    exit(1);
 }
 
 void error_warn(char const * fmt, ...)
 {
-    auto const file = stderr;
     va_list ap;
     va_start(ap, fmt);
-    fprintf(file, LISP_YELLOW "[WARN] " LISP_RESET);
-    vfprintf(file, fmt, ap);
+    g_error.vwarn(fmt, ap);
     va_end(ap);
+}
+
+void error_push(ErrorHandler * handler)
+{
+    g_error.push(handler);
+}
+
+void error_pop()
+{
+    g_error.pop();
 }
 
 #line 2 "src/expr.impl"

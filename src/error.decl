@@ -14,5 +14,35 @@
 #define LISP_ASSERT_DEBUG(x)
 #endif
 
+class ErrorHandler
+{
+public:
+    virtual ~ErrorHandler()
+    {
+    }
+
+    void fail(char const * fmt, ...)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        vfail(fmt, ap);
+        va_end(ap);
+    }
+
+    void warn(char const * fmt, ...)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        vwarn(fmt, ap);
+        va_end(ap);
+    }
+
+    virtual void vfail(char const * fmt, va_list ap) = 0;
+    virtual void vwarn(char const * fmt, va_list ap) = 0;
+};
+
 void error_fail(char const * fmt, ...);
 void error_warn(char const * fmt, ...);
+
+void error_push(ErrorHandler * handler);
+void error_pop();
