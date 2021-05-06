@@ -6,6 +6,30 @@
 
 namespace lisp {
 
+struct ReplError
+{
+};
+
+class StdReplErrorHandler : public ErrorHandler
+{
+public:
+    void vfail(char const * fmt, va_list ap)
+    {
+        fprintf(m_file, LISP_RED "[FAIL] " LISP_RESET);
+        vfprintf(m_file, fmt, ap);
+        throw ReplError();
+    }
+
+    void vwarn(char const * fmt, va_list ap)
+    {
+        fprintf(m_file, LISP_YELLOW "[WARN] " LISP_RESET);
+        vfprintf(m_file, fmt, ap);
+    }
+
+private:
+    FILE * m_file = stderr;
+};
+
 class StdSystem : public System
 {
 public:
@@ -16,16 +40,43 @@ public:
         srand(time(NULL));
     }
 
-    Expr builtin_arg1(Expr args, char const * /*fmt*/, ...)
+    Expr vbuiltin_arg1(Expr args, char const * fmt, va_list ap)
     {
         // TODO add error checking
         return first(args);
     }
 
-    Expr builtin_arg2(Expr args, char const * /*fmt*/, ...)
+    Expr vbuiltin_arg2(Expr args, char const * fmt, va_list ap)
     {
         // TODO add error checking
         return second(args);
+    }
+
+    Expr builtin_arg1(Expr args, char const * fmt, ...)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        auto const ret = vbuiltin_arg1(args, fmt, ap);
+        va_end(ap);
+        return ret;
+    }
+
+    Expr builtin_arg2(Expr args, char const * fmt, ...)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        auto const ret = vbuiltin_arg1(args, fmt, ap);
+        va_end(ap);
+        return ret;
+    }
+
+    void builtin_args(Expr args, Expr * arg1, Expr * arg2, char const * fmt, ...)
+    {
+        va_list ap;
+        va_start(ap, fmt);
+        *arg1 = vbuiltin_arg1(args, fmt, ap);
+        *arg1 = vbuiltin_arg2(args, fmt, ap);
+        va_end(ap);
     }
 
     Expr make_truth(bool value)
@@ -44,10 +95,18 @@ public:
 
         env_defun(env, "<", [this](Expr args, Expr) -> Expr
         {
-            Expr const exp1 = builtin_arg1(args, "< expects at least two arguments");
-            Expr const exp2 = builtin_arg2(args, "< expects at least two arguments");
+            Expr exp1, exp2;
+            builtin_args(args, &exp1, &exp2, "< expects at least two arguments");
             return make_truth(fixnum_lt(exp1, exp2));
         });
+
+        env_defspecial(env, "with", [this](Expr args, Expr env) -> Expr
+        {
+            Expr const wenv = car(args);
+            Expr const body = cdr(args);
+            return eval_body(body, wenv);
+        });
+
         return env;
     }
 
@@ -97,7 +156,37 @@ public:
                 load_file(argv[i], env);
             }
 
-            repl(env);
+            StdReplErrorHandler handler;
+            error_push(&handler);
+            // TODO make a proper prompt input stream
+            Expr in = stream_get_stdin();
+        loop:
+            {
+                /* read */
+                // TODO use global.stream.stdout
+                fprintf(stdout, "> ");
+                fflush(stdout);
+
+                Expr exp = nil;
+                if (!maybe_parse_expr(in, &exp))
+                {
+                    goto done;
+                }
+
+                try
+                {
+                    Expr ret = eval(exp, env);
+                    println(ret);
+                }
+                catch (ReplError)
+                {
+                    /* do nothing */
+                }
+
+                goto loop;
+            }
+        done:
+            error_pop();
         }
         else
         {
