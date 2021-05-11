@@ -10,6 +10,18 @@ func is_string(exp: Expr): inline bool
     return expr_type(exp) == TYPE_STRING;
 }
 
+#if LISP_WANT_GLOBAL_API
+
+Expr make_string(char const * str);
+Expr make_string_from_utf8(U8 const * str);
+Expr make_string_from_utf32_char(U32 code);
+char const * string_value(Expr exp);
+U8 const * string_value_utf8(Expr exp);
+U64 string_length(Expr exp);
+bool string_equal(Expr exp1, Expr exp2);
+
+#endif
+
 #ifdef LISP_NAMESPACE
 }
 #endif
