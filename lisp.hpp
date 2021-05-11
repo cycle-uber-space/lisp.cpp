@@ -1343,6 +1343,83 @@ private:
     std::vector<ExprPair> m_pairs;
 };
 
+template <typename T>
+class ConsMixin
+{
+public:
+    ConsMixin(ConsImpl & impl) : m_impl(impl)
+    {
+    }
+
+    Expr cons(Expr exp1, Expr exp2)
+    {
+        return m_impl.make(exp1, exp2);
+    }
+
+    Expr car(Expr exp)
+    {
+        return m_impl.car(exp);
+    }
+
+    Expr cdr(Expr exp)
+    {
+        return m_impl.cdr(exp);
+    }
+
+    void rplaca(Expr exp, Expr val)
+    {
+        m_impl.set_car(exp, val);
+    }
+
+    void rplacd(Expr exp, Expr val)
+    {
+        m_impl.set_cdr(exp, val);
+    }
+
+    inline Expr caar(Expr exp)
+    {
+        return car(car(exp));
+    }
+
+    inline Expr cadr(Expr exp)
+    {
+        return car(cdr(exp));
+    }
+
+    inline Expr cdar(Expr exp)
+    {
+        return cdr(car(exp));
+    }
+
+    inline Expr cddr(Expr exp)
+    {
+        return cdr(cdr(exp));
+    }
+
+    inline Expr caddr(Expr exp)
+    {
+        return car(cdr(cdr(exp)));
+    }
+
+    inline Expr cdddr(Expr exp)
+    {
+        return cdr(cdr(cdr(exp)));
+    }
+
+    inline Expr cadddr(Expr exp)
+    {
+        return car(cdr(cdr(cdr(exp))));
+    }
+
+    inline Expr cddddr(Expr exp)
+    {
+        return cdr(cdr(cdr(cdr(exp))));
+    }
+
+private:
+    ConsImpl & m_impl;
+};
+
 #if LISP_WANT_GLOBAL_API
 
 static ConsImpl g_cons(TYPE_CONS);
@@ -2274,10 +2351,11 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
-class SystemImpl : public EnvMixin<SystemImpl>
+class SystemImpl : public ConsMixin<SystemImpl>, public EnvMixin<SystemImpl>
 {
 public:
     SystemImpl() :
+        ConsMixin(m_cons),
         EnvMixin(m_env),
         m_symbol(TYPE_SYMBOL),
         m_keyword(TYPE_KEYWORD),
@@ -2611,73 +2689,6 @@ public:
     char const * keyword_name(Expr exp)
     {
         return m_keyword.name(exp);
-    }
-
-    /* cons */
-
-    Expr cons(Expr a, Expr b)
-    {
-        return m_cons.make(a, b);
-    }
-
-    Expr car(Expr exp)
-    {
-        return m_cons.car(exp);
-    }
-
-    Expr cdr(Expr exp)
-    {
-        return m_cons.cdr(exp);
-    }
-
-    void rplaca(Expr exp, Expr val)
-    {
-        m_cons.set_car(exp, val);
-    }
-
-    void rplacd(Expr exp, Expr val)
-    {
-        m_cons.set_cdr(exp, val);
-    }
-
-    inline Expr caar(Expr exp)
-    {
-        return car(car(exp));
-    }
-
-    inline Expr cadr(Expr exp)
-    {
-        return car(cdr(exp));
-    }
-
-    inline Expr cdar(Expr exp)
-    {
-        return cdr(car(exp));
-    }
-
-    inline Expr cddr(Expr exp)
-    {
-        return cdr(cdr(exp));
-    }
-
-    inline Expr caddr(Expr exp)
-    {
-        return car(cdr(cdr(exp)));
-    }
-
-    inline Expr cdddr(Expr exp)
-    {
-        return cdr(cdr(cdr(exp)));
-    }
-
-    inline Expr cadddr(Expr exp)
-    {
-        return car(cdr(cdr(cdr(exp))));
-    }
-
-    inline Expr cddddr(Expr exp)
-    {
-        return cdr(cdr(cdr(cdr(exp))));
     }
 
 #if LISP_WANT_GENSYM

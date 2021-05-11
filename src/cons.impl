@@ -75,6 +75,83 @@ private:
     std::vector<ExprPair> m_pairs;
 };
 
+template <typename T>
+class ConsMixin
+{
+public:
+    ConsMixin(ConsImpl & impl) : m_impl(impl)
+    {
+    }
+
+    Expr cons(Expr exp1, Expr exp2)
+    {
+        return m_impl.make(exp1, exp2);
+    }
+
+    Expr car(Expr exp)
+    {
+        return m_impl.car(exp);
+    }
+
+    Expr cdr(Expr exp)
+    {
+        return m_impl.cdr(exp);
+    }
+
+    void rplaca(Expr exp, Expr val)
+    {
+        m_impl.set_car(exp, val);
+    }
+
+    void rplacd(Expr exp, Expr val)
+    {
+        m_impl.set_cdr(exp, val);
+    }
+
+    inline Expr caar(Expr exp)
+    {
+        return car(car(exp));
+    }
+
+    inline Expr cadr(Expr exp)
+    {
+        return car(cdr(exp));
+    }
+
+    inline Expr cdar(Expr exp)
+    {
+        return cdr(car(exp));
+    }
+
+    inline Expr cddr(Expr exp)
+    {
+        return cdr(cdr(exp));
+    }
+
+    inline Expr caddr(Expr exp)
+    {
+        return car(cdr(cdr(exp)));
+    }
+
+    inline Expr cdddr(Expr exp)
+    {
+        return cdr(cdr(cdr(exp)));
+    }
+
+    inline Expr cadddr(Expr exp)
+    {
+        return car(cdr(cdr(cdr(exp))));
+    }
+
+    inline Expr cddddr(Expr exp)
+    {
+        return cdr(cdr(cdr(cdr(exp))));
+    }
+
+private:
+    ConsImpl & m_impl;
+};
+
 #if LISP_WANT_GLOBAL_API
 
 static ConsImpl g_cons(TYPE_CONS);
