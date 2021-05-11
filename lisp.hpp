@@ -2598,7 +2598,6 @@ public:
     SystemImpl() :
         ConsMixin(m_cons),
         EnvMixin(m_env),
-        m_symbol(TYPE_SYMBOL),
         m_cons(TYPE_CONS),
         m_env(m_cons),
         m_dummy(0)
@@ -2898,18 +2897,6 @@ public:
     char const * type_name(U64 type)
     {
         return m_type.name(type);
-    }
-
-    /* symbol */
-
-    Expr make_symbol(char const * name)
-    {
-        return m_symbol.make(name);
-    }
-
-    char const * symbol_name(Expr exp)
-    {
-        return m_symbol.name(exp);
     }
 
     /* util */
@@ -4207,7 +4194,6 @@ public:
     }
 
     TypeImpl m_type;
-    SymbolImpl m_symbol;
     ConsImpl m_cons;
     BuiltinImpl m_builtin;
     EnvImpl m_env;
@@ -4239,7 +4225,7 @@ System::~System()
 
 char const * System::symbol_name(Expr exp)
 {
-    return m_impl->symbol_name(exp);
+    return ::symbol_name(exp);
 }
 
 /* cons */
