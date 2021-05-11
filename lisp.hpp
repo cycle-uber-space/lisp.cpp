@@ -2592,14 +2592,12 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
-class SystemImpl : public ConsMixin<SystemImpl>, public EnvMixin<SystemImpl>
+class SystemImpl : public EnvMixin<SystemImpl>
 {
 public:
     SystemImpl() :
-        ConsMixin(m_cons),
         EnvMixin(m_env),
-        m_cons(TYPE_CONS),
-        m_env(m_cons),
+        m_env(g_cons),
         m_dummy(0)
     {
         // TODO move to type_init?
@@ -4194,7 +4192,6 @@ public:
     }
 
     TypeImpl m_type;
-    ConsImpl m_cons;
     BuiltinImpl m_builtin;
     EnvImpl m_env;
     int m_dummy;
@@ -4232,27 +4229,27 @@ char const * System::symbol_name(Expr exp)
 
 Expr System::cons(Expr a, Expr b)
 {
-    return m_impl->cons(a, b);
+    return ::cons(a, b);
 }
 
 Expr System::car(Expr exp)
 {
-    return m_impl->car(exp);
+    return ::car(exp);
 }
 
 Expr System::cdr(Expr exp)
 {
-    return m_impl->cdr(exp);
+    return ::cdr(exp);
 }
 
 void System::rplaca(Expr exp, Expr val)
 {
-    return m_impl->rplaca(exp, val);
+    return ::rplaca(exp, val);
 }
 
 void System::rplacd(Expr exp, Expr val)
 {
-    return m_impl->rplacd(exp, val);
+    return ::rplacd(exp, val);
 }
 
 /* stream */
