@@ -407,53 +407,6 @@ public:
         return true;
     }
 
-    Expr first(Expr seq)
-    {
-        return car(seq);
-    }
-
-    Expr second(Expr seq)
-    {
-        return car(cdr(seq));
-    }
-
-    Expr nreverse(Expr list)
-    {
-        if (!list)
-        {
-            return list;
-        }
-
-        Expr prev = nil;
-        Expr expr = list;
-        while (is_cons(expr))
-        {
-            Expr next = cdr(expr);
-            rplacd(expr, prev);
-            prev = expr;
-            expr = next;
-        }
-        if (expr)
-        {
-            Expr iter;
-            for (iter = prev; cdr(iter); iter = cdr(iter))
-            {
-                Expr next = car(iter);
-                rplaca(iter, expr);
-                expr = next;
-            }
-            Expr next = car(iter);
-            rplaca(iter, expr);
-            rplacd(iter, next);
-        }
-        return prev;
-    }
-
-    Expr append(Expr a, Expr b)
-    {
-        return a ? cons(car(a), append(cdr(a), b)) : b;
-    }
-
     /* reader */
 
     void env_destructuring_bind(Expr env, Expr vars, Expr vals)
@@ -691,12 +644,12 @@ Expr System::list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
 
 Expr System::first(Expr seq)
 {
-    return m_impl->first(seq);
+    return ::first(seq);
 }
 
 Expr System::second(Expr seq)
 {
-    return m_impl->second(seq);
+    return ::second(seq);
 }
 
 bool System::equal(Expr a, Expr b)

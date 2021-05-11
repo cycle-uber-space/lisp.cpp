@@ -104,6 +104,53 @@ Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
     return cons(exp1, cons(exp2, cons(exp3, cons(exp4, cons(exp5, nil)))));
 }
 
+Expr first(Expr seq)
+{
+    return car(seq);
+}
+
+Expr second(Expr seq)
+{
+    return car(cdr(seq));
+}
+
+Expr nreverse(Expr list)
+{
+    if (!list)
+    {
+        return list;
+    }
+
+    Expr prev = nil;
+    Expr expr = list;
+    while (is_cons(expr))
+    {
+        Expr next = cdr(expr);
+        rplacd(expr, prev);
+        prev = expr;
+        expr = next;
+    }
+    if (expr)
+    {
+        Expr iter;
+        for (iter = prev; cdr(iter); iter = cdr(iter))
+        {
+            Expr next = car(iter);
+            rplaca(iter, expr);
+            expr = next;
+        }
+        Expr next = car(iter);
+        rplaca(iter, expr);
+        rplacd(iter, next);
+    }
+    return prev;
+}
+
+Expr append(Expr a, Expr b)
+{
+    return a ? cons(car(a), append(cdr(a), b)) : b;
+}
+
 #endif
 
 #ifdef LISP_NAMESPACE
