@@ -75,9 +75,6 @@ public:
         m_keyword(TYPE_KEYWORD),
         m_cons(TYPE_CONS),
         m_string(TYPE_STRING),
-#if LISP_WANT_POINTER
-        m_pointer(TYPE_POINTER),
-#endif
         m_env(m_cons),
         m_dummy(0)
     {
@@ -401,26 +398,6 @@ public:
     {
         return m_keyword.name(exp);
     }
-
-#if LISP_WANT_POINTER
-
-    /* pointer */
-
-    bool is_pointer(Expr exp)
-    {
-        return m_pointer.isinstance(exp);
-    }
-
-    Expr make_pointer(void * ptr)
-    {
-        return m_pointer.make(ptr);
-    }
-
-    void * pointer_value(Expr exp)
-    {
-        return m_pointer.value(exp);
-    }
-#endif
 
     /* string */
 
@@ -1900,9 +1877,6 @@ public:
     var m_string: StringImpl;
     var m_stream: StreamImpl;
     var m_builtin: BuiltinImpl;
-#if LISP_WANT_POINTER
-    var m_pointer: PointerImpl;
-#endif
     EnvImpl m_env;
     var m_dummy: int;
 };
