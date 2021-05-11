@@ -361,8 +361,6 @@ public:
             Expr t = intern("t");
             LISP_TEST_ASSERT(test, eval(t, env) == t);
 
-            LISP_TEST_ASSERT(test, eval(intern("*env*"), env) == env);
-
             Expr foo = intern("foo");
             LISP_TEST_ASSERT(test, eval(make_quote(foo), env) == foo);
         }
