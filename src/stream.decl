@@ -21,6 +21,34 @@ func is_stream(exp: Expr): inline bool
     return expr_type(exp) == TYPE_STREAM;
 }
 
+#if LISP_WANT_GLOBAL_API
+
+Expr make_file_input_stream_from_path(char const * path);
+
+Expr make_string_input_stream(char const * str);
+Expr make_buffer_output_stream(size_t size, char * str);
+
+U32 stream_read_char(Expr exp);
+U32 stream_peek_char(Expr exp);
+void stream_skip_char(Expr exp);
+
+void stream_put_cchar(Expr exp, char ch);
+void stream_put_char(Expr exp, U32 ch);
+void stream_put_cstring(Expr exp, char const * str);
+void stream_put_u64(Expr exp, U64 val);
+void stream_put_i64(Expr exp, U64 val);
+void stream_put_x64(Expr exp, U64 val);
+void stream_put_pointer(Expr exp, void const * ptr);
+
+void stream_release(Expr exp);
+bool stream_at_end(Expr exp);
+
+Expr stream_get_stdin();
+Expr stream_get_stdout();
+Expr stream_get_stderr();
+
+#endif
+
 #ifdef LISP_NAMESPACE
 }
 #endif
