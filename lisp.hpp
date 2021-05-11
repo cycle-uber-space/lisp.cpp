@@ -1211,6 +1211,21 @@ char const * symbol_name(Expr exp)
 }
 #endif
 
+#line 2 "src/keyword.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+#if LISP_WANT_GLOBAL_API
+
+SymbolImpl g_keyword(TYPE_KEYWORD);
+
+#endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/cons.impl"
 /* cons */
 

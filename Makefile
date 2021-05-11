@@ -34,6 +34,7 @@ src/type.impl\
 src/fixnum.impl\
 src/char.impl\
 src/symbol.impl\
+src/keyword.impl\
 src/cons.impl\
 src/string.impl\
 src/stream.impl\
