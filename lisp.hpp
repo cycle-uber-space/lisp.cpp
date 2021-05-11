@@ -3789,108 +3789,6 @@ public:
         stream_put_char(out, '"');
     }
 
-    /* stream */
-
-    Expr make_file_input_stream_from_path(char const * path)
-    {
-        FILE * file = fopen(path, "rb");
-        LISP_ASSERT(file);
-        return m_stream.make_file_input(file, true);
-    }
-
-    Expr make_string_input_stream(char const * str)
-    {
-        return m_stream.make_string_input(str);
-    }
-
-    Expr make_buffer_output_stream(size_t size, char * str)
-    {
-        return m_stream.make_buffer_output(size, str);
-    }
-
-    U32 stream_read_char(Expr exp)
-    {
-        return m_stream.read_char(exp);
-    }
-
-    U32 stream_peek_char(Expr exp)
-    {
-        return m_stream.peek_char(exp);
-    }
-
-    void stream_skip_char(Expr exp)
-    {
-        m_stream.skip_char(exp);
-    }
-
-    void stream_put_cchar(Expr exp, char ch)
-    {
-        m_stream.put_cchar(exp, ch);
-    }
-
-    void stream_put_char(Expr exp, U32 ch)
-    {
-        m_stream.put_char(exp, ch);
-    }
-
-    void stream_put_cstring(Expr exp, char const * str)
-    {
-        m_stream.put_cstring(exp, str);
-    }
-
-    void stream_put_u64(Expr exp, U64 val)
-    {
-        char str[32];
-        sprintf(str, "%" PRIu64, val);
-        stream_put_cstring(exp, str);
-    }
-
-    void stream_put_i64(Expr exp, U64 val)
-    {
-        char str[32];
-        sprintf(str, "%" PRIi64, val);
-        stream_put_cstring(exp, str);
-    }
-
-    void stream_put_x64(Expr exp, U64 val)
-    {
-        char str[32];
-        sprintf(str, "%016" PRIx64, val);
-        stream_put_cstring(exp, str);
-    }
-
-    void stream_put_pointer(Expr exp, void const * ptr)
-    {
-        char str[32];
-        sprintf(str, "%p", ptr);
-        stream_put_cstring(exp, str);
-    }
-
-    void stream_release(Expr exp)
-    {
-        m_stream.release(exp);
-    }
-
-    bool stream_at_end(Expr exp)
-    {
-        return m_stream.at_end(exp);
-    }
-
-    Expr stream_get_stdin()
-    {
-        return m_stream.get_stdin();
-    }
-
-    Expr stream_get_stdout()
-    {
-        return m_stream.get_stdout();
-    }
-
-    Expr stream_get_stderr()
-    {
-        return m_stream.get_stderr();
-    }
-
     /* builtin */
 
     Expr make_builtin_special(char const * name, BuiltinFunc func)
@@ -4297,7 +4195,6 @@ public:
     SymbolImpl m_symbol;
     ConsImpl m_cons;
     StringImpl m_string;
-    StreamImpl m_stream;
     BuiltinImpl m_builtin;
     EnvImpl m_env;
     int m_dummy;
@@ -4362,17 +4259,17 @@ void System::rplacd(Expr exp, Expr val)
 
 Expr System::stream_get_stdin()
 {
-    return m_impl->stream_get_stdin();
+    return ::stream_get_stdin();
 }
 
 Expr System::stream_get_stdout()
 {
-    return m_impl->stream_get_stdout();
+    return ::stream_get_stdout();
 }
 
 Expr System::stream_get_stderr()
 {
-    return m_impl->stream_get_stderr();
+    return ::stream_get_stderr();
 }
 
 /* core */
