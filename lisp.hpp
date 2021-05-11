@@ -562,6 +562,27 @@ BuiltinFunc builtin_func(Expr exp);
 }
 #endif
 
+#line 2 "src/number.decl"
+/* number */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+bool is_number(Expr exp);
+
+Expr make_number(I64 value);
+
+Expr number_neg(Expr a);
+Expr number_add(Expr a, Expr b);
+Expr number_mul(Expr a, Expr b);
+Expr number_div(Expr a, Expr b);
+bool number_equal(Expr a, Expr b);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.decl"
 /* system */
 
@@ -1917,6 +1938,50 @@ BuiltinFunc builtin_func(Expr exp)
 }
 #endif
 
+#line 2 "src/number.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+bool is_number(Expr exp)
+{
+    return is_fixnum(exp);
+}
+
+Expr make_number(I64 value)
+{
+    return make_fixnum(value);
+}
+
+Expr number_neg(Expr a)
+{
+    return fixnum_neg(a);
+}
+
+Expr number_add(Expr a, Expr b)
+{
+    return fixnum_add(a, b);
+}
+
+Expr number_mul(Expr a, Expr b)
+{
+    return fixnum_mul(a, b);
+}
+
+Expr number_div(Expr a, Expr b)
+{
+    return fixnum_div(a, b);
+}
+
+bool number_equal(Expr a, Expr b)
+{
+    return fixnum_eq(a, b);
+}
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.impl"
 /* system */
 
@@ -2422,45 +2487,6 @@ public:
         return m_pointer.value(exp);
     }
 #endif
-
-    /* fixnum */
-
-    /* number */
-
-    bool is_number(Expr exp)
-    {
-        return is_fixnum(exp);
-    }
-
-    Expr make_number(I64 value)
-    {
-        return make_fixnum(value);
-    }
-
-    Expr number_neg(Expr a)
-    {
-        return fixnum_neg(a);
-    }
-
-    Expr number_add(Expr a, Expr b)
-    {
-        return fixnum_add(a, b);
-    }
-
-    Expr number_mul(Expr a, Expr b)
-    {
-        return fixnum_mul(a, b);
-    }
-
-    Expr number_div(Expr a, Expr b)
-    {
-        return fixnum_div(a, b);
-    }
-
-    bool number_equal(Expr a, Expr b)
-    {
-        return fixnum_eq(a, b);
-    }
 
     /* string */
 

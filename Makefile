@@ -22,6 +22,7 @@ src/char.decl\
 src/string.decl\
 src/stream.decl\
 src/builtin.decl\
+src/number.decl\
 src/system.decl\
 src/HashMap.impl\
 src/HashSet.impl\
@@ -39,6 +40,7 @@ src/stream.impl\
 src/gensym.impl\
 src/pointer.impl\
 src/builtin.impl\
+src/number.impl\
 src/system.impl
 
 CXXFLAGS = -std=c++11 -Wall -Wextra
