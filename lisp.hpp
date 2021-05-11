@@ -727,6 +727,20 @@ void env_set(Expr env, Expr var, Expr val);
 }
 #endif
 
+#line 2 "src/eval.decl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+Expr eval(Expr exp, Expr env);
+Expr eval_body(Expr exps, Expr env);
+
+Expr apply(Expr name, Expr args, Expr env);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.decl"
 /* system */
 
@@ -757,8 +771,6 @@ public:
 
     /* eval */
 
-    Expr eval(Expr exp, Expr env);
-    Expr eval_body(Expr exps, Expr env);
     void load_file(char const * path, Expr env);
     void repl(Expr env);
 
@@ -3577,6 +3589,160 @@ void env_set(Expr env, Expr var, Expr val)
 }
 #endif
 
+#line 2 "src/eval.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+class EvalImpl
+{
+public:
+    Expr eval(Expr exp, Expr env)
+    {
+        switch (expr_type(exp))
+        {
+        case TYPE_NIL:
+        case TYPE_CHAR:
+        case TYPE_FIXNUM:
+        case TYPE_STRING:
+        case TYPE_KEYWORD:
+#if LISP_WANT_POINTER
+        case TYPE_POINTER:
+#endif
+            return exp;
+        case TYPE_SYMBOL:
+#if LISP_WANT_GENSYM
+        case TYPE_GENSYM:
+#endif
+            return env_get(env, exp);
+        case TYPE_CONS:
+            return apply(car(exp), cdr(exp), env);
+        case TYPE_BUILTIN_SYMBOL:
+            return builtin_func(exp)(nil, env);
+        default:
+            LISP_FAIL("cannot evaluate %s\n", repr(exp));
+            return nil;
+        }
+    }
+
+    Expr eval_list(Expr exps, Expr env)
+    {
+        Expr ret = nil;
+        for (Expr tmp = exps; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            ret = cons(eval(exp, env), ret);
+        }
+        return nreverse(ret);
+    }
+
+    Expr apply(Expr name, Expr args, Expr env)
+    {
+        if (is_builtin_function(name))
+        {
+            return builtin_func(name)(eval_list(args, env), env);
+        }
+        else if (is_builtin_special(name))
+        {
+            return builtin_func(name)(args, env);
+        }
+        else if (is_function(name))
+        {
+            return eval_body(closure_body(name),
+                             make_call_env_from(closure_env(name),
+                                                closure_args(name),
+                                                eval_list(args, env)));
+        }
+        else if (is_macro(name))
+        {
+            return eval(eval_body(closure_body(name),
+                                  make_call_env_from(closure_env(name),
+                                                     closure_args(name),
+                                                     args)),
+                        env);
+        }
+        else
+        {
+            // TODO check for unlimited recursion
+            return apply(eval(name, env), args, env);
+        }
+    }
+
+protected:
+    void bind_args(Expr env, Expr vars, Expr vals)
+    {
+        env_destructuring_bind(env, vars, vals);
+    }
+
+    Expr make_call_env_from(Expr lenv, Expr vars, Expr vals)
+    {
+        Expr cenv = make_env(lenv);
+        bind_args(cenv, vars, vals);
+        return cenv;
+    }
+
+
+    void env_destructuring_bind(Expr env, Expr vars, Expr vals)
+    {
+        if (vars == nil)
+        {
+            if (vals != nil)
+            {
+                LISP_FAIL("no more parameters to bind\n");
+            }
+        }
+        else if (is_cons(vars))
+        {
+            while (vars)
+            {
+                if (is_cons(vars))
+                {
+                    LISP_ASSERT(is_cons(vals));
+                    env_destructuring_bind(env, car(vars), car(vals));
+                    vars = cdr(vars);
+                    vals = cdr(vals);
+                }
+                else
+                {
+                    env_destructuring_bind(env, vars, vals);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            env_def(env, vars, vals);
+        }
+    }
+};
+
+EvalImpl g_eval;
+
+Expr eval(Expr exp, Expr env)
+{
+    return g_eval.eval(exp, env);
+}
+
+Expr eval_body(Expr exps, Expr env)
+{
+    Expr ret = nil;
+    for (Expr tmp = exps; tmp; tmp = cdr(tmp))
+    {
+        Expr const exp = car(tmp);
+        ret = eval(exp, env);
+    }
+    return ret;
+}
+
+Expr apply(Expr name, Expr args, Expr env)
+{
+    return g_eval.apply(name, args, env);
+}
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.impl"
 /* system */
 
@@ -3986,41 +4152,6 @@ public:
         return true;
     }
 
-    /* reader */
-
-    void env_destructuring_bind(Expr env, Expr vars, Expr vals)
-    {
-        if (vars == nil)
-        {
-            if (vals != nil)
-            {
-                LISP_FAIL("no more parameters to bind\n");
-            }
-        }
-        else if (is_cons(vars))
-        {
-            while (vars)
-            {
-                if (is_cons(vars))
-                {
-                    LISP_ASSERT(is_cons(vals));
-                    env_destructuring_bind(env, car(vars), car(vals));
-                    vars = cdr(vars);
-                    vals = cdr(vals);
-                }
-                else
-                {
-                    env_destructuring_bind(env, vars, vals);
-                    break;
-                }
-            }
-        }
-        else
-        {
-            env_def(env, vars, vals);
-        }
-    }
-
     void env_defun(Expr env, char const * name, BuiltinFunc func)
     {
         env_def(env, intern(name), make_builtin_function(name, func));
@@ -4034,102 +4165,6 @@ public:
     void env_defsym(Expr env, char const * name, BuiltinFunc func)
     {
         env_def(env, intern(name), make_builtin_symbol(name, func));
-    }
-
-    /* eval */
-
-    Expr eval(Expr exp, Expr env)
-    {
-        switch (expr_type(exp))
-        {
-        case TYPE_NIL:
-        case TYPE_CHAR:
-        case TYPE_FIXNUM:
-        case TYPE_STRING:
-        case TYPE_KEYWORD:
-#if LISP_WANT_POINTER
-        case TYPE_POINTER:
-#endif
-            return exp;
-        case TYPE_SYMBOL:
-#if LISP_WANT_GENSYM
-        case TYPE_GENSYM:
-#endif
-            return env_get(env, exp);
-        case TYPE_CONS:
-            return apply(car(exp), cdr(exp), env);
-        case TYPE_BUILTIN_SYMBOL:
-            return builtin_func(exp)(nil, env);
-        default:
-            LISP_FAIL("cannot evaluate %s\n", repr(exp));
-            return nil;
-        }
-    }
-
-    Expr eval_list(Expr exps, Expr env)
-    {
-        Expr ret = nil;
-        for (Expr tmp = exps; tmp; tmp = cdr(tmp))
-        {
-            Expr const exp = car(tmp);
-            ret = cons(eval(exp, env), ret);
-        }
-        return nreverse(ret);
-    }
-
-    Expr eval_body(Expr exps, Expr env)
-    {
-        Expr ret = nil;
-        for (Expr tmp = exps; tmp; tmp = cdr(tmp))
-        {
-            Expr const exp = car(tmp);
-            ret = eval(exp, env);
-        }
-        return ret;
-    }
-
-    Expr apply(Expr name, Expr args, Expr env)
-    {
-        if (is_builtin_function(name))
-        {
-            return builtin_func(name)(eval_list(args, env), env);
-        }
-        else if (is_builtin_special(name))
-        {
-            return builtin_func(name)(args, env);
-        }
-        else if (is_function(name))
-        {
-            return eval_body(closure_body(name),
-                             make_call_env_from(closure_env(name),
-                                                closure_args(name),
-                                                eval_list(args, env)));
-        }
-        else if (is_macro(name))
-        {
-            return eval(eval_body(closure_body(name),
-                                  make_call_env_from(closure_env(name),
-                                                     closure_args(name),
-                                                     args)),
-                        env);
-        }
-        else
-        {
-            // TODO check for unlimited recursion
-            return apply(eval(name, env), args, env);
-        }
-    }
-
-    void bind_args(Expr env, Expr vars, Expr vals)
-    {
-        env_destructuring_bind(env, vars, vals);
-    }
-
-    Expr make_call_env_from(Expr lenv, Expr vars, Expr vals)
-    {
-        Expr cenv = make_env(lenv);
-        bind_args(cenv, vars, vals);
-        return cenv;
     }
 
     /* backquote */
@@ -4237,16 +4272,6 @@ void System::env_defsym(Expr env, char const * name, BuiltinFunc func)
 }
 
 /* eval */
-
-Expr System::eval(Expr exp, Expr env)
-{
-    return m_impl->eval(exp, env);
-}
-
-Expr System::eval_body(Expr exps, Expr env)
-{
-    return m_impl->eval_body(exps, env);
-}
 
 void System::load_file(char const * path, Expr env)
 {

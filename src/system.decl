@@ -28,8 +28,6 @@ public:
 
     /* eval */
 
-    Expr eval(Expr exp, Expr env);
-    Expr eval_body(Expr exps, Expr env);
     void load_file(char const * path, Expr env);
     void repl(Expr env);
 
