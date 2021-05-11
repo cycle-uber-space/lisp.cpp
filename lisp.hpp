@@ -3789,33 +3789,6 @@ public:
         stream_put_char(out, '"');
     }
 
-    /* builtin */
-
-    Expr make_builtin_special(char const * name, BuiltinFunc func)
-    {
-        return m_builtin.make_special(name, func);
-    }
-
-    Expr make_builtin_function(char const * name, BuiltinFunc func)
-    {
-        return m_builtin.make_function(name, func);
-    }
-
-    Expr make_builtin_symbol(char const * name, BuiltinFunc func)
-    {
-        return m_builtin.make_symbol(name, func);
-    }
-
-    char const * builtin_name(Expr exp)
-    {
-        return m_builtin.name(exp);
-    }
-
-    BuiltinFunc builtin_func(Expr exp)
-    {
-        return m_builtin.func(exp);
-    }
-
     /* closure */
 
     /* (lit clo <env> <args> . <body>) */
@@ -4192,7 +4165,6 @@ public:
     }
 
     TypeImpl m_type;
-    BuiltinImpl m_builtin;
     EnvImpl m_env;
     int m_dummy;
 };
