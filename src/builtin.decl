@@ -33,6 +33,15 @@ func is_builtin(exp: Expr): inline bool
     return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
 }
 
+#if LISP_WANT_GLOBAL_API
+Expr make_builtin_special(char const * name, BuiltinFunc func);
+Expr make_builtin_function(char const * name, BuiltinFunc func);
+Expr make_builtin_symbol(char const * name, BuiltinFunc func);
+
+char const * builtin_name(Expr exp);
+BuiltinFunc builtin_func(Expr exp);
+#endif
+
 #ifdef LISP_NAMESPACE
 }
 #endif

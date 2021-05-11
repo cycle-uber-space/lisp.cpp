@@ -538,6 +538,15 @@ inline bool is_builtin(Expr exp)
     return is_builtin_special(exp) || is_builtin_function(exp) || is_builtin_symbol(exp);
 }
 
+#if LISP_WANT_GLOBAL_API
+Expr make_builtin_special(char const * name, BuiltinFunc func);
+Expr make_builtin_function(char const * name, BuiltinFunc func);
+Expr make_builtin_symbol(char const * name, BuiltinFunc func);
+
+char const * builtin_name(Expr exp);
+BuiltinFunc builtin_func(Expr exp);
+#endif
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -1861,6 +1870,37 @@ protected:
 private:
     std::vector<BuiltinInfo> m_info;
 };
+
+#if LISP_WANT_GLOBAL_API
+
+BuiltinImpl g_builtin;
+
+Expr make_builtin_special(char const * name, BuiltinFunc func)
+{
+    return g_builtin.make_special(name, func);
+}
+
+Expr make_builtin_function(char const * name, BuiltinFunc func)
+{
+    return g_builtin.make_function(name, func);
+}
+
+Expr make_builtin_symbol(char const * name, BuiltinFunc func)
+{
+    return g_builtin.make_symbol(name, func);
+}
+
+char const * builtin_name(Expr exp)
+{
+    return g_builtin.name(exp);
+}
+
+BuiltinFunc builtin_func(Expr exp)
+{
+    return g_builtin.func(exp);
+}
+
+#endif
 
 #ifdef LISP_NAMESPACE
 }
