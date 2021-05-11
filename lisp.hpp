@@ -2971,22 +2971,6 @@ public:
 
     /* core */
 
-    Expr intern(char const * name)
-    {
-        if (!strcmp("nil", name))
-        {
-            return nil;
-        }
-        else if (name[0] == ':')
-        {
-            return make_keyword(name + 1);
-        }
-        else
-        {
-            return make_symbol(name);
-        }
-    }
-
     void load_file(char const * path, Expr env)
     {
         Expr const in = make_file_input_stream_from_path(path);
@@ -4318,7 +4302,7 @@ void System::displayln(Expr exp)
 
 Expr System::intern(char const * name)
 {
-    return m_impl->intern(name);
+    return ::intern(name);
 }
 
 Expr System::read_one_from_string(char const * src)
