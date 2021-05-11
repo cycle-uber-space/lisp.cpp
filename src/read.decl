@@ -1,0 +1,11 @@
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+bool maybe_parse_expr(Expr in, Expr * exp);
+Expr read_one_from_string(char const * src);
+
+#ifdef LISP_NAMESPACE
+}
+#endif

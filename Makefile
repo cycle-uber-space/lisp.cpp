@@ -25,6 +25,7 @@ src/builtin.decl\
 src/number.decl\
 src/core.decl\
 src/print.decl\
+src/read.decl\
 src/closure.decl\
 src/env.decl\
 src/system.decl\
@@ -48,6 +49,7 @@ src/builtin.impl\
 src/number.impl\
 src/core.impl\
 src/print.impl\
+src/read.impl\
 src/closure.impl\
 src/env.impl\
 src/system.impl
