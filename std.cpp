@@ -40,13 +40,13 @@ public:
         srand(time(NULL));
     }
 
-    Expr vbuiltin_arg1(Expr args, char const * fmt, va_list ap)
+    Expr vbuiltin_arg1(Expr args, char const * /*fmt*/, va_list /*ap*/)
     {
         // TODO add error checking
         return first(args);
     }
 
-    Expr vbuiltin_arg2(Expr args, char const * fmt, va_list ap)
+    Expr vbuiltin_arg2(Expr args, char const * /*fmt*/, va_list /*ap*/)
     {
         // TODO add error checking
         return second(args);
@@ -100,7 +100,7 @@ public:
             return make_truth(fixnum_lt(exp1, exp2));
         });
 
-        env_defspecial(env, "with", [this](Expr args, Expr env) -> Expr
+        env_defspecial(env, "with", [this](Expr args, Expr) -> Expr
         {
             Expr const wenv = car(args);
             Expr const body = cdr(args);
