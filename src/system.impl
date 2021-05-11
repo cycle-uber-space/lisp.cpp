@@ -65,11 +65,10 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
-class SystemImpl : public EnvMixin<SystemImpl>
+class SystemImpl
 {
 public:
     SystemImpl() :
-        EnvMixin(m_env),
         m_dummy(0)
     {
         // TODO move to type_init?
@@ -657,7 +656,6 @@ public:
     }
 
     var m_type: TypeImpl;
-    EnvImpl m_env;
     var m_dummy: int;
 };
 
@@ -740,7 +738,7 @@ bool System::maybe_parse_expr(Expr in, Expr * exp)
 
 Expr System::make_env(Expr outer)
 {
-    return m_impl->make_env(outer);
+    return ::make_env(outer);
 }
 
 Expr System::make_core_env()

@@ -3498,23 +3498,6 @@ protected:
     }
 };
 
-template <typename T>
-class EnvMixin
-{
-public:
-    EnvMixin(EnvImpl & impl) : m_impl(impl)
-    {
-    }
-
-    Expr make_env(Expr outer)
-    {
-        return m_impl.make(outer);
-    }
-
-private:
-    EnvImpl & m_impl;
-};
-
 #if LISP_WANT_GLOBAL_API
 
 EnvImpl g_env;
@@ -3622,11 +3605,10 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
-class SystemImpl : public EnvMixin<SystemImpl>
+class SystemImpl
 {
 public:
     SystemImpl() :
-        EnvMixin(m_env),
         m_dummy(0)
     {
         // TODO move to type_init?
@@ -4214,7 +4196,6 @@ public:
     }
 
     TypeImpl m_type;
-    EnvImpl m_env;
     int m_dummy;
 };
 
@@ -4297,7 +4278,7 @@ bool System::maybe_parse_expr(Expr in, Expr * exp)
 
 Expr System::make_env(Expr outer)
 {
-    return m_impl->make_env(outer);
+    return ::make_env(outer);
 }
 
 Expr System::make_core_env()
