@@ -594,6 +594,26 @@ Expr intern(char const * name);
 }
 #endif
 
+#line 2 "src/closure.decl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+bool is_closure(Expr exp, Expr kind);
+Expr closure_env(Expr exp);
+Expr closure_args(Expr exp);
+Expr closure_body(Expr exp);
+
+bool is_function(Expr exp);
+Expr make_function(Expr env, Expr name, Expr args, Expr body);
+
+bool is_macro(Expr exp);
+Expr make_macro(Expr env, Expr name, Expr args, Expr body);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.decl"
 /* system */
 
@@ -2062,6 +2082,61 @@ Expr intern(char const * name)
 }
 
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
+#line 2 "src/closure.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+/* (lit clo <env> <args> . <body>) */
+/* (lit mac <env> <args> . <body>) */
+
+bool is_closure(Expr exp, Expr kind)
+{
+    return is_cons(exp) &&
+        eq(intern("lit"), car(exp)) &&
+        is_cons(cdr(exp)) &&
+        eq(kind, cadr(exp));
+}
+
+Expr closure_env(Expr exp)
+{
+    return caddr(exp);
+}
+
+Expr closure_args(Expr exp)
+{
+    return cadddr(exp);
+}
+
+Expr closure_body(Expr exp)
+{
+    return cddddr(exp);
+}
+
+bool is_function(Expr exp)
+{
+    return is_closure(exp, intern("clo"));
+}
+
+Expr make_function(Expr env, Expr /*name*/, Expr args, Expr body)
+{
+    return cons(intern("lit"), cons(intern("clo"), cons(env, cons(args, body))));
+}
+
+bool is_macro(Expr exp)
+{
+    return is_closure(exp, intern("mac"));
+}
+
+Expr make_macro(Expr env, Expr /*name*/, Expr args, Expr body)
+{
+    return cons(intern("lit"), cons(intern("mac"), cons(env, cons(args, body))));
+}
 
 #ifdef LISP_NAMESPACE
 }
