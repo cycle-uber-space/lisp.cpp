@@ -7,6 +7,16 @@ namespace LISP_NAMESPACE {
 
 SymbolImpl g_keyword(TYPE_KEYWORD);
 
+Expr make_keyword(char const * name)
+{
+    return g_keyword.make(name);
+}
+
+char const * keyword_name(Expr exp)
+{
+    return g_keyword.name(exp);
+}
+
 #endif
 
 #ifdef LISP_NAMESPACE

@@ -10,6 +10,14 @@ inline bool is_keyword(Expr exp)
     return expr_type(exp) == TYPE_KEYWORD;
 }
 
+#if LISP_WANT_GLOBAL_API
+
+Expr make_keyword(char const * name);
+
+char const * keyword_name(Expr exp);
+
+#endif
+
 #ifdef LISP_NAMESPACE
 }
 #endif
