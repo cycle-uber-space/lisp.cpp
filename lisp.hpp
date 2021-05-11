@@ -334,6 +334,14 @@ inline bool is_keyword(Expr exp)
     return expr_type(exp) == TYPE_KEYWORD;
 }
 
+#if LISP_WANT_GLOBAL_API
+
+Expr make_keyword(char const * name);
+
+char const * keyword_name(Expr exp);
+
+#endif
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -1257,6 +1265,16 @@ namespace LISP_NAMESPACE {
 #if LISP_WANT_GLOBAL_API
 
 SymbolImpl g_keyword(TYPE_KEYWORD);
+
+Expr make_keyword(char const * name)
+{
+    return g_keyword.make(name);
+}
+
+char const * keyword_name(Expr exp)
+{
+    return g_keyword.name(exp);
+}
 
 #endif
 
@@ -2356,7 +2374,6 @@ public:
         ConsMixin(m_cons),
         EnvMixin(m_env),
         m_symbol(TYPE_SYMBOL),
-        m_keyword(TYPE_KEYWORD),
         m_cons(TYPE_CONS),
         m_string(TYPE_STRING),
         m_env(m_cons),
@@ -2669,18 +2686,6 @@ public:
     char const * symbol_name(Expr exp)
     {
         return m_symbol.name(exp);
-    }
-
-    /* keyword */
-
-    Expr make_keyword(char const * name)
-    {
-        return m_keyword.make(name);
-    }
-
-    char const * keyword_name(Expr exp)
-    {
-        return m_keyword.name(exp);
     }
 
     /* string */
@@ -4156,7 +4161,6 @@ public:
 
     TypeImpl m_type;
     SymbolImpl m_symbol;
-    SymbolImpl m_keyword;
     ConsImpl m_cons;
     StringImpl m_string;
     StreamImpl m_stream;
