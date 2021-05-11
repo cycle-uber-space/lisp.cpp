@@ -75,7 +75,7 @@ public:
         va_list ap;
         va_start(ap, fmt);
         *arg1 = vbuiltin_arg1(args, fmt, ap);
-        *arg1 = vbuiltin_arg2(args, fmt, ap);
+        *arg2 = vbuiltin_arg2(args, fmt, ap);
         va_end(ap);
     }
 
