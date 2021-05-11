@@ -21,6 +21,17 @@ void set_cdr(Expr exp, Expr val);
 inline void rplaca(Expr exp, Expr val) { set_car(exp, val); }
 inline void rplacd(Expr exp, Expr val) { set_cdr(exp, val); }
 
+inline Expr caar(Expr exp) { return car(car(exp)); }
+inline Expr cadr(Expr exp) { return car(cdr(exp)); }
+inline Expr cdar(Expr exp) { return cdr(car(exp)); }
+inline Expr cddr(Expr exp) { return cdr(cdr(exp)); }
+
+inline Expr caddr(Expr exp) { return car(cdr(cdr(exp))); }
+inline Expr cdddr(Expr exp) { return cdr(cdr(cdr(exp))); }
+
+inline Expr cadddr(Expr exp) { return car(cdr(cdr(cdr(exp)))); }
+inline Expr cddddr(Expr exp) { return cdr(cdr(cdr(cdr(exp)))); }
+
 #endif
 
 #ifdef LISP_NAMESPACE
