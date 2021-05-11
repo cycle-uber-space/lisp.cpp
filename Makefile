@@ -24,6 +24,7 @@ src/stream.decl\
 src/builtin.decl\
 src/number.decl\
 src/core.decl\
+src/backquote.decl\
 src/print.decl\
 src/read.decl\
 src/closure.decl\
@@ -49,6 +50,7 @@ src/pointer.impl\
 src/builtin.impl\
 src/number.impl\
 src/core.impl\
+src/backquote.impl\
 src/print.impl\
 src/read.impl\
 src/closure.impl\

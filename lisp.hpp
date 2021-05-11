@@ -658,6 +658,17 @@ Expr append(Expr a, Expr b);
 }
 #endif
 
+#line 2 "src/backquote.decl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+Expr backquote(Expr exp, Expr env);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/print.decl"
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
@@ -2524,6 +2535,55 @@ Expr append(Expr a, Expr b)
 }
 
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
+#line 2 "src/backquote.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+Expr backquote_list(Expr seq, Expr env)
+{
+    if (seq)
+    {
+        Expr item = car(seq);
+        Expr rest = cdr(seq);
+        if (is_unquote_splicing(item))
+        {
+            return append(eval(cadr(item), env), backquote_list(rest, env));
+        }
+        else
+        {
+            return cons(backquote(item, env), backquote_list(rest, env));
+        }
+    }
+    else
+    {
+        return nil;
+    }
+}
+
+Expr backquote(Expr exp, Expr env)
+{
+    if (is_cons(exp))
+    {
+        if (is_unquote(exp))
+        {
+            return eval(cadr(exp), env);
+        }
+        else
+        {
+            return backquote_list(exp, env);
+        }
+    }
+    else
+    {
+        return exp;
+    }
+}
 
 #ifdef LISP_NAMESPACE
 }
