@@ -26,11 +26,6 @@ public:
     void env_defspecial_while(Expr env);
     void env_defsym(Expr env, char const * name, BuiltinFunc func);
 
-    /* eval */
-
-    void load_file(char const * path, Expr env);
-    void repl(Expr env);
-
 private:
     SystemImpl * m_impl = nullptr;
     static var s_instance: System *;

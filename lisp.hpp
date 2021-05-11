@@ -654,6 +654,9 @@ Expr second(Expr seq);
 Expr nreverse(Expr list);
 Expr append(Expr a, Expr b);
 
+void load_file(char const * path, Expr env);
+void repl(Expr env);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -779,11 +782,6 @@ public:
     void env_defspecial_quote(Expr env);
     void env_defspecial_while(Expr env);
     void env_defsym(Expr env, char const * name, BuiltinFunc func);
-
-    /* eval */
-
-    void load_file(char const * path, Expr env);
-    void repl(Expr env);
 
 private:
     SystemImpl * m_impl = nullptr;
@@ -2534,6 +2532,46 @@ Expr append(Expr a, Expr b)
     return a ? cons(car(a), append(cdr(a), b)) : b;
 }
 
+void load_file(char const * path, Expr env)
+{
+    Expr const in = make_file_input_stream_from_path(path);
+    Expr exp = nil;
+    while (maybe_parse_expr(in, &exp))
+    {
+        eval(exp, env);
+    }
+    stream_release(in);
+}
+
+void repl(Expr env)
+{
+    // TODO make a proper prompt input stream
+    Expr in = stream_get_stdin();
+loop:
+    {
+        /* read */
+        // TODO use global.stream.stdout
+        fprintf(stdout, "> ");
+        fflush(stdout);
+
+        Expr exp = nil;
+        if (!maybe_parse_expr(in, &exp))
+        {
+            goto done;
+        }
+
+        /* eval */
+        Expr ret = eval(exp, env);
+
+        /* print */
+        println(ret);
+
+        goto loop;
+    }
+done:
+    ;
+}
+
 #endif
 
 #ifdef LISP_NAMESPACE
@@ -3902,46 +3940,6 @@ public:
 
     /* core */
 
-    void load_file(char const * path, Expr env)
-    {
-        Expr const in = make_file_input_stream_from_path(path);
-        Expr exp = nil;
-        while (maybe_parse_expr(in, &exp))
-        {
-            eval(exp, env);
-        }
-        stream_release(in);
-    }
-
-    void repl(Expr env)
-    {
-        // TODO make a proper prompt input stream
-        Expr in = stream_get_stdin();
-    loop:
-        {
-            /* read */
-            // TODO use global.stream.stdout
-            fprintf(stdout, "> ");
-            fflush(stdout);
-
-            Expr exp = nil;
-            if (!maybe_parse_expr(in, &exp))
-            {
-                goto done;
-            }
-
-            /* eval */
-            Expr ret = eval(exp, env);
-
-            /* print */
-            println(ret);
-
-            goto loop;
-        }
-    done:
-        ;
-    }
-
     virtual Expr make_core_env()
     {
         Expr env = make_env(nil);
@@ -4329,18 +4327,6 @@ void System::env_defspecial_while(Expr env)
 void System::env_defsym(Expr env, char const * name, BuiltinFunc func)
 {
     m_impl->env_defsym(env, name, func);
-}
-
-/* eval */
-
-void System::load_file(char const * path, Expr env)
-{
-    m_impl->load_file(path, env);
-}
-
-void System::repl(Expr env)
-{
-    return m_impl->repl(env);
 }
 
 #endif

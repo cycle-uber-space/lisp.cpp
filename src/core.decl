@@ -28,6 +28,9 @@ Expr second(Expr seq);
 Expr nreverse(Expr list);
 Expr append(Expr a, Expr b);
 
+void load_file(char const * path, Expr env);
+void repl(Expr env);
+
 #ifdef LISP_NAMESPACE
 }
 #endif

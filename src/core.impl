@@ -151,6 +151,46 @@ Expr append(Expr a, Expr b)
     return a ? cons(car(a), append(cdr(a), b)) : b;
 }
 
+void load_file(char const * path, Expr env)
+{
+    Expr const in = make_file_input_stream_from_path(path);
+    Expr exp = nil;
+    while (maybe_parse_expr(in, &exp))
+    {
+        eval(exp, env);
+    }
+    stream_release(in);
+}
+
+void repl(Expr env)
+{
+    // TODO make a proper prompt input stream
+    Expr in = stream_get_stdin();
+loop:
+    {
+        /* read */
+        // TODO use global.stream.stdout
+        fprintf(stdout, "> ");
+        fflush(stdout);
+
+        Expr exp = nil;
+        if (!maybe_parse_expr(in, &exp))
+        {
+            goto done;
+        }
+
+        /* eval */
+        Expr ret = eval(exp, env);
+
+        /* print */
+        println(ret);
+
+        goto loop;
+    }
+done:
+    ;
+}
+
 #endif
 
 #ifdef LISP_NAMESPACE
