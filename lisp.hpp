@@ -269,8 +269,6 @@ inline bool eq(Expr a, Expr b)
     return a == b;
 }
 
-typedef struct SystemState SystemState;
-
 #ifdef LISP_NAMESPACE
 }
 #endif
