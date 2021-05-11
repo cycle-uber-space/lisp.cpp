@@ -2359,9 +2359,6 @@ public:
         m_keyword(TYPE_KEYWORD),
         m_cons(TYPE_CONS),
         m_string(TYPE_STRING),
-#if LISP_WANT_GENSYM
-        m_gensym(TYPE_GENSYM),
-#endif
 #if LISP_WANT_POINTER
         m_pointer(TYPE_POINTER),
 #endif
@@ -2688,21 +2685,6 @@ public:
     {
         return m_keyword.name(exp);
     }
-
-#if LISP_WANT_GENSYM
-
-    /* gensym */
-
-    bool is_gensym(Expr exp)
-    {
-        return m_gensym.isinstance(exp);
-    }
-
-    Expr gensym()
-    {
-        return m_gensym.make();
-    }
-#endif
 
 #if LISP_WANT_POINTER
 
@@ -4202,9 +4184,6 @@ public:
     StringImpl m_string;
     StreamImpl m_stream;
     BuiltinImpl m_builtin;
-#if LISP_WANT_GENSYM
-    GensymImpl m_gensym;
-#endif
 #if LISP_WANT_POINTER
     PointerImpl m_pointer;
 #endif
