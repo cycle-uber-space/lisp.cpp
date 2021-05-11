@@ -47,11 +47,6 @@ enum
     DATA_NIL = 0,
 };
 
-inline bool eq(Expr a, Expr b)
-{
-    return a == b;
-}
-
 #ifdef LISP_NAMESPACE
 }
 #endif

@@ -3,6 +3,11 @@
 namespace LISP_NAMESPACE {
 #endif
 
+inline bool eq(Expr a, Expr b)
+{
+    return a == b;
+}
+
 bool equal(Expr a, Expr b);
 
 Expr intern(char const * name);

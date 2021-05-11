@@ -264,11 +264,6 @@ enum
     DATA_NIL = 0,
 };
 
-inline bool eq(Expr a, Expr b)
-{
-    return a == b;
-}
-
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -633,6 +628,11 @@ bool number_equal(Expr a, Expr b);
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
+
+inline bool eq(Expr a, Expr b)
+{
+    return a == b;
+}
 
 bool equal(Expr a, Expr b);
 
