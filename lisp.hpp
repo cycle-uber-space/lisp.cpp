@@ -636,6 +636,30 @@ namespace LISP_NAMESPACE {
 
 Expr intern(char const * name);
 
+bool is_named_call(Expr exp, Expr name);
+bool is_quote_call(Expr exp);
+bool is_unquote(Expr exp);
+bool is_unquote_splicing(Expr exp);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
+#line 2 "src/print.decl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+char const * repr(Expr exp);
+
+void print(Expr exp);
+void println(Expr exp);
+
+void display(Expr exp);
+void displayln(Expr exp);
+
+Expr b_println(Expr args, Expr env);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -2408,7 +2432,342 @@ Expr intern(char const * name)
     return g_core.intern(name);
 }
 
+bool is_named_call(Expr exp, Expr name)
+{
+    return is_cons(exp) && eq(car(exp), name);
+}
+
+bool is_quote_call(Expr exp)
+{
+    return is_named_call(exp, intern("quote"));
+}
+
+bool is_unquote(Expr exp)
+{
+    return is_named_call(exp, LISP_SYM_UNQUOTE);
+}
+
+bool is_unquote_splicing(Expr exp)
+{
+    return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
+}
+
 #endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
+#line 2 "src/print.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+class PrintImpl
+{
+public:
+    char const * repr(Expr exp)
+    {
+        // TODO multiple calls => need temp buffer per call
+        size_t const size = 4096;
+        char * buffer = get_temp_buf(size);
+        Expr out = make_buffer_output_stream(size, buffer);
+        HashSet<Expr> seen;
+        print_expr(exp, out, seen);
+        stream_release(out);
+        return buffer;
+    }
+
+    void print(Expr exp)
+    {
+        Expr const out = stream_get_stdout();
+        HashSet<Expr> seen;
+        print_expr(exp, out, seen);
+    }
+
+    void println(Expr exp)
+    {
+        Expr const out = stream_get_stdout();
+        HashSet<Expr> seen;
+        print_expr(exp, out, seen);
+        stream_put_char(out, '\n');
+    }
+
+    void display(Expr exp)
+    {
+        Expr const out = stream_get_stdout();
+        HashSet<Expr> seen;
+        display_expr(exp, out, seen);
+    }
+
+    void displayln(Expr exp)
+    {
+        Expr const out = stream_get_stdout();
+        HashSet<Expr> seen;
+        display_expr(exp, out, seen);
+        stream_put_char(out, '\n');
+    }
+
+    void display_expr(Expr exp, Expr out, HashSet<Expr> & seen)
+    {
+        switch (expr_type(exp))
+        {
+        case TYPE_STRING:
+            stream_put_cstring(out, string_value(exp));
+            break;
+        case TYPE_CHAR:
+            stream_put_char(out, char_code(exp));
+            break;
+        default:
+            print_expr(exp, out, seen);
+            break;
+        }
+    }
+
+    void print_expr(Expr exp, Expr out, HashSet<Expr> & seen)
+    {
+        switch (expr_type(exp))
+        {
+        case TYPE_NIL:
+            LISP_ASSERT_DEBUG(expr_data(exp) == 0);
+            stream_put_cstring(out, "nil");
+            break;
+        case TYPE_KEYWORD:
+            stream_put_char(out, ':');
+            stream_put_cstring(out, keyword_name(exp));
+            break;
+        case TYPE_SYMBOL:
+            stream_put_cstring(out, symbol_name(exp));
+            break;
+        case TYPE_CONS:
+            print_cons(exp, out, seen);
+            break;
+#if LISP_WANT_GENSYM
+        case TYPE_GENSYM:
+            stream_put_cstring(out, "#:G");
+            stream_put_u64(out, expr_data(exp));
+            break;
+#endif
+#if LISP_WANT_POINTER
+        case TYPE_POINTER:
+            stream_put_cstring(out, "#:<pointer ");
+            stream_put_pointer(out, pointer_value(exp));
+            stream_put_cstring(out, ">");
+            break;
+#endif
+        case TYPE_CHAR:
+            print_char(exp, out);
+            break;
+        case TYPE_FIXNUM:
+            stream_put_i64(out, fixnum_value(exp));
+            break;
+        case TYPE_STRING:
+            print_string(exp, out);
+            break;
+        case TYPE_BUILTIN_SPECIAL:
+            print_builtin_special(exp, out);
+            break;
+        case TYPE_BUILTIN_FUNCTION:
+            print_builtin_function(exp, out);
+            break;
+        case TYPE_BUILTIN_SYMBOL:
+            print_builtin_symbol(exp, out);
+            break;
+        default:
+            LISP_FAIL("cannot print expression %016" PRIx64 "\n", exp);
+            break;
+        }
+    }
+
+    void print_cons(Expr exp, Expr out, HashSet<Expr> & seen)
+    {
+#if LISP_PRINTER_PRINT_QUOTE
+        if (is_quote_call(exp))
+        {
+            stream_put_char(out, '\'');
+            print_expr(cadr(exp), out, seen);
+            return;
+        }
+#endif
+
+        if (seen.contains(exp))
+        {
+            stream_put_cstring(out, "...");
+            return;
+        }
+        seen.add(exp);
+
+        stream_put_char(out, '(');
+        print_expr(car(exp), out, seen);
+
+        for (Expr tmp = cdr(exp); tmp; tmp = cdr(tmp))
+        {
+            if (tmp == exp)
+            {
+                stream_put_cstring(out, " ...");
+                break;
+            }
+            else if (is_cons(tmp))
+            {
+                stream_put_char(out, ' ');
+                print_expr(car(tmp), out, seen);
+            }
+            else
+            {
+                stream_put_cstring(out, " . ");
+                print_expr(tmp, out, seen);
+                break;
+            }
+        }
+
+        stream_put_char(out, ')');
+    }
+
+    void print_builtin(Expr exp, Expr out, char const * flavor)
+    {
+        stream_put_cstring(out, "#:<");
+        stream_put_cstring(out, flavor);
+        char const * name = builtin_name(exp);
+        if (name)
+        {
+            stream_put_cstring(out, " ");
+            stream_put_cstring(out, name);
+        }
+        stream_put_cstring(out, ">");
+    }
+
+    void print_builtin_special(Expr exp, Expr out)
+    {
+        print_builtin(exp, out, "special operator");
+    }
+
+    void print_builtin_function(Expr exp, Expr out)
+    {
+        print_builtin(exp, out, "core function");
+    }
+
+    void print_builtin_symbol(Expr exp, Expr out)
+    {
+        print_builtin(exp, out, "symbol macro");
+    }
+
+    void print_char(Expr exp, Expr out)
+    {
+        LISP_ASSERT_DEBUG(is_char(exp));
+        U32 const code = char_code(exp);
+        // TODO
+        if (is_printable_ascii(code))
+        {
+            stream_put_char(out, '\\');
+            stream_put_char(out, (char) code);
+        }
+        else if (code == '\a')
+        {
+            stream_put_cstring(out, "\\bel");
+        }
+        else if (code == ' ')
+        {
+            stream_put_cstring(out, "\\space");
+        }
+        else
+        {
+            LISP_FAIL("cannot render character %" PRIu32 "\n", code);
+        }
+    }
+
+    void print_string(Expr exp, Expr out)
+    {
+        stream_put_char(out, '"');
+        char const * str = string_value(exp);
+        size_t const len = string_length(exp);
+        for (size_t i = 0; i < len; ++i)
+        {
+            // TODO \u****
+            // TODO \U********
+            char const ch = str[i];
+            switch (ch)
+            {
+            case '"':
+                stream_put_char(out, '\\');
+                stream_put_char(out, '"');
+                break;
+            case '\n':
+                stream_put_char(out, '\\');
+                stream_put_char(out, 'n');
+                break;
+            case '\t':
+                stream_put_char(out, '\\');
+                stream_put_char(out, 't');
+                break;
+            default:
+                if (ch == 0x1b) // TODO use a function to test what to escape
+                {
+                    stream_put_char(out, '\\');
+                    stream_put_char(out, 'x');
+                    stream_put_x64(out, ch);
+                }
+                else
+                {
+                    stream_put_cchar(out, ch);
+                }
+                break;
+            }
+        }
+        stream_put_char(out, '"');
+    }
+
+
+    Expr b_println(Expr args, Expr /*env*/)
+    {
+        {
+            Expr out = stream_get_stdout();
+            for (Expr tmp = args; tmp; tmp = cdr(tmp))
+            {
+                if (tmp != args)
+                {
+                    stream_put_char(out, ' ');
+                }
+                Expr exp = car(tmp);
+                HashSet<Expr> seen;
+                print_expr(exp, out, seen);
+            }
+            stream_put_char(out, '\n');
+            return nil;
+        }
+    }
+};
+
+PrintImpl g_print;
+
+char const * repr(Expr exp)
+{
+    return g_print.repr(exp);
+}
+
+void print(Expr exp)
+{
+    g_print.print(exp);
+}
+
+void println(Expr exp)
+{
+    g_print.println(exp);
+}
+
+void display(Expr exp)
+{
+    g_print.display(exp);
+}
+
+void displayln(Expr exp)
+{
+    g_print.displayln(exp);
+}
+
+Expr b_println(Expr args, Expr env)
+{
+    return g_print.b_println(args, env);
+}
 
 #ifdef LISP_NAMESPACE
 }
@@ -2853,22 +3212,7 @@ public:
 
     void env_defun_println(Expr env, char const * name)
     {
-        env_defun(env, name, [this](Expr args, Expr) -> Expr
-        {
-            Expr out = stream_get_stdout();
-            for (Expr tmp = args; tmp; tmp = cdr(tmp))
-            {
-                if (tmp != args)
-                {
-                    stream_put_char(out, ' ');
-                }
-                Expr exp = car(tmp);
-                HashSet<Expr> seen;
-                print_expr(exp, out, seen);
-            }
-            stream_put_char(out, '\n');
-            return nil;
-        });
+        env_defun(env, name, b_println);
     }
 
     /* type */
@@ -2885,26 +3229,7 @@ public:
 
     /* util */
 
-    bool is_named_call(Expr exp, Expr name)
-    {
-        return is_cons(exp) && eq(car(exp), name);
-    }
-
-    bool is_quote_call(Expr exp)
-    {
-        return is_named_call(exp, intern("quote"));
-    }
-
-    bool is_unquote(Expr exp)
-    {
-        return is_named_call(exp, LISP_SYM_UNQUOTE);
-    }
-
-    bool is_unquote_splicing(Expr exp)
-    {
-        return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
-    }
-
+    // TODO use is_named_call()
     bool is_op(Expr exp, Expr name)
     {
         return is_cons(exp) && car(exp) == name;
@@ -3050,48 +3375,6 @@ public:
     Expr append(Expr a, Expr b)
     {
         return a ? cons(car(a), append(cdr(a), b)) : b;
-    }
-
-    char const * repr(Expr exp)
-    {
-        // TODO multiple calls => need temp buffer per call
-        size_t const size = 4096;
-        char * buffer = get_temp_buf(size);
-        Expr out = make_buffer_output_stream(size, buffer);
-        HashSet<Expr> seen;
-        print_expr(exp, out, seen);
-        stream_release(out);
-        return buffer;
-    }
-
-    void print(Expr exp)
-    {
-        Expr const out = stream_get_stdout();
-        HashSet<Expr> seen;
-        print_expr(exp, out, seen);
-    }
-
-    void println(Expr exp)
-    {
-        Expr const out = stream_get_stdout();
-        HashSet<Expr> seen;
-        print_expr(exp, out, seen);
-        stream_put_char(out, '\n');
-    }
-
-    void display(Expr exp)
-    {
-        Expr const out = stream_get_stdout();
-        HashSet<Expr> seen;
-        display_expr(exp, out, seen);
-    }
-
-    void displayln(Expr exp)
-    {
-        Expr const out = stream_get_stdout();
-        HashSet<Expr> seen;
-        display_expr(exp, out, seen);
-        stream_put_char(out, '\n');
     }
 
     /* reader */
@@ -3565,216 +3848,6 @@ public:
         goto comment;
     }
 
-    /* printer */
-
-    void display_expr(Expr exp, Expr out, HashSet<Expr> & seen)
-    {
-        switch (expr_type(exp))
-        {
-        case TYPE_STRING:
-            stream_put_cstring(out, string_value(exp));
-            break;
-        case TYPE_CHAR:
-            stream_put_char(out, char_code(exp));
-            break;
-        default:
-            print_expr(exp, out, seen);
-            break;
-        }
-    }
-
-    void print_expr(Expr exp, Expr out, HashSet<Expr> & seen)
-    {
-        switch (expr_type(exp))
-        {
-        case TYPE_NIL:
-            LISP_ASSERT_DEBUG(expr_data(exp) == 0);
-            stream_put_cstring(out, "nil");
-            break;
-        case TYPE_KEYWORD:
-            stream_put_char(out, ':');
-            stream_put_cstring(out, keyword_name(exp));
-            break;
-        case TYPE_SYMBOL:
-            stream_put_cstring(out, symbol_name(exp));
-            break;
-        case TYPE_CONS:
-            print_cons(exp, out, seen);
-            break;
-#if LISP_WANT_GENSYM
-        case TYPE_GENSYM:
-            stream_put_cstring(out, "#:G");
-            stream_put_u64(out, expr_data(exp));
-            break;
-#endif
-#if LISP_WANT_POINTER
-        case TYPE_POINTER:
-            stream_put_cstring(out, "#:<pointer ");
-            stream_put_pointer(out, pointer_value(exp));
-            stream_put_cstring(out, ">");
-            break;
-#endif
-        case TYPE_CHAR:
-            print_char(exp, out);
-            break;
-        case TYPE_FIXNUM:
-            stream_put_i64(out, fixnum_value(exp));
-            break;
-        case TYPE_STRING:
-            print_string(exp, out);
-            break;
-        case TYPE_BUILTIN_SPECIAL:
-            print_builtin_special(exp, out);
-            break;
-        case TYPE_BUILTIN_FUNCTION:
-            print_builtin_function(exp, out);
-            break;
-        case TYPE_BUILTIN_SYMBOL:
-            print_builtin_symbol(exp, out);
-            break;
-        default:
-            LISP_FAIL("cannot print expression %016" PRIx64 "\n", exp);
-            break;
-        }
-    }
-
-    void print_cons(Expr exp, Expr out, HashSet<Expr> & seen)
-    {
-#if LISP_PRINTER_PRINT_QUOTE
-        if (is_quote_call(exp))
-        {
-            stream_put_char(out, '\'');
-            print_expr(cadr(exp), out, seen);
-            return;
-        }
-#endif
-
-        if (seen.contains(exp))
-        {
-            stream_put_cstring(out, "...");
-            return;
-        }
-        seen.add(exp);
-
-        stream_put_char(out, '(');
-        print_expr(car(exp), out, seen);
-
-        for (Expr tmp = cdr(exp); tmp; tmp = cdr(tmp))
-        {
-            if (tmp == exp)
-            {
-                stream_put_cstring(out, " ...");
-                break;
-            }
-            else if (is_cons(tmp))
-            {
-                stream_put_char(out, ' ');
-                print_expr(car(tmp), out, seen);
-            }
-            else
-            {
-                stream_put_cstring(out, " . ");
-                print_expr(tmp, out, seen);
-                break;
-            }
-        }
-
-        stream_put_char(out, ')');
-    }
-
-    void print_builtin(Expr exp, Expr out, char const * flavor)
-    {
-        stream_put_cstring(out, "#:<");
-        stream_put_cstring(out, flavor);
-        char const * name = builtin_name(exp);
-        if (name)
-        {
-            stream_put_cstring(out, " ");
-            stream_put_cstring(out, name);
-        }
-        stream_put_cstring(out, ">");
-    }
-
-    void print_builtin_special(Expr exp, Expr out)
-    {
-        print_builtin(exp, out, "special operator");
-    }
-
-    void print_builtin_function(Expr exp, Expr out)
-    {
-        print_builtin(exp, out, "core function");
-    }
-
-    void print_builtin_symbol(Expr exp, Expr out)
-    {
-        print_builtin(exp, out, "symbol macro");
-    }
-
-    void print_char(Expr exp, Expr out)
-    {
-        LISP_ASSERT_DEBUG(is_char(exp));
-        U32 const code = char_code(exp);
-        // TODO
-        if (is_printable_ascii(code))
-        {
-            stream_put_char(out, '\\');
-            stream_put_char(out, (char) code);
-        }
-        else if (code == '\a')
-        {
-            stream_put_cstring(out, "\\bel");
-        }
-        else if (code == ' ')
-        {
-            stream_put_cstring(out, "\\space");
-        }
-        else
-        {
-            LISP_FAIL("cannot render character %" PRIu32 "\n", code);
-        }
-    }
-
-    void print_string(Expr exp, Expr out)
-    {
-        stream_put_char(out, '"');
-        char const * str = string_value(exp);
-        size_t const len = string_length(exp);
-        for (size_t i = 0; i < len; ++i)
-        {
-            // TODO \u****
-            // TODO \U********
-            char const ch = str[i];
-            switch (ch)
-            {
-            case '"':
-                stream_put_char(out, '\\');
-                stream_put_char(out, '"');
-                break;
-            case '\n':
-                stream_put_char(out, '\\');
-                stream_put_char(out, 'n');
-                break;
-            case '\t':
-                stream_put_char(out, '\\');
-                stream_put_char(out, 't');
-                break;
-            default:
-                if (ch == 0x1b) // TODO use a function to test what to escape
-                {
-                    stream_put_char(out, '\\');
-                    stream_put_char(out, 'x');
-                    stream_put_x64(out, ch);
-                }
-                else
-                {
-                    stream_put_cchar(out, ch);
-                }
-                break;
-            }
-        }
-        stream_put_char(out, '"');
-    }
-
     Expr env_vars(Expr env)
     {
         return caar(env);
@@ -4218,27 +4291,27 @@ bool System::equal(Expr a, Expr b)
 
 char const * System::repr(Expr exp)
 {
-    return m_impl->repr(exp);
+    return ::repr(exp);
 }
 
 void System::print(Expr exp)
 {
-    m_impl->print(exp);
+    ::print(exp);
 }
 
 void System::println(Expr exp)
 {
-    m_impl->println(exp);
+    ::println(exp);
 }
 
 void System::display(Expr exp)
 {
-    m_impl->display(exp);
+    ::display(exp);
 }
 
 void System::displayln(Expr exp)
 {
-    m_impl->displayln(exp);
+    ::displayln(exp);
 }
 
 /* read */

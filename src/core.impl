@@ -51,6 +51,26 @@ Expr intern(char const * name)
     return g_core.intern(name);
 }
 
+bool is_named_call(Expr exp, Expr name)
+{
+    return is_cons(exp) && eq(car(exp), name);
+}
+
+bool is_quote_call(Expr exp)
+{
+    return is_named_call(exp, intern("quote"));
+}
+
+bool is_unquote(Expr exp)
+{
+    return is_named_call(exp, LISP_SYM_UNQUOTE);
+}
+
+bool is_unquote_splicing(Expr exp)
+{
+    return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
+}
+
 #endif
 
 #ifdef LISP_NAMESPACE

@@ -1,0 +1,18 @@
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+char const * repr(Expr exp);
+
+void print(Expr exp);
+void println(Expr exp);
+
+void display(Expr exp);
+void displayln(Expr exp);
+
+Expr b_println(Expr args, Expr env);
+
+#ifdef LISP_NAMESPACE
+}
+#endif

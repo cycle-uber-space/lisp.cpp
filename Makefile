@@ -24,6 +24,7 @@ src/stream.decl\
 src/builtin.decl\
 src/number.decl\
 src/core.decl\
+src/print.decl\
 src/closure.decl\
 src/env.decl\
 src/system.decl\
@@ -46,6 +47,7 @@ src/pointer.impl\
 src/builtin.impl\
 src/number.impl\
 src/core.impl\
+src/print.impl\
 src/closure.impl\
 src/env.impl\
 src/system.impl

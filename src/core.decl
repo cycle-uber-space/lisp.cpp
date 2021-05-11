@@ -5,6 +5,11 @@ namespace LISP_NAMESPACE {
 
 Expr intern(char const * name);
 
+bool is_named_call(Expr exp, Expr name);
+bool is_quote_call(Expr exp);
+bool is_unquote(Expr exp);
+bool is_unquote_splicing(Expr exp);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
