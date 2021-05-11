@@ -614,6 +614,15 @@ Expr make_macro(Expr env, Expr name, Expr args, Expr body);
 }
 #endif
 
+#line 2 "src/env.decl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.decl"
 /* system */
 
@@ -2142,6 +2151,62 @@ Expr make_macro(Expr env, Expr /*name*/, Expr args, Expr body)
 }
 #endif
 
+#line 2 "src/env.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+class EnvImpl
+{
+public:
+    EnvImpl(ConsImpl & cons) : m_cons(cons)
+    {
+    }
+
+    Expr make(Expr outer)
+    {
+        // ((<vars> . <vals>) . <outer>)
+        // TODO add dummy conses as sentinels for vars and vals
+        return cons(cons(nil, nil), outer);
+    }
+
+protected:
+    Expr cons(Expr exp1, Expr exp2)
+    {
+        return m_cons.make(exp1, exp2);
+    }
+
+private:
+    ConsImpl & m_cons;
+};
+
+template <typename T>
+class EnvMixin
+{
+public:
+    EnvMixin(EnvImpl & impl) : m_impl(impl)
+    {
+    }
+
+    Expr make_env(Expr outer)
+    {
+        return m_impl.make(outer);
+    }
+
+private:
+    EnvImpl & m_impl;
+};
+
+#if LISP_WANT_GLOBAL_API
+
+EnvImpl g_env(g_cons);
+
+#endif
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.impl"
 /* system */
 
@@ -2209,10 +2274,11 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
-class SystemImpl
+class SystemImpl : public EnvMixin<SystemImpl>
 {
 public:
     SystemImpl() :
+        EnvMixin(m_env),
         m_symbol(TYPE_SYMBOL),
         m_keyword(TYPE_KEYWORD),
         m_cons(TYPE_CONS),
@@ -2223,6 +2289,7 @@ public:
 #if LISP_WANT_POINTER
         m_pointer(TYPE_POINTER),
 #endif
+        m_env(m_cons),
         m_dummy(0)
     {
         // TODO move to type_init?
@@ -3794,13 +3861,6 @@ public:
 
     /* env */
 
-    Expr make_env(Expr outer)
-    {
-        // ((<vars> . <vals>) . <outer>)
-        // TODO add dummy conses as sentinels for vars and vals
-        return cons(cons(nil, nil), outer);
-    }
-
     Expr env_vars(Expr env)
     {
         return caar(env);
@@ -4139,6 +4199,7 @@ public:
 #if LISP_WANT_POINTER
     PointerImpl m_pointer;
 #endif
+    EnvImpl m_env;
     int m_dummy;
 };
 

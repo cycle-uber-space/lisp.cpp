@@ -65,10 +65,11 @@ U32 utf8_decode_one(U8 const * buf)
     return val;
 }
 
-class SystemImpl
+class SystemImpl : public EnvMixin<SystemImpl>
 {
 public:
     SystemImpl() :
+        EnvMixin(m_env),
         m_symbol(TYPE_SYMBOL),
         m_keyword(TYPE_KEYWORD),
         m_cons(TYPE_CONS),
@@ -79,6 +80,7 @@ public:
 #if LISP_WANT_POINTER
         m_pointer(TYPE_POINTER),
 #endif
+        m_env(m_cons),
         m_dummy(0)
     {
         // TODO move to type_init?
@@ -1650,13 +1652,6 @@ public:
 
     /* env */
 
-    Expr make_env(Expr outer)
-    {
-        // ((<vars> . <vals>) . <outer>)
-        // TODO add dummy conses as sentinels for vars and vals
-        return cons(cons(nil, nil), outer);
-    }
-
     Expr env_vars(Expr env)
     {
         return caar(env);
@@ -1995,6 +1990,7 @@ public:
 #if LISP_WANT_POINTER
     var m_pointer: PointerImpl;
 #endif
+    EnvImpl m_env;
     var m_dummy: int;
 };
 

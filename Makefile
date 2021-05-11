@@ -25,6 +25,7 @@ src/builtin.decl\
 src/number.decl\
 src/core.decl\
 src/closure.decl\
+src/env.decl\
 src/system.decl\
 src/HashMap.impl\
 src/HashSet.impl\
@@ -46,6 +47,7 @@ src/builtin.impl\
 src/number.impl\
 src/core.impl\
 src/closure.impl\
+src/env.impl\
 src/system.impl
 
 CXXFLAGS = -std=c++11 -Wall -Wextra
