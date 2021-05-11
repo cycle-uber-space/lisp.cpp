@@ -2600,7 +2600,6 @@ public:
         EnvMixin(m_env),
         m_symbol(TYPE_SYMBOL),
         m_cons(TYPE_CONS),
-        m_string(TYPE_STRING),
         m_env(m_cons),
         m_dummy(0)
     {
@@ -2911,81 +2910,6 @@ public:
     char const * symbol_name(Expr exp)
     {
         return m_symbol.name(exp);
-    }
-
-    /* string */
-
-    Expr make_string(char const * str)
-    {
-        return m_string.make(str);
-    }
-
-    Expr make_string_from_utf8(U8 const * str)
-    {
-        // TODO assert this works?
-        return make_string((char const *) str);
-    }
-
-    Expr make_string_from_utf32_char(U32 code)
-    {
-        // TODO use string output stream
-        U8 bytes[5];
-        U8 * out_bytes = bytes;
-
-        if (code < 0x80)
-        {
-            *out_bytes++ = (U8) code;
-        }
-        else if (code < 0x800)
-        {
-            *out_bytes++ = (U8) (0xc0 | ((code >> 6) & 0x1f));
-            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
-        }
-        else if ((code >= 0xd800 && code < 0xe000))
-        {
-            LISP_FAIL("illegal code point %" PRIu64 "\n", code);
-        }
-        else if (code < 0x10000)
-        {
-            *out_bytes++ = (U8) (0xe0 | ((code >> 12) & 0xf));
-            *out_bytes++ = (U8) (0x80 | ((code >> 6) & 0x3f));
-            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
-        }
-        else if (code <= 0x10ffff)
-        {
-            *out_bytes++ = (U8) (0xf0 | ((code >> 18) & 0x7));
-            *out_bytes++ = (U8) (0x80 | ((code >> 12) & 0x3f));
-            *out_bytes++ = (U8) (0x80 | ((code >> 6) & 0x3f));
-            *out_bytes++ = (U8) (0x80 | (code & 0x3f));
-        }
-        else
-        {
-            LISP_FAIL("illegal code point %" PRIu64 " for utf-8 encoder\n", code);
-        }
-
-        *out_bytes++ = 0;
-        return make_string_from_utf8(bytes);
-    }
-
-    char const * string_value(Expr exp)
-    {
-        return m_string.value(exp);
-    }
-
-    U8 const * string_value_utf8(Expr exp)
-    {
-        // TODO actually change internal representation
-        return (U8 const *) string_value(exp);
-    }
-
-    U64 string_length(Expr exp)
-    {
-        return m_string.length(exp);
-    }
-
-    bool string_equal(Expr exp1, Expr exp2)
-    {
-        return m_string.equal(exp1, exp2);
     }
 
     /* util */
@@ -4285,7 +4209,6 @@ public:
     TypeImpl m_type;
     SymbolImpl m_symbol;
     ConsImpl m_cons;
-    StringImpl m_string;
     BuiltinImpl m_builtin;
     EnvImpl m_env;
     int m_dummy;
