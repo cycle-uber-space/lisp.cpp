@@ -943,17 +943,17 @@ bool is_printable_ascii(U32 ch)
     return ch >= 33 && ch <= 126;
 }
 
-#define TEMP_BUF_SIZE  4096
-#define TEMP_BUF_COUNT 4
+#define LISP_TEMP_BUF_SIZE  4096
+#define LISP_TEMP_BUF_COUNT 4
 
 char * get_temp_buf(size_t size)
 {
-    LISP_ASSERT(size <= TEMP_BUF_SIZE);
+    LISP_ASSERT(size <= LISP_TEMP_BUF_SIZE);
 
-    static char buf[TEMP_BUF_COUNT][TEMP_BUF_SIZE];
+    static char buf[LISP_TEMP_BUF_COUNT][LISP_TEMP_BUF_SIZE];
     static int idx = 0;
     char * ret = buf[idx];
-    idx = (idx + 1) % TEMP_BUF_COUNT;
+    idx = (idx + 1) % LISP_TEMP_BUF_COUNT;
     return ret;
 }
 
