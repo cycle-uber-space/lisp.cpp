@@ -2477,25 +2477,12 @@ namespace LISP_NAMESPACE {
 class EnvImpl
 {
 public:
-    EnvImpl(ConsImpl & cons) : m_cons(cons)
-    {
-    }
-
     Expr make(Expr outer)
     {
         // ((<vars> . <vals>) . <outer>)
         // TODO add dummy conses as sentinels for vars and vals
         return cons(cons(nil, nil), outer);
     }
-
-protected:
-    Expr cons(Expr exp1, Expr exp2)
-    {
-        return m_cons.make(exp1, exp2);
-    }
-
-private:
-    ConsImpl & m_cons;
 };
 
 template <typename T>
@@ -2517,7 +2504,7 @@ private:
 
 #if LISP_WANT_GLOBAL_API
 
-EnvImpl g_env(g_cons);
+EnvImpl g_env;
 
 #endif
 
@@ -2597,7 +2584,6 @@ class SystemImpl : public EnvMixin<SystemImpl>
 public:
     SystemImpl() :
         EnvMixin(m_env),
-        m_env(g_cons),
         m_dummy(0)
     {
         // TODO move to type_init?

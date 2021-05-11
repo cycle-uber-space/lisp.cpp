@@ -70,7 +70,6 @@ class SystemImpl : public EnvMixin<SystemImpl>
 public:
     SystemImpl() :
         EnvMixin(m_env),
-        m_env(g_cons),
         m_dummy(0)
     {
         // TODO move to type_init?
