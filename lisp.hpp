@@ -744,45 +744,16 @@ public:
     System();
     virtual ~System();
 
-    /* core */
-
-    Expr list(Expr exp1);
-    Expr list(Expr exp1, Expr exp2);
-    Expr list(Expr exp1, Expr exp2, Expr exp3);
-    Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
-
-    Expr first(Expr seq);
-    Expr second(Expr seq);
-
-    bool equal(Expr a, Expr b);
-
-    /* read */
-
-    Expr intern(char const * name);
-    Expr read_one_from_string(char const * src);
-    bool maybe_parse_expr(Expr in, Expr * exp);
-
     /* env */
 
-    Expr make_env(Expr outer);
     virtual Expr make_core_env();
 
-    void env_def(Expr env, Expr var, Expr val);
     void env_defun(Expr env, char const * name, BuiltinFunc func);
     void env_defun_println(Expr env, char const * name);
     void env_defspecial(Expr env, char const * name, BuiltinFunc func);
     void env_defspecial_quote(Expr env);
     void env_defspecial_while(Expr env);
     void env_defsym(Expr env, char const * name, BuiltinFunc func);
-    void env_del(Expr env, Expr var);
-
-    Expr env_get(Expr env, Expr var);
-    bool env_can_set(Expr env, Expr var);
-    void env_set(Expr env, Expr var, Expr val);
-
-    /* function */
-
-    Expr make_function(Expr env, Expr name, Expr args, Expr body);
 
     /* eval */
 
@@ -4228,75 +4199,11 @@ System::~System()
     s_instance = nullptr;
 }
 
-/* core */
-
-Expr System::list(Expr exp1)
-{
-    return ::list(exp1);
-}
-
-Expr System::list(Expr exp1, Expr exp2)
-{
-    return ::list(exp1, exp2);
-}
-
-Expr System::list(Expr exp1, Expr exp2, Expr exp3)
-{
-    return ::list(exp1, exp2, exp3);
-}
-
-Expr System::list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
-{
-    return ::list(exp1, exp2, exp3, exp4, exp5);
-}
-
-Expr System::first(Expr seq)
-{
-    return ::first(seq);
-}
-
-Expr System::second(Expr seq)
-{
-    return ::second(seq);
-}
-
-bool System::equal(Expr a, Expr b)
-{
-    return ::equal(a, b);
-}
-
-/* read */
-
-Expr System::intern(char const * name)
-{
-    return ::intern(name);
-}
-
-Expr System::read_one_from_string(char const * src)
-{
-    return ::read_one_from_string(src);
-}
-
-bool System::maybe_parse_expr(Expr in, Expr * exp)
-{
-    return ::maybe_parse_expr(in, exp);
-}
-
 /* env */
-
-Expr System::make_env(Expr outer)
-{
-    return ::make_env(outer);
-}
 
 Expr System::make_core_env()
 {
     return m_impl->make_core_env();
-}
-
-void System::env_def(Expr env, Expr var, Expr val)
-{
-    ::env_def(env, var, val);
 }
 
 void System::env_defun(Expr env, char const * name, BuiltinFunc func)
@@ -4327,33 +4234,6 @@ void System::env_defspecial_while(Expr env)
 void System::env_defsym(Expr env, char const * name, BuiltinFunc func)
 {
     m_impl->env_defsym(env, name, func);
-}
-
-void System::env_del(Expr env, Expr var)
-{
-    ::env_del(env, var);
-}
-
-Expr System::env_get(Expr env, Expr var)
-{
-    return ::env_get(env, var);
-}
-
-bool System::env_can_set(Expr env, Expr var)
-{
-    return ::env_can_set(env, var);
-}
-
-void System::env_set(Expr env, Expr var, Expr val)
-{
-    ::env_set(env, var, val);
-}
-
-/* function */
-
-Expr System::make_function(Expr env, Expr name, Expr args, Expr body)
-{
-    return ::make_function(env, name, args, body);
 }
 
 /* eval */
