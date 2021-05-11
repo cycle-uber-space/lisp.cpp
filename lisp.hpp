@@ -648,6 +648,12 @@ Expr list(Expr exp1, Expr exp2);
 Expr list(Expr exp1, Expr exp2, Expr exp3);
 Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
 
+Expr first(Expr seq);
+Expr second(Expr seq);
+
+Expr nreverse(Expr list);
+Expr append(Expr a, Expr b);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
