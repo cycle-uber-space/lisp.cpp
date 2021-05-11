@@ -4,7 +4,7 @@
 
 namespace lisp {
 
-class SchemeSystem : public System
+class SchemeSystem
 {
 public:
     int main(int argc, char ** argv)

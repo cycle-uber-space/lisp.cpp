@@ -30,11 +30,9 @@ private:
     FILE * m_file = stderr;
 };
 
-class StdSystem : public System
+class StdSystem
 {
 public:
-    typedef System Super;
-
     StdSystem()
     {
         srand(time(NULL));

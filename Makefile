@@ -32,7 +32,6 @@ src/closure.decl\
 src/env.decl\
 src/eval.decl\
 src/lang.decl\
-src/system.decl\
 src/HashMap.impl\
 src/HashSet.impl\
 src/test.impl\
@@ -58,8 +57,7 @@ src/read.impl\
 src/closure.impl\
 src/env.impl\
 src/eval.impl\
-src/lang.impl\
-src/system.impl
+src/lang.impl
 
 CXXFLAGS = -std=c++11 -Wall -Wextra
 #CXXFLAGS += -O2

@@ -7,7 +7,7 @@
 
 namespace lisp {
 
-class BelSystem : public System
+class BelSystem
 {
 public:
     BelSystem()

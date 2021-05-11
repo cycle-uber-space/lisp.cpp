@@ -794,34 +794,6 @@ void lang_defsym(Expr env, char const * name, BuiltinFunc func);
 }
 #endif
 
-#line 2 "src/system.decl"
-/* system */
-
-#if LISP_WANT_SYSTEM_API
-
-#ifdef LISP_NAMESPACE
-namespace LISP_NAMESPACE {
-#endif
-
-class SystemImpl;
-
-class System
-{
-public:
-    System();
-    virtual ~System();
-
-private:
-    SystemImpl * m_impl = nullptr;
-    static System * s_instance;
-};
-
-#ifdef LISP_NAMESPACE
-}
-#endif
-
-#endif
-
 #endif /* _LISP_HPP_ */
 
 #ifdef LISP_IMPLEMENTATION
@@ -4227,80 +4199,6 @@ void lang_defsym(Expr env, char const * name, BuiltinFunc func)
 {
     env_def(env, intern(name), make_builtin_symbol(name, func));
 }
-
-#ifdef LISP_NAMESPACE
-}
-#endif
-
-#line 2 "src/system.impl"
-/* system */
-
-#ifdef LISP_NAMESPACE
-namespace LISP_NAMESPACE {
-#endif
-
-class SystemImpl
-{
-public:
-    SystemImpl() :
-        m_dummy(0)
-    {
-    }
-
-    virtual ~SystemImpl()
-    {
-    }
-
-    /* core */
-
-    virtual Expr make_core_env()
-    {
-        return ::make_core_env();
-    }
-
-    /* util */
-
-    // TODO use is_named_call()
-    bool is_op(Expr exp, Expr name)
-    {
-        return is_cons(exp) && car(exp) == name;
-    }
-
-    bool is_quote(Expr exp)
-    {
-        return is_op(exp, LISP_SYM_QUOTE);
-    }
-
-    bool is_if(Expr exp)
-    {
-        return is_op(exp, LISP_SYM_IF);
-    }
-
-    int m_dummy;
-};
-
-/* system */
-
-#if LISP_WANT_SYSTEM_API
-
-System * System::s_instance = nullptr;
-
-System::System()
-{
-    LISP_ASSERT(s_instance == nullptr);
-    s_instance = this;
-
-    m_impl = new SystemImpl();
-}
-
-System::~System()
-{
-    delete m_impl;
-
-    s_instance = nullptr;
-}
-
-#endif
 
 #ifdef LISP_NAMESPACE
 }
