@@ -1,0 +1,276 @@
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+static U32 utf8_decode_one(U8 const * buf) // TODO replace/retire this?
+{
+    U8 ch = *buf++;
+    if (ch < 0x80)
+    {
+        return ch;
+    }
+
+    // TODO check for leading 0b10 in continuation bytes
+
+    U32 val = 0;
+    if ((ch >> 5) == 0x6)
+    {
+        val |= ch & 0x1f;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else if ((ch >> 4) == 0xe)
+    {
+        val |= ch & 0xf;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else if ((ch >> 3) == 0x1e)
+    {
+        val |= ch & 0x7;
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+
+        ch = *buf++;
+        val <<= 6;
+        val |= (ch & 0x3f);
+    }
+    else
+    {
+        LISP_FAIL("illegal utf-8 string\n", val);
+    }
+
+    if (val >= 0xd800 && val < 0xe000)
+    {
+        LISP_FAIL("illegal surrogate pair %" PRIu32 " in utf-8 string\n", val);
+    }
+
+    return val;
+}
+
+Expr make_core_env()
+{
+    Expr env = make_env(nil);
+
+    lang_def(env, intern("t"), intern("t"));
+
+    lang_defsym(env, "*env*", [](Expr, Expr env) -> Expr
+    {
+        return env;
+    });
+
+    lang_defspecial_quote(env);
+
+    lang_defspecial(env, "if", [](Expr args, Expr env) -> Expr
+    {
+        if (eval(car(args), env) != nil)
+        {
+            return eval(cadr(args), env);
+        }
+        else if (cddr(args))
+        {
+            return eval(caddr(args), env);
+        }
+        else
+        {
+            return nil;
+        }
+    });
+
+    lang_defspecial_while(env);
+
+    lang_defspecial(env, "def", [](Expr args, Expr env) -> Expr
+    {
+        lang_def(env, car(args), eval(cadr(args), env));
+        return nil;
+    });
+
+    lang_defspecial(env, "lambda", [](Expr args, Expr env) -> Expr
+    {
+        Expr const fun_args = car(args);
+        Expr const fun_body = cdr(args);
+        return make_function(env, nil, fun_args, fun_body);
+    });
+
+    lang_defspecial(env, "syntax", [](Expr args, Expr env) -> Expr
+    {
+        Expr const mac_args = car(args);
+        Expr const mac_body = cdr(args);
+        return make_macro(env, nil, mac_args, mac_body);
+    });
+
+    lang_defspecial(env, "backquote", [](Expr args, Expr env) -> Expr
+    {
+        return backquote(car(args), env);
+    });
+
+    lang_defun(env, "eq", [](Expr args, Expr) -> Expr
+    {
+        return all_eq(args) ? LISP_SYMBOL_T : nil; // TODO use make_truth()
+    });
+
+    lang_defun(env, "equal", [](Expr args, Expr) -> Expr
+    {
+        return all_equal(args) ? LISP_SYMBOL_T : nil; // TODO use make_truth()
+    });
+
+    lang_defun(env, "cons", [](Expr args, Expr) -> Expr
+    {
+        return cons(car(args), cadr(args));
+    });
+
+    lang_defun(env, "car", [](Expr args, Expr) -> Expr
+    {
+        return car(car(args));
+    });
+
+    lang_defun(env, "cdr", [](Expr args, Expr) -> Expr
+    {
+        return cdr(car(args));
+    });
+
+    lang_defun(env, "rplaca", [](Expr args, Expr) -> Expr
+    {
+        rplaca(car(args), cadr(args));
+        return nil;
+    });
+
+    lang_defun(env, "rplacd", [](Expr args, Expr) -> Expr
+    {
+        rplacd(car(args), cadr(args));
+        return nil;
+    });
+
+    lang_defun_println(env, "println");
+
+    lang_defun(env, "intern", [](Expr args, Expr) -> Expr
+    {
+        return intern(string_value(car(args)));
+    });
+
+#if LISP_WANT_GENSYM
+    lang_defun(env, "gensym", [](Expr, Expr) -> Expr
+    {
+        return gensym();
+    });
+#endif
+
+#if LISP_WANT_POINTER
+    lang_defun(env, "fopen", [](Expr args, Expr) -> Expr
+    {
+        // TODO use builtin_arg1(name, args) for better error checking
+        Expr const path = first(args);
+        Expr const mode = second(args);
+        return make_pointer(fopen(string_value(path), string_value(mode)));
+    });
+
+    lang_defun(env, "fclose", [](Expr args, Expr) -> Expr
+    {
+        // TODO use builtin_arg1(name, args) for better error checking
+        Expr const file = first(args);
+        fclose((FILE *) pointer_value(file));
+        return nil;
+    });
+
+    lang_defun(env, "write-u8", [](Expr args, Expr) -> Expr
+    {
+        Expr const file = first(args);
+        Expr const value = second(args);
+        U8 const val = fixnum_value(value); // TODO use, say, expr_to_u8()
+        fwrite(&val, 1, 1, (FILE *) pointer_value(file));
+        return nil;
+    });
+#endif
+
+    lang_defun(env, "load-file", [](Expr args, Expr env) -> Expr
+    {
+        load_file(string_value(first(args)), env);
+        return nil;
+    });
+
+    lang_defun(env, "ord", [](Expr args, Expr) -> Expr
+    {
+        return make_number(utf8_decode_one(string_value_utf8(car(args))));
+    });
+
+    lang_defun(env, "chr", [](Expr args, Expr) -> Expr
+    {
+        return make_string_from_utf32_char((U32) fixnum_value(car(args)));
+    });
+
+    lang_defun(env, "type", [](Expr args, Expr) -> Expr
+    {
+        Expr const arg1 = car(args);
+        return intern(type_name(expr_type(arg1)));
+    });
+
+    return env;
+}
+
+void lang_def(Expr env, Expr var, Expr val)
+{
+    env_def(env, var, val);
+}
+
+void lang_defun(Expr env, char const * name, BuiltinFunc func)
+{
+    env_def(env, intern(name), make_builtin_function(name, func));
+}
+
+void lang_defun_println(Expr env, char const * name)
+{
+    lang_defun(env, name, b_println);
+}
+
+void lang_defspecial(Expr env, char const * name, BuiltinFunc func)
+{
+    env_def(env, intern(name), make_builtin_special(name, func));
+}
+
+void lang_defspecial_quote(Expr env)
+{
+    lang_defspecial(env, "quote", [](Expr args, Expr) -> Expr
+    {
+        return car(args);
+    });
+}
+
+void lang_defspecial_while(Expr env)
+{
+    lang_defspecial(env, "while", [](Expr args, Expr env) -> Expr
+    {
+        Expr const test = car(args);
+        Expr const body = cdr(args);
+
+        // TODO do we want to return a value?
+        while (eval(test, env))
+        {
+            eval_body(body, env);
+        }
+        return nil;
+    });
+}
+
+void lang_defsym(Expr env, char const * name, BuiltinFunc func)
+{
+    env_def(env, intern(name), make_builtin_symbol(name, func));
+}
+
+#ifdef LISP_NAMESPACE
+}
+#endif

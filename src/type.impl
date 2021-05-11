@@ -8,6 +8,27 @@ namespace LISP_NAMESPACE {
 class TypeImpl
 {
 public:
+    TypeImpl()
+    {
+        LISP_ASSERT_ALWAYS(TYPE_NIL == make_type("nil"));
+        LISP_ASSERT_ALWAYS(TYPE_CHAR == make_type("char"));
+        LISP_ASSERT_ALWAYS(TYPE_FIXNUM == make_type("fixnum"));
+        LISP_ASSERT_ALWAYS(TYPE_SYMBOL == make_type("symbol"));
+        LISP_ASSERT_ALWAYS(TYPE_KEYWORD == make_type("keyword"));
+        LISP_ASSERT_ALWAYS(TYPE_CONS == make_type("cons"));
+#if LISP_WANT_GENSYM
+        LISP_ASSERT_ALWAYS(TYPE_GENSYM == make_type("gensym"));
+#endif
+#if LISP_WANT_POINTER
+        LISP_ASSERT_ALWAYS(TYPE_POINTER == make_type("pointer"));
+#endif
+        LISP_ASSERT_ALWAYS(TYPE_STRING == make_type("string"));
+        LISP_ASSERT_ALWAYS(TYPE_STREAM == make_type("stream"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SPECIAL == make_type("builtin-special"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_FUNCTION == make_type("builtin-function"));
+        LISP_ASSERT_ALWAYS(TYPE_BUILTIN_SYMBOL == make_type("builtin-symbol"));
+    }
+
     U64 make(char const * name)
     {
         U64 const type = count();
@@ -29,6 +50,18 @@ public:
 private:
     var m_names: std::vector<std::string>;
 };
+
+var g_type: TypeImpl;
+
+U64 make_type(char const * name)
+{
+    return g_type.make(name);
+}
+
+char const * type_name(U64 type)
+{
+    return g_type.name(type);
+}
 
 #ifdef LISP_NAMESPACE
 }

@@ -10,6 +10,9 @@ inline bool eq(Expr a, Expr b)
 
 bool equal(Expr a, Expr b);
 
+bool all_eq(Expr exps);
+bool all_equal(Expr exps);
+
 Expr intern(char const * name);
 
 bool is_named_call(Expr exp, Expr name);

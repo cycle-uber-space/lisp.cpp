@@ -8,6 +8,7 @@ LISP_SRC = src/config.decl\
 src/includes.decl\
 src/defines.decl\
 src/base.decl\
+src/type.decl\
 src/test.decl\
 src/error.decl\
 src/expr.decl\
@@ -30,6 +31,7 @@ src/read.decl\
 src/closure.decl\
 src/env.decl\
 src/eval.decl\
+src/lang.decl\
 src/system.decl\
 src/HashMap.impl\
 src/HashSet.impl\
@@ -56,6 +58,7 @@ src/read.impl\
 src/closure.impl\
 src/env.impl\
 src/eval.impl\
+src/lang.impl\
 src/system.impl
 
 CXXFLAGS = -std=c++11 -Wall -Wextra

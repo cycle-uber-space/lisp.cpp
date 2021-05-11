@@ -15,16 +15,7 @@ public:
     System();
     virtual ~System();
 
-    /* env */
-
     virtual Expr make_core_env();
-
-    void env_defun(Expr env, char const * name, BuiltinFunc func);
-    void env_defun_println(Expr env, char const * name);
-    void env_defspecial(Expr env, char const * name, BuiltinFunc func);
-    void env_defspecial_quote(Expr env);
-    void env_defspecial_while(Expr env);
-    void env_defsym(Expr env, char const * name, BuiltinFunc func);
 
 private:
     SystemImpl * m_impl = nullptr;

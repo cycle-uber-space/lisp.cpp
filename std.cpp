@@ -87,20 +87,20 @@ public:
     Expr make_core_env()
     {
         Expr env = Super::make_core_env();
-        env_defun(env, "coin", [this](Expr args, Expr) -> Expr
+        lang_defun(env, "coin", [this](Expr args, Expr) -> Expr
         {
             LISP_ASSERT(args == nil);
             return make_truth(rand() & 1);
         });
 
-        env_defun(env, "<", [this](Expr args, Expr) -> Expr
+        lang_defun(env, "<", [this](Expr args, Expr) -> Expr
         {
             Expr exp1, exp2;
             builtin_args(args, &exp1, &exp2, "< expects at least two arguments");
             return make_truth(fixnum_lt(exp1, exp2));
         });
 
-        env_defspecial(env, "with", [this](Expr args, Expr) -> Expr
+        lang_defspecial(env, "with", [this](Expr args, Expr) -> Expr
         {
             Expr const wenv = car(args);
             Expr const body = cdr(args);

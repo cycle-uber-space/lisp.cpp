@@ -1,0 +1,13 @@
+
+/* type */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+U64 make_type(char const * name);
+char const * type_name(U64 type);
+
+#ifdef LISP_NAMESPACE
+}
+#endif

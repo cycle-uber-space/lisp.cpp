@@ -1,0 +1,21 @@
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+Expr make_core_env();
+
+void lang_def(Expr env, Expr var, Expr val);
+
+void lang_defun(Expr env, char const * name, BuiltinFunc func);
+void lang_defun_println(Expr env, char const * name);
+
+void lang_defspecial(Expr env, char const * name, BuiltinFunc func);
+void lang_defspecial_quote(Expr env);
+void lang_defspecial_while(Expr env);
+
+void lang_defsym(Expr env, char const * name, BuiltinFunc func);
+
+#ifdef LISP_NAMESPACE
+}
+#endif

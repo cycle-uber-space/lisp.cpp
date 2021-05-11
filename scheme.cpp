@@ -10,7 +10,7 @@ public:
     int main(int argc, char ** argv)
     {
         Expr env = make_env(nil);
-        env_defspecial(env, "define", [this](Expr args, Expr env)
+        lang_defspecial(env, "define", [this](Expr args, Expr env)
         {
             Expr const head = car(args);
             Expr const tail = cdr(args);
@@ -29,20 +29,20 @@ public:
             }
         });
 
-        env_defspecial(env, "lambda", [this](Expr args, Expr env) -> Expr
+        lang_defspecial(env, "lambda", [this](Expr args, Expr env) -> Expr
         {
             Expr const fun_args = car(args);
             Expr const fun_body = cdr(args);
             return make_function(env, nil, fun_args, fun_body);
         });
 
-        env_defun(env, "display", [this](Expr args, Expr) -> Expr
+        lang_defun(env, "display", [this](Expr args, Expr) -> Expr
         {
             display(car(args));
             return nil;
         });
 
-        env_defun(env, "displayln", [this](Expr args, Expr) -> Expr
+        lang_defun(env, "displayln", [this](Expr args, Expr) -> Expr
         {
             displayln(car(args));
             return nil;

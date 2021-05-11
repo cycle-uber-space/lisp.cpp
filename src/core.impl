@@ -59,6 +59,59 @@ bool equal(Expr a, Expr b)
     return eq(a, b);
 }
 
+bool all_eq(Expr exps)
+{
+    if (is_nil(exps))
+    {
+        LISP_FAIL("not enough arguments in call to eq: %s\n", repr(exps));
+    }
+    var prv = car(exps);
+    var tmp = cdr(exps);
+    if (is_nil(tmp))
+    {
+        LISP_FAIL("not enough arguments in call to eq: %s\n", repr(exps));
+    }
+
+    for (; tmp; tmp = cdr(tmp))
+    {
+        let exp = car(tmp);
+        if (!eq(prv, exp))
+        {
+            return false;
+        }
+        prv = exp;
+    }
+
+    return true;
+}
+
+// TODO might as well call this b_equal
+bool all_equal(Expr exps)
+{
+    if (is_nil(exps))
+    {
+        LISP_FAIL("not enough arguments in call to equal: %s\n", repr(exps));
+    }
+    Expr prv = car(exps);
+    Expr tmp = cdr(exps);
+    if (is_nil(tmp))
+    {
+        LISP_FAIL("not enough arguments in call to equal: %s\n", repr(exps));
+    }
+
+    for (; tmp; tmp = cdr(tmp))
+    {
+        let exp = car(tmp);
+        if (!equal(prv, exp))
+        {
+            return false;
+        }
+        prv = exp;
+    }
+
+    return true;
+}
+
 Expr intern(char const * name)
 {
     return g_core.intern(name);
