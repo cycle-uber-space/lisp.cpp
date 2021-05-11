@@ -3,6 +3,8 @@
 namespace LISP_NAMESPACE {
 #endif
 
+bool equal(Expr a, Expr b);
+
 Expr intern(char const * name);
 
 bool is_named_call(Expr exp, Expr name);

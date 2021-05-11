@@ -634,6 +634,8 @@ bool number_equal(Expr a, Expr b);
 namespace LISP_NAMESPACE {
 #endif
 
+bool equal(Expr a, Expr b);
+
 Expr intern(char const * name);
 
 bool is_named_call(Expr exp, Expr name);
@@ -2427,6 +2429,19 @@ private:
 
 CoreImpl g_core(g_symbol, g_keyword);
 
+bool equal(Expr a, Expr b)
+{
+    if (is_cons(a) && is_cons(b))
+    {
+        return equal(car(a), car(b)) && equal(cdr(a), cdr(b));
+    }
+    else if (is_string(a) && is_string(b))
+    {
+        return string_equal(a, b);
+    }
+    return eq(a, b);
+}
+
 Expr intern(char const * name)
 {
     return g_core.intern(name);
@@ -3895,19 +3910,6 @@ public:
         return is_op(exp, LISP_SYM_IF);
     }
 
-    bool equal(Expr a, Expr b)
-    {
-        if (is_cons(a) && is_cons(b))
-        {
-            return equal(car(a), car(b)) && equal(cdr(a), cdr(b));
-        }
-        else if (is_string(a) && is_string(b))
-        {
-            return string_equal(a, b);
-        }
-        return eq(a, b);
-    }
-
     bool all_equal(Expr exps)
     {
         if (is_nil(exps))
@@ -4254,7 +4256,7 @@ Expr System::second(Expr seq)
 
 bool System::equal(Expr a, Expr b)
 {
-    return m_impl->equal(a, b);
+    return ::equal(a, b);
 }
 
 /* read */
