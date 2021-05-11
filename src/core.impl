@@ -71,6 +71,26 @@ bool is_unquote_splicing(Expr exp)
     return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
 }
 
+Expr list(Expr exp1)
+{
+    return cons(exp1, nil);
+}
+
+Expr list(Expr exp1, Expr exp2)
+{
+    return cons(exp1, cons(exp2, nil));
+}
+
+Expr list(Expr exp1, Expr exp2, Expr exp3)
+{
+    return cons(exp1, cons(exp2, cons(exp3, nil)));
+}
+
+Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
+{
+    return cons(exp1, cons(exp2, cons(exp3, cons(exp4, cons(exp5, nil)))));
+}
+
 #endif
 
 #ifdef LISP_NAMESPACE

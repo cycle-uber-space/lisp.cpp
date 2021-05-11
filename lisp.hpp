@@ -641,6 +641,11 @@ bool is_quote_call(Expr exp);
 bool is_unquote(Expr exp);
 bool is_unquote_splicing(Expr exp);
 
+Expr list(Expr exp1);
+Expr list(Expr exp1, Expr exp2);
+Expr list(Expr exp1, Expr exp2, Expr exp3);
+Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -2426,6 +2431,26 @@ bool is_unquote_splicing(Expr exp)
     return is_named_call(exp, LISP_SYM_UNQUOTE_SPLICING);
 }
 
+Expr list(Expr exp1)
+{
+    return cons(exp1, nil);
+}
+
+Expr list(Expr exp1, Expr exp2)
+{
+    return cons(exp1, cons(exp2, nil));
+}
+
+Expr list(Expr exp1, Expr exp2, Expr exp3)
+{
+    return cons(exp1, cons(exp2, cons(exp3, nil)));
+}
+
+Expr list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
+{
+    return cons(exp1, cons(exp2, cons(exp3, cons(exp4, cons(exp5, nil)))));
+}
+
 #endif
 
 #ifdef LISP_NAMESPACE
@@ -4161,22 +4186,22 @@ System::~System()
 
 Expr System::list(Expr exp1)
 {
-    return m_impl->list(exp1);
+    return ::list(exp1);
 }
 
 Expr System::list(Expr exp1, Expr exp2)
 {
-    return m_impl->list(exp1, exp2);
+    return ::list(exp1, exp2);
 }
 
 Expr System::list(Expr exp1, Expr exp2, Expr exp3)
 {
-    return m_impl->list(exp1, exp2, exp3);
+    return ::list(exp1, exp2, exp3);
 }
 
 Expr System::list(Expr exp1, Expr exp2, Expr exp3, Expr exp4, Expr exp5)
 {
-    return m_impl->list(exp1, exp2, exp3, exp4, exp5);
+    return ::list(exp1, exp2, exp3, exp4, exp5);
 }
 
 Expr System::first(Expr seq)
