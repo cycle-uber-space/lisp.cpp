@@ -15,24 +15,6 @@ public:
     System();
     virtual ~System();
 
-    /* symbol */
-
-    char const * symbol_name(Expr exp);
-
-    /* cons */
-
-    Expr cons(Expr a, Expr b);
-    Expr car(Expr exp);
-    Expr cdr(Expr exp);
-    void rplaca(Expr exp, Expr val);
-    void rplacd(Expr exp, Expr val);
-
-    /* stream */
-
-    Expr stream_get_stdin();
-    Expr stream_get_stdout();
-    Expr stream_get_stderr();
-
     /* core */
 
     Expr list(Expr exp1);
@@ -44,14 +26,6 @@ public:
     Expr second(Expr seq);
 
     bool equal(Expr a, Expr b);
-
-    /* print */
-
-    char const * repr(Expr exp);
-    void print(Expr exp);
-    void println(Expr exp);
-    void display(Expr exp);
-    void displayln(Expr exp);
 
     /* read */
 

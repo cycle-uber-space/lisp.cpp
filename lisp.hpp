@@ -710,24 +710,6 @@ public:
     System();
     virtual ~System();
 
-    /* symbol */
-
-    char const * symbol_name(Expr exp);
-
-    /* cons */
-
-    Expr cons(Expr a, Expr b);
-    Expr car(Expr exp);
-    Expr cdr(Expr exp);
-    void rplaca(Expr exp, Expr val);
-    void rplacd(Expr exp, Expr val);
-
-    /* stream */
-
-    Expr stream_get_stdin();
-    Expr stream_get_stdout();
-    Expr stream_get_stderr();
-
     /* core */
 
     Expr list(Expr exp1);
@@ -739,14 +721,6 @@ public:
     Expr second(Expr seq);
 
     bool equal(Expr a, Expr b);
-
-    /* print */
-
-    char const * repr(Expr exp);
-    void print(Expr exp);
-    void println(Expr exp);
-    void display(Expr exp);
-    void displayln(Expr exp);
 
     /* read */
 
@@ -4183,57 +4157,6 @@ System::~System()
     s_instance = nullptr;
 }
 
-/* symbol */
-
-char const * System::symbol_name(Expr exp)
-{
-    return ::symbol_name(exp);
-}
-
-/* cons */
-
-Expr System::cons(Expr a, Expr b)
-{
-    return ::cons(a, b);
-}
-
-Expr System::car(Expr exp)
-{
-    return ::car(exp);
-}
-
-Expr System::cdr(Expr exp)
-{
-    return ::cdr(exp);
-}
-
-void System::rplaca(Expr exp, Expr val)
-{
-    return ::rplaca(exp, val);
-}
-
-void System::rplacd(Expr exp, Expr val)
-{
-    return ::rplacd(exp, val);
-}
-
-/* stream */
-
-Expr System::stream_get_stdin()
-{
-    return ::stream_get_stdin();
-}
-
-Expr System::stream_get_stdout()
-{
-    return ::stream_get_stdout();
-}
-
-Expr System::stream_get_stderr()
-{
-    return ::stream_get_stderr();
-}
-
 /* core */
 
 Expr System::list(Expr exp1)
@@ -4269,33 +4192,6 @@ Expr System::second(Expr seq)
 bool System::equal(Expr a, Expr b)
 {
     return m_impl->equal(a, b);
-}
-
-/* print */
-
-char const * System::repr(Expr exp)
-{
-    return ::repr(exp);
-}
-
-void System::print(Expr exp)
-{
-    ::print(exp);
-}
-
-void System::println(Expr exp)
-{
-    ::println(exp);
-}
-
-void System::display(Expr exp)
-{
-    ::display(exp);
-}
-
-void System::displayln(Expr exp)
-{
-    ::displayln(exp);
 }
 
 /* read */
