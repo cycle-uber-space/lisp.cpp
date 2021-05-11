@@ -348,6 +348,7 @@ public:
     {
         Expr const ret = eval(read_one_from_string(src), env);
         //println(ret);
+        //printf("'%s'\n", repr(ret));
         return repr(ret);
     }
 

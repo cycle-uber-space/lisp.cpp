@@ -2729,6 +2729,7 @@ public:
         Expr out = make_buffer_output_stream(size, buffer);
         HashSet<Expr> seen;
         print_expr(exp, out, seen);
+        stream_put_char(out, 0);
         stream_release(out);
         return buffer;
     }
