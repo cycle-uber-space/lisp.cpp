@@ -583,6 +583,17 @@ bool number_equal(Expr a, Expr b);
 }
 #endif
 
+#line 2 "src/core.decl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+Expr intern(char const * name);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
 #line 2 "src/system.decl"
 /* system */
 
@@ -1992,6 +2003,65 @@ bool number_equal(Expr a, Expr b)
 {
     return fixnum_eq(a, b);
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
+#line 2 "src/core.impl"
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+class CoreImpl
+{
+public:
+    CoreImpl(SymbolImpl & symbol, SymbolImpl & keyword) : m_symbol(symbol), m_keyword(keyword)
+    {
+    }
+
+    Expr intern(char const * name)
+    {
+        if (!strcmp("nil", name))
+        {
+            return nil;
+        }
+        else if (name[0] == ':')
+        {
+            return make_keyword(name + 1);
+        }
+        else
+        {
+            return make_symbol(name);
+        }
+    }
+
+protected:
+    Expr make_symbol(char const * name)
+    {
+        return m_symbol.make(name);
+    }
+
+    Expr make_keyword(char const * name)
+    {
+        return m_keyword.make(name);
+    }
+
+private:
+    SymbolImpl & m_symbol;
+    SymbolImpl & m_keyword;
+};
+
+#if LISP_WANT_GLOBAL_API
+
+CoreImpl g_core(g_symbol, g_keyword);
+
+Expr intern(char const * name)
+{
+    return g_core.intern(name);
+}
+
+#endif
 
 #ifdef LISP_NAMESPACE
 }

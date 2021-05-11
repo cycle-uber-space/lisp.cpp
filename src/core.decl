@@ -1,0 +1,10 @@
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+Expr intern(char const * name);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
