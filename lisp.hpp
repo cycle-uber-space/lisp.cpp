@@ -706,6 +706,15 @@ Expr make_macro(Expr env, Expr name, Expr args, Expr body);
 namespace LISP_NAMESPACE {
 #endif
 
+Expr make_env(Expr outer);
+
+void env_def(Expr env, Expr var, Expr val);
+void env_del(Expr env, Expr var);
+
+Expr env_get(Expr env, Expr var);
+bool env_can_set(Expr env, Expr var);
+void env_set(Expr env, Expr var, Expr val);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -3347,6 +3356,146 @@ public:
         // TODO add dummy conses as sentinels for vars and vals
         return cons(cons(nil, nil), outer);
     }
+
+    Expr get_vars(Expr env)
+    {
+        return caar(env);
+    }
+
+    void set_vars(Expr env, Expr vars)
+    {
+        rplaca(car(env), vars);
+    }
+
+    Expr get_vals(Expr env)
+    {
+        return cdar(env);
+    }
+
+    void set_vals(Expr env, Expr vals)
+    {
+        rplacd(car(env), vals);
+    }
+
+    Expr get_outer(Expr env)
+    {
+        return cdr(env);
+    }
+
+    void def(Expr env, Expr var, Expr val)
+    {
+        Expr const vals = find_local(env, var);
+        if (vals)
+        {
+            rplaca(vals, val);
+        }
+        else
+        {
+            set_vars(env, cons(var, get_vars(env)));
+            set_vals(env, cons(val, get_vals(env)));
+        }
+    }
+
+    void del(Expr env, Expr var)
+    {
+        Expr prev_vars = nil;
+        Expr prev_vals = nil;
+
+        Expr vars = get_vars(env);
+        Expr vals = get_vals(env);
+        while (vars)
+        {
+            if (car(vars) == var)
+            {
+                if (prev_vars)
+                {
+                    LISP_ASSERT(prev_vals);
+                    rplacd(prev_vars, cdr(vars));
+                    rplacd(prev_vals, cdr(vals));
+                }
+                else
+                {
+                    set_vars(env, cdr(vars));
+                    set_vals(env, cdr(vals));
+                }
+                return;
+            }
+
+            prev_vars = vars;
+            prev_vals = vals;
+            vars = cdr(vars);
+            vals = cdr(vals);
+        }
+
+        LISP_FAIL("unbound variable %s\n", repr(var));
+    }
+
+    bool can_set(Expr env, Expr var)
+    {
+        Expr const tmp = find_global(env, var);
+        return tmp != nil;
+    }
+
+    Expr get(Expr env, Expr var)
+    {
+        Expr const vals = find_global(env, var);
+        if (vals)
+        {
+            return car(vals);
+        }
+        else
+        {
+            LISP_FAIL("unbound variable %s\n", repr(var));
+            return nil;
+        }
+    }
+
+    void set(Expr env, Expr var, Expr val)
+    {
+        Expr const vals = find_global(env, var);
+        if (vals)
+        {
+            rplaca(vals, val);
+        }
+        else
+        {
+            LISP_FAIL("unbound variable %s\n", repr(var));
+        }
+    }
+
+protected:
+    Expr find_local(Expr env, Expr var)
+    {
+        Expr vars = get_vars(env);
+        Expr vals = get_vals(env);
+        while (vars)
+        {
+            if (car(vars) == var)
+            {
+                return vals;
+            }
+            vars = cdr(vars);
+            vals = cdr(vals);
+        }
+        return nil;
+    }
+
+    Expr find_global(Expr env, Expr var)
+    {
+        while (env)
+        {
+            Expr const vals = find_local(env, var);
+            if (vals)
+            {
+                return vals;
+            }
+            else
+            {
+                env = get_outer(env);
+            }
+        }
+        return nil;
+    }
 };
 
 template <typename T>
@@ -3369,6 +3518,36 @@ private:
 #if LISP_WANT_GLOBAL_API
 
 EnvImpl g_env;
+
+Expr make_env(Expr outer)
+{
+    return g_env.make(outer);
+}
+
+void env_def(Expr env, Expr var, Expr val)
+{
+    g_env.def(env, var, val);
+}
+
+void env_del(Expr env, Expr var)
+{
+    g_env.del(env, var);
+}
+
+Expr env_get(Expr env, Expr var)
+{
+    return g_env.get(env, var);
+}
+
+bool env_can_set(Expr env, Expr var)
+{
+    return g_env.can_set(env, var);
+}
+
+void env_set(Expr env, Expr var, Expr val)
+{
+    g_env.set(env, var, val);
+}
 
 #endif
 
@@ -3848,112 +4027,6 @@ public:
 
     /* reader */
 
-    Expr env_vars(Expr env)
-    {
-        return caar(env);
-    }
-
-    void env_set_vars(Expr env, Expr vars)
-    {
-        rplaca(car(env), vars);
-    }
-
-    Expr env_vals(Expr env)
-    {
-        return cdar(env);
-    }
-
-    void env_set_vals(Expr env, Expr vals)
-    {
-        rplacd(car(env), vals);
-    }
-
-    Expr env_outer(Expr env)
-    {
-        return cdr(env);
-    }
-
-    void env_def(Expr env, Expr var, Expr val)
-    {
-        Expr const vals = _env_find_local(env, var);
-        if (vals)
-        {
-            rplaca(vals, val);
-        }
-        else
-        {
-            env_set_vars(env, cons(var, env_vars(env)));
-            env_set_vals(env, cons(val, env_vals(env)));
-        }
-    }
-
-    void env_del(Expr env, Expr var)
-    {
-        Expr prev_vars = nil;
-        Expr prev_vals = nil;
-
-        Expr vars = env_vars(env);
-        Expr vals = env_vals(env);
-        while (vars)
-        {
-            if (car(vars) == var)
-            {
-                if (prev_vars)
-                {
-                    LISP_ASSERT(prev_vals);
-                    rplacd(prev_vars, cdr(vars));
-                    rplacd(prev_vals, cdr(vals));
-                }
-                else
-                {
-                    env_set_vars(env, cdr(vars));
-                    env_set_vals(env, cdr(vals));
-                }
-                return;
-            }
-
-            prev_vars = vars;
-            prev_vals = vals;
-            vars = cdr(vars);
-            vals = cdr(vals);
-        }
-
-        LISP_FAIL("unbound variable %s\n", repr(var));
-    }
-
-    bool env_can_set(Expr env, Expr var)
-    {
-        Expr const tmp = _env_find_global(env, var);
-        return tmp != nil;
-    }
-
-    Expr env_get(Expr env, Expr var)
-    {
-        Expr const vals = _env_find_global(env, var);
-        if (vals)
-        {
-            return car(vals);
-        }
-        else
-        {
-            LISP_FAIL("unbound variable %s\n", repr(var));
-            return nil;
-        }
-    }
-
-    void env_set(Expr env, Expr var, Expr val)
-    {
-        Expr const vals = _env_find_global(env, var);
-        if (vals)
-        {
-            rplaca(vals, val);
-        }
-        else
-        {
-            LISP_FAIL("unbound variable %s\n", repr(var));
-        }
-    }
-
     void env_destructuring_bind(Expr env, Expr vars, Expr vals)
     {
         if (vars == nil)
@@ -4000,39 +4073,6 @@ public:
     void env_defsym(Expr env, char const * name, BuiltinFunc func)
     {
         env_def(env, intern(name), make_builtin_symbol(name, func));
-    }
-
-    Expr _env_find_local(Expr env, Expr var)
-    {
-        Expr vars = env_vars(env);
-        Expr vals = env_vals(env);
-        while (vars)
-        {
-            if (car(vars) == var)
-            {
-                return vals;
-            }
-            vars = cdr(vars);
-            vals = cdr(vals);
-        }
-        return nil;
-    }
-
-    Expr _env_find_global(Expr env, Expr var)
-    {
-        while (env)
-        {
-            Expr const vals = _env_find_local(env, var);
-            if (vals)
-            {
-                return vals;
-            }
-            else
-            {
-                env = env_outer(env);
-            }
-        }
-        return nil;
     }
 
     /* eval */
@@ -4267,7 +4307,7 @@ Expr System::make_core_env()
 
 void System::env_def(Expr env, Expr var, Expr val)
 {
-    m_impl->env_def(env, var, val);
+    ::env_def(env, var, val);
 }
 
 void System::env_defun(Expr env, char const * name, BuiltinFunc func)
@@ -4302,22 +4342,22 @@ void System::env_defsym(Expr env, char const * name, BuiltinFunc func)
 
 void System::env_del(Expr env, Expr var)
 {
-    return m_impl->env_del(env, var);
+    ::env_del(env, var);
 }
 
 Expr System::env_get(Expr env, Expr var)
 {
-    return m_impl->env_get(env, var);
+    return ::env_get(env, var);
 }
 
 bool System::env_can_set(Expr env, Expr var)
 {
-    return m_impl->env_can_set(env, var);
+    return ::env_can_set(env, var);
 }
 
 void System::env_set(Expr env, Expr var, Expr val)
 {
-    m_impl->env_set(env, var, val);
+    ::env_set(env, var, val);
 }
 
 /* function */
