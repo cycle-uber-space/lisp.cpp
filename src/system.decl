@@ -15,8 +15,6 @@ public:
     System();
     virtual ~System();
 
-    virtual Expr make_core_env();
-
 private:
     SystemImpl * m_impl = nullptr;
     static var s_instance: System *;

@@ -811,8 +811,6 @@ public:
     System();
     virtual ~System();
 
-    virtual Expr make_core_env();
-
 private:
     SystemImpl * m_impl = nullptr;
     static System * s_instance;
@@ -4300,11 +4298,6 @@ System::~System()
     delete m_impl;
 
     s_instance = nullptr;
-}
-
-Expr System::make_core_env()
-{
-    return ::make_core_env();
 }
 
 #endif

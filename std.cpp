@@ -86,7 +86,7 @@ public:
 
     Expr make_core_env()
     {
-        Expr env = Super::make_core_env();
+        Expr env = ::make_core_env();
         lang_defun(env, "coin", [this](Expr args, Expr) -> Expr
         {
             LISP_ASSERT(args == nil);

@@ -66,11 +66,6 @@ System::~System()
     s_instance = nullptr;
 }
 
-Expr System::make_core_env()
-{
-    return ::make_core_env();
-}
-
 #endif
 
 #ifdef LISP_NAMESPACE
