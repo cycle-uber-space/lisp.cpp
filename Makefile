@@ -74,7 +74,7 @@ clean:
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 lisp.hpp: make_lib.py $(LISP_SRC) Makefile
-	./make_lib.py --hack $(LISP_SRC)
+	./make_lib.py --name lisp --hack $(LISP_SRC)
 
 test:
 	./std unit

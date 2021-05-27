@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import os, sys, re
 
+def fail(*args, **kwargs):
+    print(*args, **kwargs)
+    sys.exit(1)
+
 g_match = None
 
 def re_match(pattern, text):
@@ -42,30 +46,31 @@ def has_ext(path, *exts):
             return ext
     return None
 
-def assemble(srcs):
+def assemble(name, srcs):
+    NAME = name.upper()
     text = ""
-    text += """
-#ifndef _LISP_HPP_
-#define _LISP_HPP_
+    text += f"""
+#ifndef _{NAME}_HPP_
+#define _{NAME}_HPP_
 """
     for src in srcs:
         if has_ext(src, ".hpp", ".fwd", ".decl"):
             text += load_source(src)
-    text += """
-#endif /* _LISP_HPP_ */
+    text += f"""
+#endif /* _{NAME}_HPP_ */
 
-#ifdef LISP_IMPLEMENTATION
+#ifdef {NAME}_IMPLEMENTATION
 
-#ifndef _LISP_CPP_
-#define _LISP_CPP_
+#ifndef _{NAME}_CPP_
+#define _{NAME}_CPP_
 """
     for src in srcs:
         if has_ext(src, ".cpp", ".def", ".impl"):
             text += load_source(src)
-    text += """
-#endif /* _LISP_CPP_ */
+    text += f"""
+#endif /* _{NAME}_CPP_ */
 
-#endif /* LISP_IMPLEMENTATION */
+#endif /* {NAME}_IMPLEMENTATION */
 """
     return text
 
@@ -153,15 +158,25 @@ def main(args):
     srcs = list()
     hack = False
     undo = False
+    name = None
+    set_name = False
     for arg in args:
+        if set_name:
+            name = arg
+            set_name = False
         if arg == "--hack":
             hack = True
         elif arg == "--undo":
             undo = True
+        elif arg == "--name":
+            set_name = True
         else:
             srcs.append(arg)
 
-    text = assemble(srcs)
+    if name is None:
+        fail("missing library name")
+
+    text = assemble(name, srcs)
 
     if hack:
         text = hack_text(text)
