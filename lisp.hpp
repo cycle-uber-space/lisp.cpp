@@ -2472,7 +2472,7 @@ Expr number_div(Expr a, Expr b)
         {
             // TODO use divmod?
             Expr ret = fixnum_div(a, b);
-            if (a == fixnum_mul(a, b))
+            if (a == fixnum_mul(ret, b))
             {
                 return ret;
             }
