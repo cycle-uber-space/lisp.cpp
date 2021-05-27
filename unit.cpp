@@ -36,6 +36,8 @@ static void test_float(TestState * test)
     LISP_TEST_ASSERT(test, float_value(make_float(0.0f)) == 0.0f);
     LISP_TEST_ASSERT(test, float_value(make_float(1.0f)) == 1.0f);
     LISP_TEST_ASSERT(test, float_value(make_float(-1.0f)) == -1.0f);
+
+    LISP_TEST_ASSERT(test, float_value(float_add(make_float(-1.0f), make_float(1.0f))) == 0.0f);
 }
 
 static void test_symbol(TestState * test)

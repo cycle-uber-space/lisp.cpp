@@ -13,6 +13,13 @@ inline bool is_float(Expr exp)
 Expr make_float(F32 value);
 F32 float_value(Expr exp);
 
+Expr float_neg(Expr a);
+
+Expr float_add(Expr a, Expr b);
+Expr float_sub(Expr a, Expr b);
+Expr float_mul(Expr a, Expr b);
+Expr float_div(Expr a, Expr b);
+
 #ifdef LISP_NAMESPACE
 }
 #endif

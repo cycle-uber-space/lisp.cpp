@@ -493,6 +493,13 @@ inline bool is_float(Expr exp)
 Expr make_float(F32 value);
 F32 float_value(Expr exp);
 
+Expr float_neg(Expr a);
+
+Expr float_add(Expr a, Expr b);
+Expr float_sub(Expr a, Expr b);
+Expr float_mul(Expr a, Expr b);
+Expr float_div(Expr a, Expr b);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -1309,6 +1316,32 @@ F32 float_value(Expr exp)
     U64 const data = expr_data(exp);
     LISP_ASSERT_DEBUG((data & UINT64_C(0xffffffff)) == data);
     return u32_as_f32((U32) data);
+}
+
+Expr float_neg(Expr a)
+{
+    // TODO? just flip the sign bit
+    return make_float(-float_value(a));
+}
+
+Expr float_add(Expr a, Expr b)
+{
+    return make_float(float_value(a) + float_value(b));
+}
+
+Expr float_sub(Expr a, Expr b)
+{
+    return make_float(float_value(a) - float_value(b));
+}
+
+Expr float_mul(Expr a, Expr b)
+{
+    return make_float(float_value(a) * float_value(b));
+}
+
+Expr float_div(Expr a, Expr b)
+{
+    return make_float(float_value(a) / float_value(b));
 }
 
 #ifdef LISP_NAMESPACE
