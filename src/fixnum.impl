@@ -10,6 +10,16 @@ namespace LISP_NAMESPACE {
 
 Expr make_fixnum(I64 value)
 {
+#if LISP_DEBUG
+    if (value < LISP_FIXNUM_MINVAL)
+    {
+        LISP_FAIL("cannot make fixnum from %" PRIi64 ", min value is %" PRIi64 "\n", value, LISP_FIXNUM_MINVAL);
+    }
+    if (value > LISP_FIXNUM_MAXVAL)
+    {
+        LISP_FAIL("cannot make fixnum from %" PRIi64 ", max value is %" PRIi64 "\n", value, LISP_FIXNUM_MAXVAL);
+    }
+#endif
     LISP_ASSERT(value >= LISP_FIXNUM_MINVAL);
     LISP_ASSERT(value <= LISP_FIXNUM_MAXVAL);
 
