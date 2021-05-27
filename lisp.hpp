@@ -553,6 +553,7 @@ void stream_put_cstring(Expr exp, char const * str);
 void stream_put_u64(Expr exp, U64 val);
 void stream_put_i64(Expr exp, U64 val);
 void stream_put_x64(Expr exp, U64 val);
+void stream_put_f32(Expr exp, F32 val);
 void stream_put_pointer(Expr exp, void const * ptr);
 
 void stream_release(Expr exp);
@@ -1183,6 +1184,16 @@ namespace LISP_NAMESPACE {
 
 Expr make_fixnum(I64 value)
 {
+#if LISP_DEBUG
+    if (value < LISP_FIXNUM_MINVAL)
+    {
+        LISP_FAIL("cannot make fixnum from %" PRIi64 ", min value is %" PRIi64 "\n", value, LISP_FIXNUM_MINVAL);
+    }
+    if (value > LISP_FIXNUM_MAXVAL)
+    {
+        LISP_FAIL("cannot make fixnum from %" PRIi64 ", max value is %" PRIi64 "\n", value, LISP_FIXNUM_MAXVAL);
+    }
+#endif
     LISP_ASSERT(value >= LISP_FIXNUM_MINVAL);
     LISP_ASSERT(value <= LISP_FIXNUM_MAXVAL);
 
@@ -2137,6 +2148,13 @@ void stream_put_x64(Expr exp, U64 val)
     stream_put_cstring(exp, str);
 }
 
+void stream_put_f32(Expr exp, F32 val)
+{
+    char str[32];
+    sprintf(str, "%f", val);
+    stream_put_cstring(exp, str);
+}
+
 void stream_put_pointer(Expr exp, void const * ptr)
 {
     char str[32];
@@ -2424,10 +2442,34 @@ Expr number_mul(Expr a, Expr b)
     return fixnum_mul(a, b);
 }
 
+#define PACK_TYPE(a, b) ((a) | ((a) << LISP_TYPE_BITS))
+
 Expr number_div(Expr a, Expr b)
 {
-    return fixnum_div(a, b);
+    switch (PACK_TYPE(expr_type(a), expr_type(b)))
+    {
+    case PACK_TYPE(TYPE_FLOAT, TYPE_FLOAT):
+        return float_div(a, b);
+    case PACK_TYPE(TYPE_FIXNUM, TYPE_FIXUM):
+        {
+            // TODO use divmod?
+            Expr ret = fixnum_div(a, b);
+            if (a == fixnum_mul(a, b))
+            {
+                return ret;
+            }
+            else
+            {
+                return float_div(make_float(fixnum_value(a)), make_float(fixnum_value(b)));
+            }
+        }
+    default:
+        LISP_FAIL("cannot divide %s by %s\n", repr(a), repr(b));
+        return nil;
+    }
 }
+
+#undef PACK_TYPE
 
 bool number_equal(Expr a, Expr b)
 {
@@ -2842,6 +2884,9 @@ public:
             break;
         case TYPE_FIXNUM:
             stream_put_i64(out, fixnum_value(exp));
+            break;
+        case TYPE_FLOAT:
+            stream_put_f32(out, float_value(exp));
             break;
         case TYPE_STRING:
             print_string(exp, out);
@@ -3815,6 +3860,7 @@ public:
         case TYPE_NIL:
         case TYPE_CHAR:
         case TYPE_FIXNUM:
+        case TYPE_FLOAT:
         case TYPE_STRING:
         case TYPE_KEYWORD:
 #if LISP_WANT_POINTER
