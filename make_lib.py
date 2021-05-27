@@ -160,28 +160,38 @@ def main(args):
     undo = False
     name = None
     set_name = False
+    out = None
+    set_out = False
     for arg in args:
         if set_name:
             name = arg
             set_name = False
-        if arg == "--hack":
+        elif set_out:
+            out = arg
+            set_out = False
+        elif arg == "--hack":
             hack = True
         elif arg == "--undo":
             undo = True
         elif arg == "--name":
             set_name = True
+        elif arg == "--output" or arg == "-o":
+            set_out = True
         else:
             srcs.append(arg)
 
     if name is None:
         fail("missing library name")
 
+    if out is None:
+        fail("missing output file")
+
     text = assemble(name, srcs)
 
     if hack:
         text = hack_text(text)
 
-    save_text("lisp.hpp", text)
+    save_text(out, text)
 
     if undo:
         for src in srcs:
