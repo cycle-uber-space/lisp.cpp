@@ -13,6 +13,7 @@ I64 fixnum_value(Expr exp);
 
 Expr fixnum_neg(Expr a);
 Expr fixnum_add(Expr a, Expr b);
+Expr fixnum_sub(Expr a, Expr b);
 Expr fixnum_mul(Expr a, Expr b);
 Expr fixnum_div(Expr a, Expr b);
 

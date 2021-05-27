@@ -23,6 +23,11 @@ Expr number_add(Expr a, Expr b)
     return fixnum_add(a, b);
 }
 
+Expr number_sub(Expr a, Expr b)
+{
+    return fixnum_sub(a, b);
+}
+
 Expr number_mul(Expr a, Expr b)
 {
     return fixnum_mul(a, b);

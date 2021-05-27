@@ -53,6 +53,11 @@ Expr fixnum_add(Expr a, Expr b)
     return make_fixnum(fixnum_value(a) + fixnum_value(b));
 }
 
+Expr fixnum_sub(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) - fixnum_value(b));
+}
+
 Expr fixnum_mul(Expr a, Expr b)
 {
     return make_fixnum(fixnum_value(a) * fixnum_value(b));

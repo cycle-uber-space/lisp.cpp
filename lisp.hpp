@@ -438,6 +438,7 @@ I64 fixnum_value(Expr exp);
 
 Expr fixnum_neg(Expr a);
 Expr fixnum_add(Expr a, Expr b);
+Expr fixnum_sub(Expr a, Expr b);
 Expr fixnum_mul(Expr a, Expr b);
 Expr fixnum_div(Expr a, Expr b);
 
@@ -626,6 +627,7 @@ Expr make_number(I64 value);
 
 Expr number_neg(Expr a);
 Expr number_add(Expr a, Expr b);
+Expr number_sub(Expr a, Expr b);
 Expr number_mul(Expr a, Expr b);
 Expr number_div(Expr a, Expr b);
 bool number_equal(Expr a, Expr b);
@@ -1225,6 +1227,11 @@ Expr fixnum_neg(Expr a)
 Expr fixnum_add(Expr a, Expr b)
 {
     return make_fixnum(fixnum_value(a) + fixnum_value(b));
+}
+
+Expr fixnum_sub(Expr a, Expr b)
+{
+    return make_fixnum(fixnum_value(a) - fixnum_value(b));
 }
 
 Expr fixnum_mul(Expr a, Expr b)
@@ -2435,6 +2442,11 @@ Expr number_neg(Expr a)
 Expr number_add(Expr a, Expr b)
 {
     return fixnum_add(a, b);
+}
+
+Expr number_sub(Expr a, Expr b)
+{
+    return fixnum_sub(a, b);
 }
 
 Expr number_mul(Expr a, Expr b)
