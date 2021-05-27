@@ -28,10 +28,34 @@ Expr number_mul(Expr a, Expr b)
     return fixnum_mul(a, b);
 }
 
+#define PACK_TYPE(a, b) ((a) | ((a) << LISP_TYPE_BITS))
+
 Expr number_div(Expr a, Expr b)
 {
-    return fixnum_div(a, b);
+    switch (PACK_TYPE(expr_type(a), expr_type(b)))
+    {
+    case PACK_TYPE(TYPE_FLOAT, TYPE_FLOAT):
+        return float_div(a, b);
+    case PACK_TYPE(TYPE_FIXNUM, TYPE_FIXUM):
+        {
+            // TODO use divmod?
+            Expr ret = fixnum_div(a, b);
+            if (a == fixnum_mul(a, b))
+            {
+                return ret;
+            }
+            else
+            {
+                return float_div(make_float(fixnum_value(a)), make_float(fixnum_value(b)));
+            }
+        }
+    default:
+        LISP_FAIL("cannot divide %s by %s\n", repr(a), repr(b));
+        return nil;
+    }
 }
+
+#undef PACK_TYPE
 
 bool number_equal(Expr a, Expr b)
 {
