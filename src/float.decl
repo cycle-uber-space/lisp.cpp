@@ -1,0 +1,15 @@
+
+/* float */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+inline bool is_float(Expr exp)
+{
+    return expr_type(exp) == TYPE_FLOAT;
+}
+
+#ifdef LISP_NAMESPACE
+}
+#endif

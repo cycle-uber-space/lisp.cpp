@@ -19,6 +19,7 @@ src/cons.decl\
 src/gensym.decl\
 src/pointer.decl\
 src/fixnum.decl\
+src/float.decl\
 src/char.decl\
 src/string.decl\
 src/stream.decl\
@@ -40,6 +41,7 @@ src/expr.impl\
 src/base.impl\
 src/type.impl\
 src/fixnum.impl\
+src/float.impl\
 src/char.impl\
 src/symbol.impl\
 src/keyword.impl\

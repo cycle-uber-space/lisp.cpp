@@ -13,6 +13,7 @@ public:
         LISP_ASSERT_ALWAYS(TYPE_NIL == make_type("nil"));
         LISP_ASSERT_ALWAYS(TYPE_CHAR == make_type("char"));
         LISP_ASSERT_ALWAYS(TYPE_FIXNUM == make_type("fixnum"));
+        LISP_ASSERT_ALWAYS(TYPE_FLOAT == make_type("float"));
         LISP_ASSERT_ALWAYS(TYPE_SYMBOL == make_type("symbol"));
         LISP_ASSERT_ALWAYS(TYPE_KEYWORD == make_type("keyword"));
         LISP_ASSERT_ALWAYS(TYPE_CONS == make_type("cons"));

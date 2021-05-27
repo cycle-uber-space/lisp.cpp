@@ -25,6 +25,7 @@ enum
     TYPE_NIL = 0,
     TYPE_CHAR,
     TYPE_FIXNUM,
+    TYPE_FLOAT,
     // needs separate memory
     TYPE_SYMBOL,
     TYPE_KEYWORD,

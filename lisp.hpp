@@ -256,6 +256,7 @@ enum
     TYPE_NIL = 0,
     TYPE_CHAR,
     TYPE_FIXNUM,
+    TYPE_FLOAT,
     // needs separate memory
     TYPE_SYMBOL,
     TYPE_KEYWORD,
@@ -462,6 +463,22 @@ Expr fixnum_div(Expr a, Expr b);
 
 bool fixnum_eq(Expr a, Expr b);
 bool fixnum_lt(Expr a, Expr b);
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
+#line 2 "src/float.decl"
+/* float */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
+
+inline bool is_float(Expr exp)
+{
+    return expr_type(exp) == TYPE_FLOAT;
+}
 
 #ifdef LISP_NAMESPACE
 }
@@ -1121,6 +1138,7 @@ public:
         LISP_ASSERT_ALWAYS(TYPE_NIL == make_type("nil"));
         LISP_ASSERT_ALWAYS(TYPE_CHAR == make_type("char"));
         LISP_ASSERT_ALWAYS(TYPE_FIXNUM == make_type("fixnum"));
+        LISP_ASSERT_ALWAYS(TYPE_FLOAT == make_type("float"));
         LISP_ASSERT_ALWAYS(TYPE_SYMBOL == make_type("symbol"));
         LISP_ASSERT_ALWAYS(TYPE_KEYWORD == make_type("keyword"));
         LISP_ASSERT_ALWAYS(TYPE_CONS == make_type("cons"));
@@ -1241,6 +1259,17 @@ bool fixnum_lt(Expr a, Expr b)
 {
     return fixnum_value(a) < fixnum_value(b);
 }
+
+#ifdef LISP_NAMESPACE
+}
+#endif
+
+#line 2 "src/float.impl"
+/* float */
+
+#ifdef LISP_NAMESPACE
+namespace LISP_NAMESPACE {
+#endif
 
 #ifdef LISP_NAMESPACE
 }
