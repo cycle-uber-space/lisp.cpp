@@ -102,6 +102,9 @@ public:
         case TYPE_FIXNUM:
             stream_put_i64(out, fixnum_value(exp));
             break;
+        case TYPE_FLOAT:
+            stream_put_f32(out, float_value(exp));
+            break;
         case TYPE_STRING:
             print_string(exp, out);
             break;
