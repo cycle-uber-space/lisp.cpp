@@ -1,6 +1,4 @@
 
-/* config */
-
 #ifndef LISP_WANT_GLOBAL_API
 #define LISP_WANT_GLOBAL_API 1
 #endif

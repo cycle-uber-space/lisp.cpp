@@ -1,6 +1,4 @@
 
-/* defines */
-
 #define LISP_RED     "\x1b[31m"
 #define LISP_GREEN   "\x1b[32m"
 #define LISP_YELLOW  "\x1b[33m"

@@ -3,8 +3,6 @@
 #define _LISP_HPP_
 
 #line 2 "src/config.decl"
-/* config */
-
 #ifndef LISP_WANT_GLOBAL_API
 #define LISP_WANT_GLOBAL_API 1
 #endif
@@ -58,8 +56,6 @@
 #endif
 
 #line 2 "src/includes.decl"
-/* includes */
-
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -81,8 +77,6 @@
 #endif
 
 #line 2 "src/defines.decl"
-/* defines */
-
 #define LISP_RED     "\x1b[31m"
 #define LISP_GREEN   "\x1b[32m"
 #define LISP_YELLOW  "\x1b[33m"
@@ -92,8 +86,6 @@
 #define LISP_RESET   "\x1b[0m"
 
 #line 2 "src/base.decl"
-/* base */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -140,8 +132,6 @@ I64 u64_as_i64(U64 val);
 #endif
 
 #line 2 "src/type.decl"
-/* type */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -154,8 +144,6 @@ char const * type_name(U64 type);
 #endif
 
 #line 2 "src/test.decl"
-/* test */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -183,8 +171,6 @@ void test_assert_try(TestState * test, bool exp, char const * msg);
 #endif
 
 #line 2 "src/error.decl"
-/* error */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -240,8 +226,6 @@ void error_pop();
 #endif
 
 #line 2 "src/expr.decl"
-/* expr */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -294,8 +278,6 @@ enum
 #endif
 
 #line 2 "src/nil.decl"
-/* nil */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -312,8 +294,6 @@ inline static bool is_nil(Expr exp)
 #endif
 
 #line 2 "src/symbol.decl"
-/* symbol */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -343,8 +323,6 @@ char const * symbol_name(Expr exp);
 #endif
 
 #line 2 "src/keyword.decl"
-/* keyword */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -367,8 +345,6 @@ char const * keyword_name(Expr exp);
 #endif
 
 #line 2 "src/cons.decl"
-/* cons */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -407,8 +383,6 @@ inline Expr cddddr(Expr exp) { return cdr(cdr(cdr(cdr(exp)))); }
 #endif
 
 #line 2 "src/gensym.decl"
-/* gensym */
-
 #if LISP_WANT_GENSYM
 
 #ifdef LISP_NAMESPACE
@@ -429,8 +403,6 @@ Expr gensym();
 #endif
 
 #line 2 "src/pointer.decl"
-/* pointer */
-
 #if LISP_WANT_POINTER
 
 #ifdef LISP_NAMESPACE
@@ -452,8 +424,6 @@ void * pointer_value(Expr exp);
 #endif
 
 #line 2 "src/fixnum.decl"
-/* fixnum */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -479,8 +449,6 @@ bool fixnum_lt(Expr a, Expr b);
 #endif
 
 #line 2 "src/float.decl"
-/* float */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -505,8 +473,6 @@ Expr float_div(Expr a, Expr b);
 #endif
 
 #line 2 "src/char.decl"
-/* char */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -524,8 +490,6 @@ U32 char_code(Expr exp);
 #endif
 
 #line 2 "src/string.decl"
-/* string */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -552,8 +516,6 @@ bool string_equal(Expr exp1, Expr exp2);
 #endif
 
 #line 2 "src/stream.decl"
-/* stream */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -607,8 +569,6 @@ Expr stream_get_stderr();
 #endif
 
 #line 2 "src/builtin.decl"
-/* builtin */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -655,8 +615,6 @@ BuiltinFunc builtin_func(Expr exp);
 #endif
 
 #line 2 "src/number.decl"
-/* number */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -839,8 +797,6 @@ void lang_defsym(Expr env, char const * name, BuiltinFunc func);
 #define _LISP_CPP_
 
 #line 2 "src/HashMap.impl"
-/* HashMap */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -873,8 +829,6 @@ private:
 #endif
 
 #line 2 "src/HashSet.impl"
-/* HashSet */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -902,8 +856,6 @@ private:
 #endif
 
 #line 2 "src/test.impl"
-/* test */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -961,8 +913,6 @@ void test_assert_try(TestState * test, bool exp, char const * msg)
 #endif
 
 #line 2 "src/error.impl"
-/* error */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1073,8 +1023,6 @@ void error_pop()
 #endif
 
 #line 2 "src/expr.impl"
-/* expr */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1099,8 +1047,6 @@ U64 expr_data(Expr exp)
 #endif
 
 #line 2 "src/base.impl"
-/* base */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1158,8 +1104,6 @@ I64 u64_as_i64(U64 val)
 #endif
 
 #line 2 "src/type.impl"
-/* type */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1228,8 +1172,6 @@ char const * type_name(U64 type)
 #endif
 
 #line 2 "src/fixnum.impl"
-/* fixnum */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1299,8 +1241,6 @@ bool fixnum_lt(Expr a, Expr b)
 #endif
 
 #line 2 "src/float.impl"
-/* float */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1349,8 +1289,6 @@ Expr float_div(Expr a, Expr b)
 #endif
 
 #line 2 "src/char.impl"
-/* char */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1371,8 +1309,6 @@ U32 char_code(Expr exp)
 #endif
 
 #line 2 "src/symbol.impl"
-/* symbol */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1482,8 +1418,6 @@ char const * keyword_name(Expr exp)
 #endif
 
 #line 2 "src/cons.impl"
-/* cons */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1671,8 +1605,6 @@ void set_cdr(Expr exp, Expr val)
 #endif
 
 #line 2 "src/string.impl"
-/* string */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -1814,8 +1746,6 @@ bool string_equal(Expr exp1, Expr exp2)
 #endif
 
 #line 2 "src/stream.impl"
-/* stream */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
@@ -2246,8 +2176,6 @@ Expr stream_get_stderr()
 #endif
 
 #line 2 "src/gensym.impl"
-/* gensym */
-
 #if LISP_WANT_GENSYM
 
 #ifdef LISP_NAMESPACE
@@ -2300,8 +2228,6 @@ Expr gensym()
 #endif
 
 #line 2 "src/pointer.impl"
-/* pointer */
-
 #if LISP_WANT_POINTER
 
 #ifdef LISP_NAMESPACE
@@ -2373,8 +2299,6 @@ void * pointer_value(Expr exp)
 #endif
 
 #line 2 "src/builtin.impl"
-/* builtin */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif

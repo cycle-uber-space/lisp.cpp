@@ -1,6 +1,4 @@
 
-/* pointer */
-
 #if LISP_WANT_POINTER
 
 #ifdef LISP_NAMESPACE

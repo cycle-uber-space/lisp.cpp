@@ -1,6 +1,4 @@
 
-/* type */
-
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif

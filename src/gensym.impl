@@ -1,6 +1,4 @@
 
-/* gensym */
-
 #if LISP_WANT_GENSYM
 
 #ifdef LISP_NAMESPACE
