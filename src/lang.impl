@@ -219,6 +219,25 @@ Expr make_core_env()
         return intern(type_name(expr_type(arg1)));
     });
 
+    lang_defun(env, "fixnum-mul", [](Expr args, Expr) -> Expr
+    {
+        Expr ret = make_fixnum(1);
+        for (Expr tmp = args; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            //println(exp);
+            ret = fixnum_mul(ret, exp);
+        }
+        return ret;
+    });
+
+    lang_defun(env, "apply", [](Expr args, Expr env) -> Expr
+    {
+        Expr const name = car(args);
+        Expr const vals = cadr(args);
+        return apply(name, vals, env);
+    });
+
     return env;
 }
 
