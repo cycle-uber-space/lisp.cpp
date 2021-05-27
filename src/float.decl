@@ -10,6 +10,9 @@ inline bool is_float(Expr exp)
     return expr_type(exp) == TYPE_FLOAT;
 }
 
+Expr make_float(F32 value);
+F32 float_value(Expr exp);
+
 #ifdef LISP_NAMESPACE
 }
 #endif

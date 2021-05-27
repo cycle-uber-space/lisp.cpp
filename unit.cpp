@@ -30,6 +30,14 @@ static void test_fixnum(TestState * test)
     LISP_TEST_ASSERT(test, fixnum_value(make_fixnum(-1)) == -1);
 }
 
+static void test_float(TestState * test)
+{
+    LISP_TEST_GROUP(test, "float");
+    LISP_TEST_ASSERT(test, float_value(make_float(0.0f)) == 0.0f);
+    LISP_TEST_ASSERT(test, float_value(make_float(1.0f)) == 1.0f);
+    LISP_TEST_ASSERT(test, float_value(make_float(-1.0f)) == -1.0f);
+}
+
 static void test_symbol(TestState * test)
 {
     LISP_TEST_GROUP(test, "symbol");
@@ -51,6 +59,7 @@ static void test()
     LISP_TEST_BEGIN(test);
     test_base(test);
     test_fixnum(test);
+    test_float(test);
     test_symbol(test);
     test_cons(test);
     LISP_TEST_GROUP(test, "summary");

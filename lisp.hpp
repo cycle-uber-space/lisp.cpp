@@ -490,6 +490,9 @@ inline bool is_float(Expr exp)
     return expr_type(exp) == TYPE_FLOAT;
 }
 
+Expr make_float(F32 value);
+F32 float_value(Expr exp);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -1294,6 +1297,19 @@ bool fixnum_lt(Expr a, Expr b)
 #ifdef LISP_NAMESPACE
 namespace LISP_NAMESPACE {
 #endif
+
+Expr make_float(F32 value)
+{
+    return make_expr(TYPE_FLOAT, f32_as_u32(value));
+}
+
+F32 float_value(Expr exp)
+{
+    LISP_ASSERT(is_float(exp));
+    U64 const data = expr_data(exp);
+    LISP_ASSERT_DEBUG((data & UINT64_C(0xffffffff)) == data);
+    return u32_as_f32((U32) data);
+}
 
 #ifdef LISP_NAMESPACE
 }
