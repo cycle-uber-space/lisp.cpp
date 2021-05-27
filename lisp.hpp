@@ -3836,6 +3836,17 @@ public:
         }
     }
 
+    Expr eval_body(Expr exps, Expr env)
+    {
+        Expr ret = nil;
+        for (Expr tmp = exps; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            ret = eval(exp, env);
+        }
+        return ret;
+    }
+
     Expr eval_list(Expr exps, Expr env)
     {
         Expr ret = nil;
@@ -3936,13 +3947,7 @@ Expr eval(Expr exp, Expr env)
 
 Expr eval_body(Expr exps, Expr env)
 {
-    Expr ret = nil;
-    for (Expr tmp = exps; tmp; tmp = cdr(tmp))
-    {
-        Expr const exp = car(tmp);
-        ret = eval(exp, env);
-    }
-    return ret;
+    return g_eval.eval_body(exps, env);
 }
 
 Expr apply(Expr name, Expr args, Expr env)
