@@ -111,6 +111,13 @@ typedef int64_t I64;
 typedef float F32;
 typedef double F64;
 
+union V32
+{
+    U32 u;
+    I32 i;
+    F32 f;
+};
+
 union V64
 {
     U64 u;
@@ -121,6 +128,9 @@ union V64
 bool is_printable_ascii(U32 ch);
 
 char * get_temp_buf(size_t size);
+
+U32 f32_as_u32(F32 val);
+F32 u32_as_f32(U32 val);
 
 U64 i64_as_u64(I64 val);
 I64 u64_as_i64(U64 val);
@@ -1103,6 +1113,20 @@ char * get_temp_buf(size_t size)
     char * ret = buf[idx];
     idx = (idx + 1) % LISP_TEMP_BUF_COUNT;
     return ret;
+}
+
+U32 f32_as_u32(F32 val)
+{
+    V32 v;
+    v.f = val;
+    return v.u;
+}
+
+F32 u32_as_f32(U32 val)
+{
+    V32 v;
+    v.u = val;
+    return v.f;
 }
 
 U64 i64_as_u64(I64 val)

@@ -25,6 +25,20 @@ char * get_temp_buf(size_t size)
     return ret;
 }
 
+func f32_as_u32(val: F32): U32
+{
+    var v: V32;
+    v.f = val;
+    return v.u;
+}
+
+func u32_as_f32(val: U32): F32
+{
+    var v: V32;
+    v.u = val;
+    return v.f;
+}
+
 func i64_as_u64(val: I64): U64
 {
     var v: V64;

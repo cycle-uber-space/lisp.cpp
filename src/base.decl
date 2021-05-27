@@ -18,6 +18,13 @@ typedef int64_t I64;
 typedef float F32;
 typedef double F64;
 
+union V32
+{
+    U32 u;
+    I32 i;
+    F32 f;
+};
+
 union V64
 {
     U64 u;
@@ -28,6 +35,9 @@ union V64
 bool is_printable_ascii(U32 ch);
 
 char * get_temp_buf(size_t size);
+
+func f32_as_u32(val: F32): U32;
+func u32_as_f32(val: U32): F32;
 
 func i64_as_u64(val: I64): U64;
 func u64_as_i64(val: U64): I64;
