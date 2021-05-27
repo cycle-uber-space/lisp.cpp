@@ -13,6 +13,7 @@ public:
         case TYPE_NIL:
         case TYPE_CHAR:
         case TYPE_FIXNUM:
+        case TYPE_FLOAT:
         case TYPE_STRING:
         case TYPE_KEYWORD:
 #if LISP_WANT_POINTER
