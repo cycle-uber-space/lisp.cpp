@@ -4244,6 +4244,38 @@ Expr make_core_env()
         return intern(type_name(expr_type(arg1)));
     });
 
+    lang_defun(env, "apply", [](Expr args, Expr env) -> Expr
+    {
+        Expr const name = car(args);
+        Expr const vals = cadr(args);
+        return apply(name, vals, env);
+    });
+
+    lang_defun(env, "number-+", [](Expr args, Expr) -> Expr
+    {
+        Expr ret = make_number(0);
+        for (Expr tmp = args; tmp; tmp = cdr(tmp))
+        {
+            Expr const exp = car(tmp);
+            //println(exp);
+            ret = number_add(ret, exp);
+        }
+        return ret;
+    });
+
+    lang_defun(env, "number--", [](Expr args, Expr) -> Expr
+    {
+        if (cdr(args))
+        {
+            char const * fmt = "number-- expects two arguments\n";
+            return number_sub(builtin_arg1(args, fmt), builtin_arg2(args, fmt));
+        }
+        else
+        {
+            return number_neg(builtin_arg1(args, NULL));
+        }
+    });
+
     lang_defun(env, "number-*", [](Expr args, Expr) -> Expr
     {
         Expr ret = make_number(1);
@@ -4256,11 +4288,10 @@ Expr make_core_env()
         return ret;
     });
 
-    lang_defun(env, "apply", [](Expr args, Expr env) -> Expr
+    lang_defun(env, "number-/", [](Expr args, Expr) -> Expr
     {
-        Expr const name = car(args);
-        Expr const vals = cadr(args);
-        return apply(name, vals, env);
+        char const * fmt = "number-/ expects two arguments\n";
+        return number_div(builtin_arg1(args, fmt), builtin_arg2(args, fmt));
     });
 
     return env;
