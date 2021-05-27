@@ -36,6 +36,7 @@ void stream_put_cstring(Expr exp, char const * str);
 void stream_put_u64(Expr exp, U64 val);
 void stream_put_i64(Expr exp, U64 val);
 void stream_put_x64(Expr exp, U64 val);
+void stream_put_f32(Expr exp, F32 val);
 void stream_put_pointer(Expr exp, void const * ptr);
 
 void stream_release(Expr exp);

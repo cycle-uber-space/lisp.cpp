@@ -390,6 +390,13 @@ void stream_put_x64(Expr exp, U64 val)
     stream_put_cstring(exp, str);
 }
 
+void stream_put_f32(Expr exp, F32 val)
+{
+    char str[32];
+    sprintf(str, "%f", val);
+    stream_put_cstring(exp, str);
+}
+
 void stream_put_pointer(Expr exp, void const * ptr)
 {
     char str[32];
