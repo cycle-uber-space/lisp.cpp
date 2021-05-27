@@ -55,6 +55,10 @@
 #define LISP_PRINTER_PRINT_QUOTE 1
 #endif
 
+#ifndef LISP_CLOSURE_USE_CONS
+#define LISP_CLOSURE_USE_CONS 1
+#endif
+
 #line 2 "src/includes.decl"
 #include <stdarg.h>
 #include <stdint.h>
@@ -266,6 +270,8 @@ enum
     TYPE_BUILTIN_SPECIAL,
     TYPE_BUILTIN_FUNCTION,
     TYPE_BUILTIN_SYMBOL,
+    TYPE_CLOSURE_FUN,
+    TYPE_CLOSURE_MAC,
 };
 
 enum
@@ -723,7 +729,6 @@ Expr read_one_from_string(char const * src);
 namespace LISP_NAMESPACE {
 #endif
 
-bool is_closure(Expr exp, Expr kind);
 Expr closure_env(Expr exp);
 Expr closure_args(Expr exp);
 Expr closure_body(Expr exp);
@@ -3617,6 +3622,8 @@ Expr read_one_from_string(char const * src)
 namespace LISP_NAMESPACE {
 #endif
 
+#if LISP_CLOSURE_USE_CONS
+
 /* (lit clo <env> <args> . <body>) */
 /* (lit mac <env> <args> . <body>) */
 
@@ -3662,6 +3669,119 @@ Expr make_macro(Expr env, Expr /*name*/, Expr args, Expr body)
 {
     return cons(intern("lit"), cons(intern("mac"), cons(env, cons(args, body))));
 }
+
+#else
+
+struct Closure
+{
+    Expr env;
+    Expr name;
+    Expr args;
+    Expr body;
+};
+
+class ClosureImpl
+{
+public:
+    ClosureImpl()
+    {
+    }
+
+    Expr make_function(Expr env, Expr name, Expr args, Expr body)
+    {
+        Closure const clo = { env, name, args, body };
+        U64 const index = (U64) m_funs.size();
+        m_funs.push_back(clo);
+        return make_expr(TYPE_CLOSURE_FUN, index);
+    }
+
+    Expr make_macro(Expr env, Expr name, Expr args, Expr body)
+    {
+        Closure const clo = { env, name, args, body };
+        U64 const index = (U64) m_macs.size();
+        m_macs.push_back(clo);
+        return make_expr(TYPE_CLOSURE_MAC, index);
+    }
+
+    Expr env(Expr exp)
+    {
+        return ref(exp).env;
+    }
+
+    Expr name(Expr exp)
+    {
+        return ref(exp).name;
+    }
+
+    Expr args(Expr exp)
+    {
+        return ref(exp).args;
+    }
+
+    Expr body(Expr exp)
+    {
+        return ref(exp).body;
+    }
+
+protected:
+    Closure & ref(Expr exp)
+    {
+        static Closure nul;
+        switch (expr_type(exp))
+        {
+        case TYPE_CLOSURE_FUN:
+            return m_funs[expr_data(exp)];
+        case TYPE_CLOSURE_MAC:
+            return m_macs[expr_data(exp)];
+        default:
+            LISP_FAIL("not a closure: %s\n", repr(exp));
+            return nul;
+        }
+    }
+
+private:
+    std::vector<Closure> m_funs;
+    std::vector<Closure> m_macs;
+};
+
+ClosureImpl g_closure;
+
+Expr closure_env(Expr exp)
+{
+    return g_closure.env(exp);
+}
+
+Expr closure_args(Expr exp)
+{
+    return g_closure.args(exp);
+}
+
+Expr closure_body(Expr exp)
+{
+    return g_closure.body(exp);
+}
+
+bool is_function(Expr exp)
+{
+    return expr_type(exp) == TYPE_CLOSURE_FUN;
+}
+
+Expr make_function(Expr env, Expr name, Expr args, Expr body)
+{
+    return g_closure.make_function(env, name, args, body);
+}
+
+bool is_macro(Expr exp)
+{
+    return expr_type(exp) == TYPE_CLOSURE_MAC;
+}
+
+Expr make_macro(Expr env, Expr name, Expr args, Expr body)
+{
+    return g_closure.make_macro(env, name, args, body);
+}
+
+#endif
 
 #ifdef LISP_NAMESPACE
 }

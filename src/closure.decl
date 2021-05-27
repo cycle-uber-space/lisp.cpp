@@ -3,7 +3,6 @@
 namespace LISP_NAMESPACE {
 #endif
 
-bool is_closure(Expr exp, Expr kind);
 Expr closure_env(Expr exp);
 Expr closure_args(Expr exp);
 Expr closure_body(Expr exp);
