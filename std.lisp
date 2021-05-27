@@ -76,3 +76,6 @@
 
 (defmacro unless (test . body)
   `(when (not ,test) ,@body))
+
+(defun * args
+  (apply fixnum-mul args))
