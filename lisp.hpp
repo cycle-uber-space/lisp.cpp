@@ -788,6 +788,12 @@ void lang_defspecial_while(Expr env);
 
 void lang_defsym(Expr env, char const * name, BuiltinFunc func);
 
+Expr vbuiltin_arg1(Expr args, char const * /*fmt*/, va_list /*ap*/);
+Expr vbuiltin_arg2(Expr args, char const * /*fmt*/, va_list /*ap*/);
+Expr builtin_arg1(Expr args, char const * fmt, ...);
+Expr builtin_arg2(Expr args, char const * fmt, ...);
+void builtin_args(Expr args, Expr * arg1, Expr * arg2, char const * fmt, ...);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
@@ -4307,6 +4313,45 @@ void lang_defspecial_while(Expr env)
 void lang_defsym(Expr env, char const * name, BuiltinFunc func)
 {
     env_def(env, intern(name), make_builtin_symbol(name, func));
+}
+
+Expr vbuiltin_arg1(Expr args, char const * /*fmt*/, va_list /*ap*/)
+{
+    // TODO add error checking
+    return first(args);
+}
+
+Expr vbuiltin_arg2(Expr args, char const * /*fmt*/, va_list /*ap*/)
+{
+    // TODO add error checking
+    return second(args);
+}
+
+Expr builtin_arg1(Expr args, char const * fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    auto const ret = vbuiltin_arg1(args, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
+Expr builtin_arg2(Expr args, char const * fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    auto const ret = vbuiltin_arg2(args, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
+void builtin_args(Expr args, Expr * arg1, Expr * arg2, char const * fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    *arg1 = vbuiltin_arg1(args, fmt, ap);
+    *arg2 = vbuiltin_arg2(args, fmt, ap);
+    va_end(ap);
 }
 
 #ifdef LISP_NAMESPACE

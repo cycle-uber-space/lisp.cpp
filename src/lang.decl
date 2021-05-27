@@ -16,6 +16,12 @@ void lang_defspecial_while(Expr env);
 
 void lang_defsym(Expr env, char const * name, BuiltinFunc func);
 
+Expr vbuiltin_arg1(Expr args, char const * /*fmt*/, va_list /*ap*/);
+Expr vbuiltin_arg2(Expr args, char const * /*fmt*/, va_list /*ap*/);
+Expr builtin_arg1(Expr args, char const * fmt, ...);
+Expr builtin_arg2(Expr args, char const * fmt, ...);
+void builtin_args(Expr args, Expr * arg1, Expr * arg2, char const * fmt, ...);
+
 #ifdef LISP_NAMESPACE
 }
 #endif
