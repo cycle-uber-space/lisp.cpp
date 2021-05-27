@@ -78,4 +78,4 @@
   `(when (not ,test) ,@body))
 
 (defun * args
-  (apply fixnum-mul args))
+  (apply number-* args))
